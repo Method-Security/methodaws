@@ -1,0 +1,57 @@
+version: 2
+
+project_name: methodaws
+builds:
+  - id: build-linux
+    main: .
+    binary: methodaws
+    ldflags:
+      - -s -w
+      - "-extldflags '-static'"
+      - -X github.com/Method-Security/methodaws/main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - "386"
+      - arm
+      - amd64
+      - arm64
+    goarm:
+      - "7"
+  - id: build-macos
+    main: .
+    binary: methodaws
+    ldflags:
+      - -s -w
+      - "-extldflags '-static'"
+      - -X github.com/aquasecurity/trivy/pkg/version/app.ver={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - "7"
+  - id: build-windows
+    main: .
+    binary: methodaws
+    ldflags:
+      - -s -w
+      - "-extldflags '-static'"
+      - -X github.com/aquasecurity/trivy/pkg/version/app.ver={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+    goarch:
+      - amd64
+    goarm:
+      - "7"
+
+release:
+  extra_files:
+    - glob: ./bom.json
