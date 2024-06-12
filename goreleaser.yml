@@ -26,7 +26,7 @@ builds:
     ldflags:
       - -s -w
       - "-extldflags '-static'"
-      - -X github.com/aquasecurity/trivy/pkg/version/app.ver={{.Version}}
+      - -X github.com/method-security/methodaws/main.version={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -42,7 +42,7 @@ builds:
     ldflags:
       - -s -w
       - "-extldflags '-static'"
-      - -X github.com/aquasecurity/trivy/pkg/version/app.ver={{.Version}}
+      - -X github.com/method-security/methodaws/main.version={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:
