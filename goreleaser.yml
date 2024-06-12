@@ -85,6 +85,7 @@ dockers:
     goarch: amd64
     ids:
       - build-linux
+    dockerfile: methodaws-docker/Dockerfile
     build_flag_templates:
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.description=An on-rails AWS enumeration tool"
