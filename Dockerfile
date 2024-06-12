@@ -13,7 +13,7 @@ RUN \
   mkdir -p /opt/method/methodaws/service/bin && \
   mkdir -p /mnt/output
 
-COPY "dist/build-linux_linux_${TARGETARCH}*/methodaws" /opt/method/methodaws/service/bin/methodaws
+COPY methodaws /opt/method/methodaws/service/bin/methodaws
 
 RUN \
   adduser --disabled-password --gecos '' method && \
