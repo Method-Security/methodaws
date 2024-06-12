@@ -1,8 +1,16 @@
-name: 🔨 Build Test
+name: Reusable Build
 on:
-  pull_request:
-    paths:
-      - "**.*"
+  workflow_call:
+    inputs:
+      goreleaser_config:
+        description: "file path to GoReleaser config"
+        required: true
+        type: string
+      goreleaser_options:
+        description: "GoReleaser options separated by spaces"
+        default: ""
+        required: false
+        type: string
 
 env:
   GO_VERSION: "1.22"
@@ -68,7 +76,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: v2.0.0
-          args: release -f=goreleaser.yml --snapshot
+          args: release -f=${{ inputs.goreleaser_config}} ${{ inputs.goreleaser_options}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TMPDIR: "tmp"
