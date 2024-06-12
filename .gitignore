@@ -22,6 +22,9 @@ go.work.sum
 /conjure/build
 /out/
 
+# Goreleaser
+/dist
+
 # Env Files
 .env/
 !.env/example.env
