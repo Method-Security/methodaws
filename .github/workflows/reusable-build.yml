@@ -22,8 +22,9 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     permissions:
-      packages: write
-      contents: read
+      id-token: write # For cosign
+      packages: write # For GHCR
+      contents: read # Not required for public repositories, but for clarity
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -68,5 +69,4 @@ jobs:
           args: release -f=${{ inputs.goreleaser_config}} ${{ inputs.goreleaser_options}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           TMPDIR: "tmp"
