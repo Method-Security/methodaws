@@ -21,10 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
-    permissions:
-      id-token: write # For cosign
-      packages: write # For GHCR
-      contents: read # Not required for public repositories, but for clarity
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
