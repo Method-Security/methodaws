@@ -1,11 +1,10 @@
 name: 🔨 Build Test
 on:
   pull_request:
-    paths:
-      - "**.*"
   push:
     branches:
       - develop
+
 jobs:
   build:
     name: Test Build
