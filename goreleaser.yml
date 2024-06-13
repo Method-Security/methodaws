@@ -52,10 +52,6 @@ builds:
     goarm:
       - "7"
 
-release:
-  extra_files:
-    - glob: ./bom.json
-
 archives:
   - id: archive
     format: tar.gz
