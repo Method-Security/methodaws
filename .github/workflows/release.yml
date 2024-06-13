@@ -16,4 +16,4 @@ jobs:
     permissions:
       id-token: write # For cosign
       packages: write # For GHCR
-      contents: read # Not required for public repositories, but for clarity
+      contents: write # To upload archives as release assets
