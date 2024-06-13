@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	identity "github.com/Method-Security/methodaws/internal/iam"
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
-	identity "gitlab.com/method-security/cyber-tools/methodaws/internal/iam"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/sts"
 )
 
 type IamResourceReport struct {

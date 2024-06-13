@@ -1,4 +1,4 @@
-module gitlab.com/method-security/cyber-tools/methodaws
+module github.com/Method-Security/methodaws
 
 go 1.22
 

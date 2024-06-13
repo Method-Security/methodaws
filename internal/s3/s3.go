@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/sts"
 )
 
 type EncryptionRule struct {
