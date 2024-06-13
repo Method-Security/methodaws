@@ -3,7 +3,7 @@ name: 🎉 Release
 on:
   push:
     tags:
-      - v*
+      - "*" # Trigger on all tags
 
 jobs:
   release:
