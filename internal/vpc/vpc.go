@@ -3,9 +3,9 @@ package vpc
 import (
 	"context"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/sts"
 )
 
 func EnumerateVPC(ctx context.Context, cfg aws.Config) (report Report, err error) {

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"gitlab.com/method-security/cyber-tools/methodaws/cmd"
+	"github.com/Method-Security/methodaws/cmd"
 )
 
 var version = "none"

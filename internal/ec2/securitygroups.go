@@ -3,10 +3,10 @@ package ec2
 import (
 	"context"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/sts"
 )
 
 func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, vpcID *string) (SecurityGroupReport, error) {

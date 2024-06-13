@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Method-Security/methodaws/internal/ec2"
 	"github.com/spf13/cobra"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/ec2"
 )
 
 func (a *MethodAws) InitSecurityGroupCommand() {
