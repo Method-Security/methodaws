@@ -121,3 +121,43 @@ docker_manifests:
     image_templates:
     - 'ghcr.io/method-security/methodaws:{{ .Version }}-amd64'
     - 'ghcr.io/method-security/methodaws:{{ .Version }}-arm64'
+
+source:
+  enabled: true
+
+checksum:
+  name_template: "{{ .ProjectName }}_checksums.txt"
+
+sboms:
+  - artifacts: archive
+  - id: source
+    artifacts: source
+
+signs:
+  - cmd: cosign
+    env:
+    - COSIGN_EXPERIMENTAL=1
+    signature: "${artifact}.sig"
+    certificate: '${artifact}.pem'
+    args:
+      - sign-blob
+      - "--key=github://Method-Security/methodaws"
+      - "--oidc-issuer=https://token.actions.githubusercontent.com"
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: all
+    output: true
+
+docker_signs:
+  - cmd: cosign
+    env:
+    - COSIGN_EXPERIMENTAL=1
+    artifacts: manifests
+    output: true
+    args:
+    - "sign"
+    - "--key=github://Method-Security/methodaws"
+    - "${artifact}"
+    - "--yes"
