@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Method-Security/methodaws/internal/iam"
 	"github.com/spf13/cobra"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/iam"
 )
 
 func (a *MethodAws) InitIamCommand() {

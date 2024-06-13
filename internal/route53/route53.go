@@ -3,10 +3,10 @@ package route53
 import (
 	"context"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/sts"
 )
 
 type EnrichedHostedZone struct {

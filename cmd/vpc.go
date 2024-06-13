@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Method-Security/methodaws/internal/vpc"
 	"github.com/spf13/cobra"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/vpc"
 )
 
 func (a *MethodAws) InitVPCCommand() {

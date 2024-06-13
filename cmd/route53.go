@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Method-Security/methodaws/internal/route53"
 	"github.com/spf13/cobra"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/route53"
 )
 
 func (a *MethodAws) InitRoute53Command() {

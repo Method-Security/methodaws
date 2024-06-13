@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Method-Security/methodaws/internal/s3"
 	"github.com/spf13/cobra"
-	"gitlab.com/method-security/cyber-tools/methodaws/internal/s3"
 )
 
 func (a *MethodAws) InitS3Command() {
