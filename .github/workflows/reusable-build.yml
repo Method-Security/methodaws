@@ -1,0 +1,82 @@
+name: Reusable Build
+on:
+  workflow_call:
+    inputs:
+      goreleaser_config:
+        description: "file path to GoReleaser config"
+        required: true
+        type: string
+      goreleaser_options:
+        description: "GoReleaser options separated by spaces"
+        default: ""
+        required: false
+        type: string
+
+env:
+  GO_VERSION: "1.22"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
+    permissions:
+      contents: read
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 32768 # The Go cache (`~/.cache/go-build` and `~/go/pkg`) requires a lot of storage space.
+          remove-android: "true"
+          remove-docker-images: "true"
+          remove-dotnet: "true"
+          remove-haskell: "true"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Show available Docker Buildx platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Login to ghcr.io registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4.1.6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: false # Disable cache to avoid free space issues during `Post Setup Go` step.
+
+      - name: Generate SBOM
+        uses: CycloneDX/gh-gomod-generate-sbom@v2
+        with:
+          args: mod -licenses -json -output bom.json
+          version: ^v1
+
+      # Create tmp dir for GoReleaser
+      - name: "create tmp dir"
+        run: |
+          mkdir tmp
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2.0.0
+          args: release -f=${{ inputs.goreleaser_config}} ${{ inputs.goreleaser_options}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TMPDIR: "tmp"
