@@ -10,6 +10,8 @@ jobs:
   build-documents:
     name: Test Documentation Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # mkdocs gh-deploy requires write permissions to create a new branch
     steps:
       - name: Checkout
         uses: actions/checkout@v4.1.6
