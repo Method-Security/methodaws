@@ -112,6 +112,9 @@ func (a *MethodAws) InitRootCommand() {
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Println(a.version)
 		},
+		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
+			return nil
+		},
 	}
 
 	a.RootCmd.AddCommand(a.VersionCmd)

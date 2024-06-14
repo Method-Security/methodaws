@@ -1,43 +1,86 @@
 <div align="center">
+<h1>methodaws</h1>
 
 [![GitHub Release][release-img]][release]
-[![Test][test-img]][test]
+[![Verify][verify-img]][verify]
 [![Go Report Card][go-report-img]][go-report]
 [![License: Apache-2.0][license-img]][license]
 
+[![GitHub Downloads][github-downloads-img]][release]
+[![Docker Pulls][docker-pulls-img]][docker-pull]
+
 </div>
 
-methodaws provides a number of granular AWS enumeration capabilities that can be leveraged by security teams to gain better visibility into their AWS environments.
+methodaws provides security operators with a number of data-rich AWS enumeration capabilities to help them gain visibility into their AWS environments. Designed with data-modeling and data-integration needs in mind, methodaws can be used on its own as an interactive CLI, orchestrated as part of a broader data pipeline, or leveraged from within the Method Platform.
 
-## Development
+The number of security-relevant AWS resources that methodaws can enumerate are constantly growing. For the most up to date listing, please see the documentation [here](docs-capabilities)
 
-methodaws leverages Palantir's [godel](https://github.com/palantir/godel) build tool to provide streamlined Go build infrastructure. After cloning this repository, you can run `./godelw build` to build the project from source.
+To learn more about methodaws, please see the [Documentation site](docs) for the most detailed information.
 
-### Adding a new AWS Enumeration Capability
+## Quick Start
 
-#### New AWS Resource Type
+### Get methodaws
 
-If you are adding a new AWS resource type to methodaws, you should add it as a new top level command that will get nested under the methodaws root command. To do this, you will do the following:
+For the full list of available installation options, please see the [Installation](./docs/getting-started/index.md) page. For convenience, here are some of the most commonly used options:
 
-1. Add a file to `cmd/` that corresponds to the sub-command name you'd like to add to the `methodaws` CLI
-2. You can use `cmd/ec2.go` as a template
-3. Your file needs to be a member function of the `methodaws` struct and should be of the form `Init<cmd>Command`
-4. Add a new member to the `methodaws` struct in `cmd/root.go` that corresponds to your command name.
-5. Call your `Init` function from `main.go`
-6. Add logic to your commands runtime and put it in its own package within `internal` (e.g., `internal/ec2`)
+- `docker run methodsecurity/methodaws`
+- `docker run ghcr.io/method-security/methodaws:0.0.1`
+- Download the latest binary from the [Github Releases](releases) page
+- [Installation documentation](./docs/getting-started/index.md)
 
-## Testing
+### Authentication
 
-### Testing from Source (pre-build)
+methodaws is built using the AWS Go SDK and leverages the same AWS Credentials that are used by the AWS CLI. Specifically, it looks for the proper environment variables to be exported with credential information. For more information, please see the AWS documentation on how to [export AWS credentials as environment variables](aws_env_vars).
 
-You can test locally without building by running
+### General Usage
 
 ```bash
-go run main.go <subcommand> <flags>
+methodaws <resource> enumerate --region <AWS Region>
 ```
 
-### Testing the CLI (post-build)
+#### Examples
 
-You can test locally using the CLI by building it from source. Run, `./godelw clean && ./godelw build` to clean out the `out/` directory and rebuild. You will now have a binary at `out/build/methodaws/<version>/<architecture>/methodaws` that you can run
+```bash
+methodaws s3 enumerate --region us-east-1
+```
 
-The majority of methodaws commands will require authentication with an AWS account, so you will need to have the appropriate [AWS Credentials exported as environment variables](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html).
+```bash
+methodaws ec2 enumerate --region us-east-1
+```
+
+## Contributing
+
+Interested in contributing to methodaws? Please see our [Contribution](#) page.
+
+## Want More?
+
+If you're looking for an easy way to tie methodaws into your broader cybersecurity workflows, or want to leverage some autonomy to improve your overall security posture, you'll love the broader Method Platform.
+
+For more information, see [https://method.security]
+
+## Community
+
+methodaws is a Method Security open source project.
+
+Learn more about Method's open source source work by checking out our other projects [here](github-org).
+
+Have an idea for a Tool to contribute? Open a Discussion [here](discussion).
+
+[verify]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml
+[verify-img]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml/badge.svg
+[go-report]: https://goreportcard.com/report/github.com/Method-Security/methodaws
+[go-report-img]: https://goreportcard.com/badge/github.com/Method-Security/methodaws
+[release]: https://github.com/Method-Security/methodaws/releases
+[releases]: https://github.com/Method-Security/methodaws/releases/latest
+[release-img]: https://img.shields.io/github/release/Method-Security/methodaws.svg?logo=github
+[github-downloads-img]: https://img.shields.io/github/downloads/Method-Security/methodaws/total?logo=github
+[docker-pulls-img]: https://img.shields.io/docker/pulls/methodsecurity/methodaws?logo=docker&label=docker%20pulls%20%2F%20methodaws
+[docker-pull]: https://hub.docker.com/r/methodsecurity/methodaws
+[license]: https://github.com/Method-Security/methodaws/blob/main/LICENSE
+[license-img]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[homepage]: https://method.security
+[docs-home]: https://method-security.github.io/methodaws
+[docs-capabilities]: https://method-security.github.io/methodaws/docs/index.html
+[discussion]: https://github.com/Method-Security/methodaws/discussions
+[github-org]: https://github.com/Method-Security
+[aws_env_vars]: https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html
