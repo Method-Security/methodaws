@@ -1,15 +1,13 @@
-<div align="center">
-<h1>methodaws</h1>
+# methodaws Documentation
 
-[![GitHub Release][release-img]][release]
-[![Verify][verify-img]][verify]
-[![Go Report Card][go-report-img]][go-report]
-[![License: Apache-2.0][license-img]][license]
+Hello and welcome to the methodaws documentation. While we always want to provide the most comprehensive documentation possible, we thought you may find the below sections a helpful place to get started.
 
-[![GitHub Downloads][github-downloads-img]][release]
-[![Docker Pulls][docker-pulls-img]][docker-pull]
+- The [Getting Started](./getting-started/index.md) section provides onboarding material
+- The [Development](./development/index.md) header is the best place to get started on developing on top of and with methodaws
+- See the [Docs](./docs/index.md) section for a comprehensive rundown of methodaws capabilities
+- Finally, the [Community](./community/principles.md) folder is your one stop shop for getting involved in methodaws and joining the community.
 
-</div>
+# About methodaws
 
 methodaws provides security operators with a number of data-rich AWS enumeration capabilities to help them gain visibility into their AWS environments. Designed with data-modeling and data-integration needs in mind, methodaws can be used on its own as an interactive CLI, orchestrated as part of a broader data pipeline, or leveraged from within the Method Platform.
 
@@ -21,12 +19,12 @@ To learn more about methodaws, please see the [Documentation site](#) for the mo
 
 ### Get methodaws
 
-For the full list of available installation options, please see the [Installation](./docs/getting-started/index.md) page. For convenience, here are some of the most commonly used options:
+For the full list of available installation options, please see the [Installation](#) page. For convenience, here are some of the most commonly used options:
 
 - `docker run methodsecurity/methodaws`
 - `docker run ghcr.io/method-security/methodaws:0.0.1`
 - Download the latest binary from the [https://github.com/Method-Security/methodaws/releases/latest]
-- [Installation documentation](./docs/getting-started/index.md)
+- [Installation documentation](#)
 
 ### Authentication
 
@@ -65,16 +63,3 @@ methodaws is a Method Security open source project.
 Learn more about Method's open source source work by checking out our other projects [here](https://github.com/Method-Security).
 
 Have an idea for a Tool to contribute? Open a Discussion [here](#).
-
-[verify]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml
-[verify-img]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml/badge.svg
-[go-report]: https://goreportcard.com/report/github.com/Method-Security/methodaws
-[go-report-img]: https://goreportcard.com/badge/github.com/Method-Security/methodaws
-[release]: https://github.com/Method-Security/methodaws/releases
-[release-img]: https://img.shields.io/github/release/Method-Security/methodaws.svg?logo=github
-[github-downloads-img]: https://img.shields.io/github/downloads/Method-Security/methodaws/total?logo=github
-[docker-pulls-img]: https://img.shields.io/docker/pulls/methodsecurity/methodaws?logo=docker&label=docker%20pulls%20%2F%20methodaws
-[docker-pull]: https://hub.docker.com/r/methodsecurity/methodaws
-[license]: https://github.com/Method-Security/methodaws/blob/main/LICENSE
-[license-img]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
-[homepage]: https://method.security
