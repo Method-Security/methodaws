@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Authenticate with Chainguard
-        uses: chainguard-dev/setup-chainctl@main
+        uses: chainguard-dev/setup-chainctl@v0.2.1
         with:
           identity: ${{ secrets.CHAINCTL_IDENTITY }}
 
