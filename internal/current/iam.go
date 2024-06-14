@@ -1,4 +1,4 @@
-// The current package contains all logic and data structures relevant to the current state of the AWS instance. It is
+// Package current contains all logic and data structures relevant to the current state of the AWS instance. It is
 // primarily leveraged by the `methodaws current` subcommand.
 package current
 
@@ -15,8 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
-// The output of the `methodaws current iam` subcommand. It contains the inline policies, attached policies, and role
-// details of the current IAM role. It also contains any errors that occurred during the execution of the subcommand.
+// IamResourceReport represents the output of the `methodaws current iam` subcommand. It contains the inline policies,
+// attached policies, and role details of the current IAM role. It also contains any errors that occurred during the
+// execution of the subcommand.
 type IamResourceReport struct {
 	InlinePolicies   []*iam.GetRolePolicyOutput `json:"inlinePolicies" yaml:"inlinePolicies"`
 	AttachedPolicies []identity.PolicyResource  `json:"attachedPolicies" yaml:"attachedPolicies"`

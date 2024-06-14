@@ -1,4 +1,4 @@
-// The s3 package provides the data structures and logic necessary to enumerate and integrate AWS S3 resources.
+// Package s3 provides the data structures and logic necessary to enumerate and integrate AWS S3 resources.
 package s3
 
 import (

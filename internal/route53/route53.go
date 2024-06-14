@@ -1,4 +1,4 @@
-// The route53 package provides logic and data structures necessary to enumerate and integrate AWS Route 53 resources.
+// Package route53 provides logic and data structures necessary to enumerate and integrate AWS Route 53 resources.
 package route53
 
 import (

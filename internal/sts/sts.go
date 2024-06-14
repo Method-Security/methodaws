@@ -1,4 +1,4 @@
-// The sts package provides the data structures and logic necessary to interact with the AWS Security Token Service (STS).
+// Package sts provides the data structures and logic necessary to interact with the AWS Security Token Service (STS).
 package sts
 
 import (

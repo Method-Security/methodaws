@@ -1,4 +1,4 @@
-// The vpc package provides the data structures and logic necessary to enumerate and integrate AWS VPC resources.
+// Package vpc provides the data structures and logic necessary to enumerate and integrate AWS VPC resources.
 package vpc
 
 import (

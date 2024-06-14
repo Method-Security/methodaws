@@ -4,7 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-// Contains a slice of EC2 instances, wrapping the native AWS struct.
+// Instances represents all of the EC2 instances that were returned during the reporting process
 type Instances struct {
 	EC2Instances []types.Instance `json:"ec2_instances" yaml:"ec2_instances"`
 }

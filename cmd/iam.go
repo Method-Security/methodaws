@@ -5,8 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Initialize the `methodaws iam` subcommand that deals with enumerating IAM roles, attached policies, inline policies
-// and assume role policies within the AWS account.
+// InitIamCommand initializes the `methodaws iam` subcommand that deals with enumerating IAM roles, attached policies,
+// inline policies and assume role policies within the AWS account.
 func (a *MethodAws) InitIamCommand() {
 	iamCmd := &cobra.Command{
 		Use:   "iam",

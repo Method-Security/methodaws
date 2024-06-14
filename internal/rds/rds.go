@@ -1,4 +1,4 @@
-// The rds package provides functionality to enumerate and integrate AWS RDS resources.
+// Package rds provides functionality to enumerate and integrate AWS RDS resources.
 package rds
 
 import (

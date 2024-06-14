@@ -1,4 +1,4 @@
-// The eks package contains all of the logic and data structures relevant to enumerating EKS instances and their related
+// Package eks contains all of the logic and data structures relevant to enumerating EKS instances and their related
 // resources. It is primarily leveraged by the `methodaws eks` subcommand.
 package eks
 

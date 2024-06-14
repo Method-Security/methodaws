@@ -1,4 +1,4 @@
-// The iam package contains functions that interact with the AWS IAM service along with the data structures necessary
+// Package iam contains functions that interact with the AWS IAM service along with the data structures necessary
 // to integrate this data cleanly.
 package iam
 
@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
-// Capture any policies that have been inlined within a given IAM role. It returns a slice of the AWS GetRolePolicyOutput
-// struct. If the client is unable to list policies for the role, it will return an error.
+// GetInlinePoliciesForRole captures any policies that have been inlined within a given IAM role. It returns a slice of
+// the AWS GetRolePolicyOutput struct. If the client is unable to list policies for the role, it will return an error.
 func GetInlinePoliciesForRole(ctx context.Context, cfg aws.Config, roleName string) ([]*iam.GetRolePolicyOutput, error) {
 	client := iam.NewFromConfig(cfg)
 	rolePolicyOutput, err := client.ListRolePolicies(ctx, &iam.ListRolePoliciesInput{RoleName: &roleName})
@@ -36,8 +36,9 @@ func GetInlinePoliciesForRole(ctx context.Context, cfg aws.Config, roleName stri
 	return policies, nil
 }
 
-// Capture any policies that have been attached to a given IAM role. It returns a PolicyReport struct that contains
-// the attached policies and any non-fatal errors that occurred during the execution of the function.
+// GetAttachedPoliciesForRole captures  any policies that have been attached to a given IAM role. It returns a
+// PolicyReport struct that contains the attached policies and any non-fatal errors that occurred during the execution
+// of the function.
 func GetAttachedPoliciesForRole(ctx context.Context, cfg aws.Config, roleName string) *PolicyReport {
 	client := iam.NewFromConfig(cfg)
 	policies := make([]PolicyResource, 0)

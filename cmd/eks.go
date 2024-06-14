@@ -5,7 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Initialize the `methodaws eks` subcommand that deals with enumerating EKS instances and their related resources.
+// InitEksCommand initializes the `methodaws eks` subcommand that deals with enumerating EKS instances and their
+// related resources.
 func (a *MethodAws) InitEksCommand() {
 	eksCmd := &cobra.Command{
 		Use:   "eks",

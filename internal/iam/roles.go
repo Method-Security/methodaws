@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
-// RoleReport contains the roles, policies, and any errors that occurred during the execution of the `methodaws iam enumerate` subcommand.
-// Non-fatal errors are stored in the Errors field.
+// EnumerateIamRoles retrieves all IAM roles available to the caller. It returns a RoleReport struct that contains all
+// roles, attached or inline policies, and any non-fatal errors that occurred during the execution of the function.
 func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*RoleReport, error) {
 	client := iam.NewFromConfig(cfg)
 	policies := []PolicyResource{}
@@ -96,7 +96,7 @@ func EnrichRoleWithPolicies(ctx context.Context, cfg aws.Config, role *types.Rol
 	return roleResource, policyReport.Policies, nil
 }
 
-// Given a role name, use the AWS SDK to retrieve and return the Role.
+// GetRoleDetails uses the AWS SDK to retrieve and return a Role for the provided role name.
 func GetRoleDetails(ctx context.Context, cfg aws.Config, roleName string) (*types.Role, error) {
 	client := iam.NewFromConfig(cfg)
 	roleOutput, err := client.GetRole(ctx, &iam.GetRoleInput{RoleName: &roleName})
@@ -106,7 +106,7 @@ func GetRoleDetails(ctx context.Context, cfg aws.Config, roleName string) (*type
 	return roleOutput.Role, nil
 }
 
-// Retrieve all Roles that are available to the caller.
+// GetAllRoles retrieves all Roles that are available to the caller.
 func GetAllRoles(ctx context.Context, client *iam.Client) ([]types.Role, error) {
 	roles := []types.Role{}
 
