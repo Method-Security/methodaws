@@ -13,9 +13,9 @@
 
 methodaws provides security operators with a number of data-rich AWS enumeration capabilities to help them gain visibility into their AWS environments. Designed with data-modeling and data-integration needs in mind, methodaws can be used on its own as an interactive CLI, orchestrated as part of a broader data pipeline, or leveraged from within the Method Platform.
 
-The number of security-relevant AWS resources that methodaws can enumerate are constantly growing. For the most up to date listing, please see the documentation [here](#)
+The number of security-relevant AWS resources that methodaws can enumerate are constantly growing. For the most up to date listing, please see the documentation [here](docs-capabilities)
 
-To learn more about methodaws, please see the [Documentation site](#) for the most detailed information.
+To learn more about methodaws, please see the [Documentation site](docs) for the most detailed information.
 
 ## Quick Start
 
@@ -25,12 +25,12 @@ For the full list of available installation options, please see the [Installatio
 
 - `docker run methodsecurity/methodaws`
 - `docker run ghcr.io/method-security/methodaws:0.0.1`
-- Download the latest binary from the [https://github.com/Method-Security/methodaws/releases/latest]
+- Download the latest binary from the [Github Releases](releases) page
 - [Installation documentation](./docs/getting-started/index.md)
 
 ### Authentication
 
-methodaws is built using the AWS Go SDK and leverages the same AWS Credentials that are used by the AWS CLI. Specifically, it looks for the proper environment variables to be exported with credential information. For more information, please see the AWS documentation on how to [export AWS credentials as environment variables](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html).
+methodaws is built using the AWS Go SDK and leverages the same AWS Credentials that are used by the AWS CLI. Specifically, it looks for the proper environment variables to be exported with credential information. For more information, please see the AWS documentation on how to [export AWS credentials as environment variables](aws_env_vars).
 
 ### General Usage
 
@@ -62,15 +62,16 @@ For more information, see [https://method.security]
 
 methodaws is a Method Security open source project.
 
-Learn more about Method's open source source work by checking out our other projects [here](https://github.com/Method-Security).
+Learn more about Method's open source source work by checking out our other projects [here](github-org).
 
-Have an idea for a Tool to contribute? Open a Discussion [here](#).
+Have an idea for a Tool to contribute? Open a Discussion [here](discussion).
 
 [verify]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml
 [verify-img]: https://github.com/Method-Security/methodaws/actions/workflows/verify.yml/badge.svg
 [go-report]: https://goreportcard.com/report/github.com/Method-Security/methodaws
 [go-report-img]: https://goreportcard.com/badge/github.com/Method-Security/methodaws
 [release]: https://github.com/Method-Security/methodaws/releases
+[releases]: https://github.com/Method-Security/methodaws/releases/latest
 [release-img]: https://img.shields.io/github/release/Method-Security/methodaws.svg?logo=github
 [github-downloads-img]: https://img.shields.io/github/downloads/Method-Security/methodaws/total?logo=github
 [docker-pulls-img]: https://img.shields.io/docker/pulls/methodsecurity/methodaws?logo=docker&label=docker%20pulls%20%2F%20methodaws
@@ -78,3 +79,8 @@ Have an idea for a Tool to contribute? Open a Discussion [here](#).
 [license]: https://github.com/Method-Security/methodaws/blob/main/LICENSE
 [license-img]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [homepage]: https://method.security
+[docs-home]: https://method-security.github.io/methodaws
+[docs-capabilities]: https://method-security.github.io/methodaws/docs/index.html
+[discussion]: https://github.com/Method-Security/methodaws/discussions
+[github-org]: https://github.com/Method-Security
+[aws_env_vars]: https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html

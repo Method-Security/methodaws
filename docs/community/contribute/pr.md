@@ -13,4 +13,4 @@ Thank you for taking interest in contributing to methodaws!
 
 ## Development
 
-Please see the [Development](../../development/index.md) section for a more detailed guide on development how-tos.
+Please see the [Development](../../development/setup.md) section for a more detailed guide on development how-tos.
