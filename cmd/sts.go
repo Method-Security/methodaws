@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Initialize the `methodaws ec2` subcommand that is responsible for interacting with the AWS STS service.
 func (a *MethodAws) InitStsCommand() {
 	stsCmd := &cobra.Command{
 		Use:   "sts",

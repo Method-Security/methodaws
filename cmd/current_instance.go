@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Initialize the `methodaws current` subcommand that deals with evaluating the current properties and capabilities
+// of an AWS instance.
 func (a *MethodAws) InitCurrentInstanceCommand() {
 	currentInstanceCmd := &cobra.Command{
 		Use:   "current",

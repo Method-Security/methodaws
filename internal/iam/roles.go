@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
+// RoleReport contains the roles, policies, and any errors that occurred during the execution of the `methodaws iam enumerate` subcommand.
+// Non-fatal errors are stored in the Errors field.
 func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*RoleReport, error) {
 	client := iam.NewFromConfig(cfg)
 	policies := []PolicyResource{}
@@ -45,6 +47,9 @@ func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*RoleReport, error)
 	return &report, nil
 }
 
+// EnrichRoleWithPolicies retrieves the attached and inline policies for a given IAM role. It returns a RoleResource struct
+// that contains the role, any attached policies, and any inline policies. It also returns a slice of PolicyResource structs
+// that contain the attached policies for the role.
 func EnrichRoleWithPolicies(ctx context.Context, cfg aws.Config, role *types.Role) (RoleResource, []PolicyResource, error) {
 
 	decodedRole, err := decodeRole(role)
@@ -91,6 +96,7 @@ func EnrichRoleWithPolicies(ctx context.Context, cfg aws.Config, role *types.Rol
 	return roleResource, policyReport.Policies, nil
 }
 
+// Given a role name, use the AWS SDK to retrieve and return the Role.
 func GetRoleDetails(ctx context.Context, cfg aws.Config, roleName string) (*types.Role, error) {
 	client := iam.NewFromConfig(cfg)
 	roleOutput, err := client.GetRole(ctx, &iam.GetRoleInput{RoleName: &roleName})
@@ -100,6 +106,7 @@ func GetRoleDetails(ctx context.Context, cfg aws.Config, roleName string) (*type
 	return roleOutput.Role, nil
 }
 
+// Retrieve all Roles that are available to the caller.
 func GetAllRoles(ctx context.Context, client *iam.Client) ([]types.Role, error) {
 	roles := []types.Role{}
 
@@ -121,6 +128,7 @@ func GetAllRoles(ctx context.Context, client *iam.Client) ([]types.Role, error) 
 	return roles, nil
 }
 
+// Given a slice of PolicyResource, return a slice of unique PolicyResources.
 func distinctPoliciesFromResource(policies []PolicyResource) []PolicyResource {
 	policiesMap := make(map[string]PolicyResource)
 	for _, policy := range policies {
@@ -134,6 +142,7 @@ func distinctPoliciesFromResource(policies []PolicyResource) []PolicyResource {
 	return uniquePolicies
 }
 
+// Decode the AssumeRolePolicyDocument for a given Role.
 func decodeRole(role *types.Role) (*DecodedRole, error) {
 	decodedAssumeRolePolicyDocument, err := decodeDocument(role.AssumeRolePolicyDocument)
 	if err != nil {

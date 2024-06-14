@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Initialize the `methodaws ec2` subcommand that deals with enumerating EC2 instances and their related resources.
 func (a *MethodAws) InitEc2Command() {
 	ec2Cmd := &cobra.Command{
 		Use:   "ec2",

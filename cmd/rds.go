@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Initialize the `methodaws rds` subcommand that deals with enumerating RDS instances in the AWS account.
 func (a *MethodAws) InitRdsCommand() {
 	a.RdsCmd = &cobra.Command{
 		Use:   "rds",

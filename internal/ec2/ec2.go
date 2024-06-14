@@ -1,3 +1,6 @@
+// The ec2 package contains all logic and data structures relevant to enumerating EC2 instances and their related,
+// resources, including security groups and network interfaces. It is primarily utilized by the `methodaws ec2` an
+// `methodaws securitygroup` subcommands.
 package ec2
 
 import (
@@ -8,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
+// Enumerate all EC2 instances that the caller has access to. It returns a ResourceReport struct that contains the EC2
+// instances and any non-fatal errors that occurred during the execution of the subcommand.
 func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) {
 	// Create an EC2 service client
 	svc := ec2.NewFromConfig(cfg)
