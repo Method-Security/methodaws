@@ -14,16 +14,16 @@ nav:
   - Docs:
       - Overview: docs/index.md
       - Capabilities:
-        - Current Instance: docs/current_instance/index.md
-        - EC2: docs/ec2/index.md
-        - EKS: docs/eks/index.md
-        - IAM: docs/iam/index.md
-        - RDS: docs/rds/index.md
-        - Route53: docs/route53/index.md
-        - S3: docs/s3/index.md
-        - Security Groups: docs/securitygroup/index.md
-        - STS: docs/sts/index.md
-        - VPC: docs/vpc/index.md
+        - Current Instance: docs/current.md
+        - EC2: docs/ec2.md
+        - EKS: docs/eks.md
+        - IAM: docs/iam.md
+        - RDS: docs/rds.md
+        - Route53: docs/route53.md
+        - S3: docs/s3.md
+        - Security Groups: docs/securitygroup.md
+        - STS: docs/sts.md
+        - VPC: docs/vpc.md
   - Contributing:
       - How to contribute: community/community.md
       - Development:
