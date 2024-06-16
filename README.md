@@ -15,7 +15,7 @@ methodaws provides security operators with a number of data-rich AWS enumeration
 
 The number of security-relevant AWS resources that methodaws can enumerate are constantly growing. For the most up to date listing, please see the documentation [here](docs-capabilities)
 
-To learn more about methodaws, please see the [Documentation site](docs) for the most detailed information.
+To learn more about methodaws, please see the [Documentation site](https://method-security.github.io/methodaws/) for the most detailed information.
 
 ## Quick Start
 

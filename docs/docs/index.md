@@ -33,4 +33,4 @@ Run `methodaws version` to get the exact version information for your binary
 
 ## Output Formats
 
-For more information on the various output formats that are supported by methodaws, see the [Output Formats](./output.md) page.
+For more information on the various output formats that are supported by methodaws, see the [Output Formats](https://method-security.github.io/docs/output.html) page in our organization wide documentation.

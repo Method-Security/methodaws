@@ -6,7 +6,7 @@ If you are just getting started with methodaws, welcome! This guide will walk yo
 
 methodaws is provided in several convenient form factors, including statically compiled binary images on a variety of architectures as well as a Docker image for both x86 and ARM machines.
 
-If you do not see an architecture that you require, please open a [Discussion](../community/contribute/discussions.md) to propose adding it.
+If you do not see an architecture that you require, please open a [Discussion](https://method-security.github.io/community/contribute/discussions.html) to propose adding it.
 
 ### Binaries
 
@@ -22,7 +22,7 @@ methodaws currently supports statically compiled binaries across the following o
 | MacOS   | arm64         |
 | Windows | amd64         |
 
-The latest binaries can be downloaded directly from [Github](releases).
+The latest binaries can be downloaded directly from [Github](https://github.com/Method-Security/methodaws/releases/latest).
 
 ### Docker
 
@@ -35,5 +35,3 @@ docker pull ghcr.io/method-security/methodaws
 ```bash
 docker pull methodsecurity/methodaws
 ```
-
-[releases]: https://github.com/Method-Security/methodaws/releases/latest
