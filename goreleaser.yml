@@ -121,6 +121,18 @@ docker_manifests:
     image_templates:
     - 'ghcr.io/method-security/methodaws:{{ .Version }}-amd64'
     - 'ghcr.io/method-security/methodaws:{{ .Version }}-arm64'
+  - name_template: 'ghcr.io/method-security/methodaws:latest'
+    image_templates:
+    - 'ghcr.io/method-security/methodaws:{{ .Version }}-amd64'
+    - 'ghcr.io/method-security/methodaws:{{ .Version }}-arm64'
+  - name_template: 'methodsecurity/methodaws:{{ .Version }}'
+    image_templates:
+    - 'methodsecurity/methodaws:{{ .Version }}-amd64'
+    - 'methodsecurity/methodaws:{{ .Version }}-arm64'
+  - name_template: 'methodsecurity/methodaws:latest'
+    image_templates:
+    - 'methodsecurity/methodaws:{{ .Version }}-amd64'
+    - 'methodsecurity/methodaws:{{ .Version }}-arm64'
 
 source:
   enabled: true
