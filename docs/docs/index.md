@@ -2,16 +2,16 @@
 
 methodaws provides a number of capabilities to cyber security professionals working within AWS, spanning many of Amazon's most important resource types. Each of the below pages will provide you with a more in depth look at the methodaws capabilities related the specified resource.
 
-- [Current Instance](./current_instance/index.md)
-- [EC2](./ec2/index.md)
-- [EKS](./eks/index.md)
-- [IAM](./iam/index.md)
-- [RDS](./rds/index.md)
-- [Route53](./route53/index.md)
-- [S3](./s3/index.md)
-- [Security Group](./securitygroup/index.md)
-- [STS](./sts/index.md)
-- [VPC](./vpc/index.md)
+- [Current Instance](./current.md)
+- [EC2](./ec2.md)
+- [EKS](./eks.md)
+- [IAM](./iam.md)
+- [RDS](./rds.md)
+- [Route53](./route53.md)
+- [S3](./s3.md)
+- [Security Group](./securitygroup.md)
+- [STS](./sts.md)
+- [VPC](./vpc.md)
 
 ## Top Level Flags
 
@@ -33,4 +33,4 @@ Run `methodaws version` to get the exact version information for your binary
 
 ## Output Formats
 
-For more information on the various output formats that are supported by methodaws, see the [Output Formats](./output.md) page.
+For more information on the various output formats that are supported by methodaws, see the [Output Formats](https://method-security.github.io/docs/output.html) page in our organization wide documentation.

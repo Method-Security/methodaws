@@ -1,3 +1,4 @@
+// Package rds provides functionality to enumerate and integrate AWS RDS resources.
 package rds
 
 import (
@@ -9,10 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 )
 
+// AWSResources contains the RDS instances that were enumerated.
 type AWSResources struct {
 	RDSInstances []types.DBInstance `json:"rds_instances" yaml:"rds_instances"`
 }
 
+// AWSResourceReport contains the account ID that the RDS instances were discovered in, the resources themselves,
+// and any non-fatal errors that occurred during the execution of the `methodaws rds enumerate` subcommand.
 type AWSResourceReport struct {
 	AccountID string       `json:"account_id" yaml:"account_id"`
 	Resources AWSResources `json:"resources" yaml:"resources"`
@@ -35,6 +39,7 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 	return instances, nil
 }
 
+// EnumerateRds retrieves all RDS instances available to the caller and returns an AWSResourceReport struct
 func EnumerateRds(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
 	rdsClient := rds.NewFromConfig(cfg)
 	resources := AWSResources{}

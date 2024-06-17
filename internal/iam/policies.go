@@ -1,3 +1,5 @@
+// Package iam contains functions that interact with the AWS IAM service along with the data structures necessary
+// to integrate this data cleanly.
 package iam
 
 import (
@@ -11,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
+// GetInlinePoliciesForRole captures any policies that have been inlined within a given IAM role. It returns a slice of
+// the AWS GetRolePolicyOutput struct. If the client is unable to list policies for the role, it will return an error.
 func GetInlinePoliciesForRole(ctx context.Context, cfg aws.Config, roleName string) ([]*iam.GetRolePolicyOutput, error) {
 	client := iam.NewFromConfig(cfg)
 	rolePolicyOutput, err := client.ListRolePolicies(ctx, &iam.ListRolePoliciesInput{RoleName: &roleName})
@@ -32,6 +36,9 @@ func GetInlinePoliciesForRole(ctx context.Context, cfg aws.Config, roleName stri
 	return policies, nil
 }
 
+// GetAttachedPoliciesForRole captures  any policies that have been attached to a given IAM role. It returns a
+// PolicyReport struct that contains the attached policies and any non-fatal errors that occurred during the execution
+// of the function.
 func GetAttachedPoliciesForRole(ctx context.Context, cfg aws.Config, roleName string) *PolicyReport {
 	client := iam.NewFromConfig(cfg)
 	policies := make([]PolicyResource, 0)
@@ -80,6 +87,8 @@ func GetAttachedPoliciesForRole(ctx context.Context, cfg aws.Config, roleName st
 	}
 }
 
+// A utility function that decodes a policy version. It returns a DecodedPolicyVersion struct that contains the decoded
+// policy version and any errors that occurred during the decoding process.
 func decodePolicyVersion(policyVersion types.PolicyVersion) (DecodedPolicyVersion, error) {
 	decodedDocument, err := decodeDocument(policyVersion.Document)
 	if err != nil {
@@ -98,6 +107,8 @@ func decodePolicyVersion(policyVersion types.PolicyVersion) (DecodedPolicyVersio
 	}, nil
 }
 
+// A utility function that decodes a policy document. The AWS API returns the policy document as a URL encoded string
+// that needs to be decoded before it can be used.
 func decodeDocument(policyDocument *string) (*string, error) {
 	// Decodes the URL encoded policy document and returns stringified JSON
 	decodedDocument, err := url.QueryUnescape(*policyDocument)
@@ -107,6 +118,8 @@ func decodeDocument(policyDocument *string) (*string, error) {
 	return &decodedDocument, nil
 }
 
+// A utility function that minifies all returned Policy JSON documents. This is necessary because the decoded JSON
+// that is returned via the AWS APIs includes whitespace and newlines that are not necessary for the output.
 func minifyJSON(jsonStr string) (*string, error) {
 	var jsonObj interface{}
 	err := json.Unmarshal([]byte(jsonStr), &jsonObj)

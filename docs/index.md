@@ -5,7 +5,6 @@ Hello and welcome to the methodaws documentation. While we always want to provid
 - The [Getting Started](./getting-started/basic-usage.md) section provides onboarding material
 - The [Development](./development/setup.md) header is the best place to get started on developing on top of and with methodaws
 - See the [Docs](./docs/index.md) section for a comprehensive rundown of methodaws capabilities
-- Finally, the [Community](./community/principles.md) folder is your one stop shop for getting involved in methodaws and joining the community.
 
 # About methodaws
 
@@ -13,17 +12,17 @@ methodaws provides security operators with a number of data-rich AWS enumeration
 
 The number of security-relevant AWS resources that methodaws can enumerate are constantly growing. For the most up to date listing, please see the documentation [here](./docs/index.md)
 
-To learn more about methodaws, please see the [Documentation site](docs) for the most detailed information.
+To learn more about methodaws, please see the [Documentation site](https://method-security.github.io/methodaws/) for the most detailed information.
 
 ## Quick Start
 
 ### Get methodaws
 
-For the full list of available installation options, please see the [Installation](#) page. For convenience, here are some of the most commonly used options:
+For the full list of available installation options, please see the [Installation](./getting-started/installation.md) page. For convenience, here are some of the most commonly used options:
 
 - `docker run methodsecurity/methodaws`
-- `docker run ghcr.io/method-security/methodaws:0.0.1`
-- Download the latest binary from the [Github Releases](releases) page
+- `docker run ghcr.io/method-security/methodaws`
+- Download the latest binary from the [Github Releases](https://github.com/Method-Security/methodaws/releases/latest) page
 - [Installation documentation](./getting-started/installation.md)
 
 ### Authentication
@@ -48,22 +47,18 @@ methodaws ec2 enumerate --region us-east-1
 
 ## Contributing
 
-Interested in contributing to methodaws? Please see our [Contribution](./community/contribute/discussions.md) page.
+Interested in contributing to methodaws? Please see our organization wide [Contribution](https://method-security.github.io/community/contribute/discussions.html) page.
 
 ## Want More?
 
 If you're looking for an easy way to tie methodaws into your broader cybersecurity workflows, or want to leverage some autonomy to improve your overall security posture, you'll love the broader Method Platform.
 
-For more information, visit us [here](method)
+For more information, visit us [here](https://method.security)
 
 ## Community
 
 methodaws is a Method Security open source project.
 
-Learn more about Method's open source source work by checking out our other projects [here](https://github.com/Method-Security).
+Learn more about Method's open source source work by checking out our other projects [here](https://github.com/Method-Security) or our organization wide documentation [here](https://method-security.github.io).
 
-Have an idea for a Tool to contribute? Open a Discussion [here](#).
-
-[docs]: https://method-security.github.io/methodaws/
-[releases]: https://github.com/Method-Security/methodaws/releases/latest
-[method]: https://method.security
+Have an idea for a Tool to contribute? Open a Discussion [here](https://github.com/Method-Security/Method-Security.github.io/discussions).

@@ -29,5 +29,8 @@ go.work.sum
 .env/
 !.env/example.env
 
+# mkdocs
+/site
+
 # Don't ignore vendors
 !vendor/**
