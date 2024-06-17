@@ -1,6 +1,6 @@
 # Basic Usage
 
-Before you get started, you will need to export AWS credentials that you want methodaws to utilize as environment variables. For more documentation on how to do this, please see the Amazon documentation [here](aws_env_vars).
+Before you get started, you will need to export AWS credentials that you want methodaws to utilize as environment variables. For more documentation on how to do this, please see the Amazon documentation [here](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html).
 
 ## Binaries
 
@@ -21,5 +21,3 @@ docker run \
   -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
   ghcr.io/method-security/methodaws:0.0.1 methodaws sts arn --region us-east-1 --output json
 ```
-
-[aws_env_vars]: https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html

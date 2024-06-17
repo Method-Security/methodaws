@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// InitSecurityGroupCommand initializes the `methodaws securitygroup` subcommand that deals with enumerating security
+// groups and their related resources.
 func (a *MethodAws) InitSecurityGroupCommand() {
 	securityGroupCmd := &cobra.Command{
 		Use:     "securitygroup",

@@ -1,3 +1,4 @@
+// Package route53 provides logic and data structures necessary to enumerate and integrate AWS Route 53 resources.
 package route53
 
 import (
@@ -9,15 +10,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/route53/types"
 )
 
+// EnrichedHostedZone wraps the AWS representations of a hosted zone and its associated resource record sets.
 type EnrichedHostedZone struct {
 	ZoneDetails        types.HostedZone          `json:"zone_details" yaml:"zone_details"`
 	ResourceRecordSets []types.ResourceRecordSet `json:"resource_record_sets" yaml:"resource_record_sets"`
 }
 
+// AWSResources contains the Route 53 hosted zones that were enumerated.
 type AWSResources struct {
 	HostedZones []EnrichedHostedZone `json:"hosted_zones" yaml:"hosted_zones"`
 }
 
+// AWSResourceReport contains the account ID that the Route 53 hosted zones were discovered in, the resources themselves,
+// and any non-fatal errors that occurred during the execution of the `methodaws route53 enumerate` subcommand.
 type AWSResourceReport struct {
 	AccountID string       `json:"account_id" yaml:"account_id"`
 	Resources AWSResources `json:"resources" yaml:"resources"`
@@ -74,6 +79,7 @@ func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID s
 	return recordSets, nil
 }
 
+// EnumerateRoute53 retrieves all Route 53 hosted zones available to the caller and returns an AWSResourceReport struct
 func EnumerateRoute53(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
 	route53Client := route53.NewFromConfig(cfg)
 	resources := AWSResources{}

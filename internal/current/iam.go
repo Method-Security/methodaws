@@ -1,3 +1,5 @@
+// Package current contains all logic and data structures relevant to the current state of the AWS instance. It is
+// primarily leveraged by the `methodaws current` subcommand.
 package current
 
 import (
@@ -13,6 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
+// IamResourceReport represents the output of the `methodaws current iam` subcommand. It contains the inline policies,
+// attached policies, and role details of the current IAM role. It also contains any errors that occurred during the
+// execution of the subcommand.
 type IamResourceReport struct {
 	InlinePolicies   []*iam.GetRolePolicyOutput `json:"inlinePolicies" yaml:"inlinePolicies"`
 	AttachedPolicies []identity.PolicyResource  `json:"attachedPolicies" yaml:"attachedPolicies"`
@@ -20,6 +25,10 @@ type IamResourceReport struct {
 	Errors           []string                   `json:"errors" yaml:"errors"`
 }
 
+// IamDetails is responsible for gathering the IAM role details, inline policies, and attached policies for any IAM
+// roles that are associated with the current AWS instance. It returns an IamResourceReport struct that contains any non-fatal
+// errors that occurred during the execution of the subcommand. If the caller ARN cannot be retrieved, it will return an
+// error because execution cannot proceed.
 func IamDetails(ctx context.Context, cfg aws.Config) (IamResourceReport, error) {
 	runningErrors := []string{}
 	callerArn, err := sts.GetCallerArn(ctx, cfg)
@@ -57,6 +66,8 @@ func IamDetails(ctx context.Context, cfg aws.Config) (IamResourceReport, error) 
 	return report, nil
 }
 
+// extractRoleNameFromARN is a helper function that extracts the role name from an ARN. It is used to determine the IAM
+// role associated with the current AWS instance.
 func extractRoleNameFromARN(arn string) (string, error) {
 	// Splitting the ARN by ":" and then "/"
 	parts := strings.Split(arn, ":")
