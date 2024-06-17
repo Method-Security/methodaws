@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://method-security.github.io/methodaws/docs/output.html">
+        <link rel="canonical" href="https://method-security.github.io/methodaws/docs/s3.html">
       
       
-        <link rel="prev" href="index.html">
+        <link rel="prev" href="route53.html">
       
       
-        <link rel="next" href="current_instance/index.html">
+        <link rel="next" href="securitygroup.html">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Output Types - methodaws</title>
+        <title>S3 - methodaws</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#output-formats" class="md-skip">
+        <a href="#s3" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Output Types
+              S3
             
           </span>
         </div>
@@ -269,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../community/principles.html" class="md-tabs__link">
+        <a href="../community/community.html" class="md-tabs__link">
           
   
   Contributing
@@ -515,6 +515,177 @@
   
   
   
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Capabilities
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            Capabilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="current.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Current Instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ec2.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EC2
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="eks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EKS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="iam.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IAM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rds.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RDS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="route53.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Route53
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
@@ -527,18 +698,18 @@
           
   
   <span class="md-ellipsis">
-    Output Types
+    S3
   </span>
   
 
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="output.html" class="md-nav__link md-nav__link--active">
+      <a href="s3.html" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Output Types
+    S3
   </span>
   
 
@@ -560,20 +731,68 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#json" class="md-nav__link">
+  <a href="#enumerate" class="md-nav__link">
     <span class="md-ellipsis">
-      JSON
+      Enumerate
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enumerate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#signal" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#help-text" class="md-nav__link">
     <span class="md-ellipsis">
-      Signal
+      Help Text
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ls" class="md-nav__link">
+    <span class="md-ellipsis">
+      ls
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-text_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help Text
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -592,198 +811,8 @@
   
   
   
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
-            
-  
-  <span class="md-ellipsis">
-    Capabilities
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2_3">
-            <span class="md-nav__icon md-icon"></span>
-            Capabilities
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
-      <a href="current_instance/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Current Instance
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="ec2/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    EC2
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="eks/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    EKS
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="iam/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    IAM
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="rds/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    RDS
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="route53/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Route53
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="s3/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    S3
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="securitygroup/index.html" class="md-nav__link">
+      <a href="securitygroup.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -804,7 +833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="sts/index.html" class="md-nav__link">
+      <a href="sts.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -825,7 +854,7 @@
   
   
     <li class="md-nav__item">
-      <a href="vpc/index.html" class="md-nav__link">
+      <a href="vpc.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -901,11 +930,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../community/principles.html" class="md-nav__link">
+      <a href="../community/community.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Principles
+    How to contribute
   </span>
   
 
@@ -941,7 +970,7 @@
             
   
   <span class="md-ellipsis">
-    How to contribute
+    Development
   </span>
   
 
@@ -950,117 +979,6 @@
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
-            <span class="md-nav__icon md-icon"></span>
-            How to contribute
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../community/contribute/issues.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Issues
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../community/contribute/discussions.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Discussions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../community/contribute/pr.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Pull Requests
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
-            
-  
-  <span class="md-ellipsis">
-    Development
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
             <span class="md-nav__icon md-icon"></span>
             Development
           </label>
@@ -1078,6 +996,27 @@
   
   <span class="md-ellipsis">
     Setup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/principles.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Project Principles
   </span>
   
 
@@ -1150,20 +1089,68 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#json" class="md-nav__link">
+  <a href="#enumerate" class="md-nav__link">
     <span class="md-ellipsis">
-      JSON
+      Enumerate
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Enumerate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#signal" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#help-text" class="md-nav__link">
     <span class="md-ellipsis">
-      Signal
+      Help Text
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ls" class="md-nav__link">
+    <span class="md-ellipsis">
+      ls
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-text_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help Text
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1182,7 +1169,7 @@
                   
 
   
-    <a href="https://github.com/Method-Security/methodaws/blob/main/docs/docs/output.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/Method-Security/methodaws/blob/main/docs/docs/s3.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
     </a>
@@ -1190,12 +1177,52 @@
   
 
 
-<h1 id="output-formats">Output Formats</h1>
-<p>methodaws supports several different output formats.</p>
-<h2 id="json">JSON</h2>
-<p>Output AWS information in a well structured JSON format that is easily parsed by a variety of data integration tools, allowing you to automate your AWS visibility challenges and leverage methodaws as as sensor.</p>
-<h2 id="signal">Signal</h2>
-<p>A well structured JSON specification used by the Method Platform, the Signal contains all of the information contained within <code>content</code> key of the JSON command as a Base64 encoded string. This is in keeping with the Method Platform <a href="signal">Signal</a> specification, allowing for non-JSON based cybersecurity tools to be leveraged within Method.</p>
+<h1 id="s3">S3<a class="headerlink" href="#s3" title="Permanent link">#</a></h1>
+<p>The <code>methodaws s3</code> family of commands provide information about an account's S3 buckets and their contents.</p>
+<h2 id="enumerate">Enumerate<a class="headerlink" href="#enumerate" title="Permanent link">#</a></h2>
+<p>The enumerate command will gather information about all of the S3 buckets that the provided credentials have access to.</p>
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>s3<span class="w"> </span>enumerate<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--output<span class="w"> </span>json
+</code></pre></div>
+<h3 id="help-text">Help Text<a class="headerlink" href="#help-text" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>methodaws<span class="w"> </span>s3<span class="w"> </span>enumerate<span class="w"> </span>-h
+Enumerate<span class="w"> </span>all<span class="w"> </span>S3<span class="w"> </span>buckets<span class="w"> </span><span class="k">in</span><span class="w"> </span>your<span class="w"> </span>AWS<span class="w"> </span>account.
+
+Usage:
+<span class="w">  </span>methodaws<span class="w"> </span>s3<span class="w"> </span>enumerate<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+
+Flags:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>enumerate
+
+Global<span class="w"> </span>Flags:
+<span class="w">  </span>-o,<span class="w"> </span>--output<span class="w"> </span>string<span class="w">        </span>Output<span class="w"> </span>format<span class="w"> </span><span class="o">(</span>signal,<span class="w"> </span>json,<span class="w"> </span>yaml<span class="o">)</span>.<span class="w"> </span>Default<span class="w"> </span>value<span class="w"> </span>is<span class="w"> </span>signal<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="s2">&quot;signal&quot;</span><span class="o">)</span>
+<span class="w">  </span>-f,<span class="w"> </span>--output-file<span class="w"> </span>string<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>output<span class="w"> </span>file.<span class="w"> </span>If<span class="w"> </span>blank,<span class="w"> </span>will<span class="w"> </span>output<span class="w"> </span>to<span class="w"> </span>STDOUT
+<span class="w">  </span>-q,<span class="w"> </span>--quiet<span class="w">                </span>Suppress<span class="w"> </span>output
+<span class="w">  </span>-r,<span class="w"> </span>--region<span class="w"> </span>string<span class="w">        </span>AWS<span class="w"> </span>region
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">              </span>Verbose<span class="w"> </span>output
+</code></pre></div>
+<h2 id="ls">ls<a class="headerlink" href="#ls" title="Permanent link">#</a></h2>
+<h3 id="usage_1">Usage<a class="headerlink" href="#usage_1" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--output<span class="w"> </span>json<span class="w"> </span>--name<span class="w"> </span>&lt;bucket<span class="w"> </span>name&gt;
+</code></pre></div>
+<h3 id="help-text_1">Help Text<a class="headerlink" href="#help-text_1" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>methodaws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span>-h
+List<span class="w"> </span>all<span class="w"> </span>objects<span class="w"> </span><span class="k">in</span><span class="w"> </span>a<span class="w"> </span>single<span class="w"> </span>S3<span class="w"> </span>bucket.
+
+Usage:
+<span class="w">  </span>methodaws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+
+Flags:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">          </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>ls
+<span class="w">      </span>--name<span class="w"> </span>string<span class="w">   </span>Name<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>S3<span class="w"> </span>bucket
+
+Global<span class="w"> </span>Flags:
+<span class="w">  </span>-o,<span class="w"> </span>--output<span class="w"> </span>string<span class="w">        </span>Output<span class="w"> </span>format<span class="w"> </span><span class="o">(</span>signal,<span class="w"> </span>json,<span class="w"> </span>yaml<span class="o">)</span>.<span class="w"> </span>Default<span class="w"> </span>value<span class="w"> </span>is<span class="w"> </span>signal<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="s2">&quot;signal&quot;</span><span class="o">)</span>
+<span class="w">  </span>-f,<span class="w"> </span>--output-file<span class="w"> </span>string<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>output<span class="w"> </span>file.<span class="w"> </span>If<span class="w"> </span>blank,<span class="w"> </span>will<span class="w"> </span>output<span class="w"> </span>to<span class="w"> </span>STDOUT
+<span class="w">  </span>-q,<span class="w"> </span>--quiet<span class="w">                </span>Suppress<span class="w"> </span>output
+<span class="w">  </span>-r,<span class="w"> </span>--region<span class="w"> </span>string<span class="w">        </span>AWS<span class="w"> </span>region
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">              </span>Verbose<span class="w"> </span>output
+</code></pre></div>
 
 
 
@@ -1227,7 +1254,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+          <a href="route53.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Route53">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1237,20 +1264,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Overview
+                Route53
               </div>
             </div>
           </a>
         
         
           
-          <a href="current_instance/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: Current Instance">
+          <a href="securitygroup.html" class="md-footer__link md-footer__link--next" aria-label="Next: Security Groups">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Current Instance
+                Security Groups
               </div>
             </div>
             <div class="md-footer__button md-icon">

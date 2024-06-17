@@ -10,28 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://method-security.github.io/methodaws/docs/eks/index.html">
+        <link rel="canonical" href="https://method-security.github.io/methodaws/docs/securitygroup.html">
       
       
-        <link rel="prev" href="../ec2/index.html">
+        <link rel="prev" href="s3.html">
       
       
-        <link rel="next" href="../iam/index.html">
+        <link rel="next" href="sts.html">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.26">
     
     
       
-        <title>EKS - methodaws</title>
+        <title>Security Groups - methodaws</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -52,7 +52,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#eks" class="md-skip">
+        <a href="#security-groups" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="methodaws" class="md-header__button md-logo" aria-label="methodaws" data-md-component="logo">
+    <a href=".." title="methodaws" class="md-header__button md-logo" aria-label="methodaws" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              EKS
+              Security Groups
             
           </span>
         </div>
@@ -231,7 +231,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../index.html" class="md-tabs__link">
+        <a href="../index.html" class="md-tabs__link">
           
   
   Getting Started
@@ -251,7 +251,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../index.html" class="md-tabs__link">
+        <a href="index.html" class="md-tabs__link">
           
   
   Docs
@@ -269,7 +269,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../community/principles.html" class="md-tabs__link">
+        <a href="../community/community.html" class="md-tabs__link">
           
   
   Contributing
@@ -308,7 +308,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="methodaws" class="md-nav__button md-logo" aria-label="methodaws" data-md-component="logo">
+    <a href=".." title="methodaws" class="md-nav__button md-logo" aria-label="methodaws" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -378,7 +378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../index.html" class="md-nav__link">
+      <a href="../index.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -399,7 +399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation.html" class="md-nav__link">
+      <a href="../getting-started/installation.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -420,7 +420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/basic-usage.html" class="md-nav__link">
+      <a href="../getting-started/basic-usage.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -493,32 +493,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../index.html" class="md-nav__link">
+      <a href="index.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Overview
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../output.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Output Types
   </span>
   
 
@@ -552,10 +531,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -566,8 +545,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_2_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_2">
             <span class="md-nav__icon md-icon"></span>
             Capabilities
           </label>
@@ -580,7 +559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../current_instance/index.html" class="md-nav__link">
+      <a href="current.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -601,11 +580,116 @@
   
   
     <li class="md-nav__item">
-      <a href="../ec2/index.html" class="md-nav__link">
+      <a href="ec2.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     EC2
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="eks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EKS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="iam.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    IAM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rds.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RDS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="route53.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Route53
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="s3.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    S3
   </span>
   
 
@@ -635,18 +719,18 @@
           
   
   <span class="md-ellipsis">
-    EKS
+    Security Groups
   </span>
   
 
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="index.html" class="md-nav__link md-nav__link--active">
+      <a href="securitygroup.html" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    EKS
+    Security Groups
   </span>
   
 
@@ -716,112 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../iam/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    IAM
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../rds/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    RDS
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../route53/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Route53
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../s3/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    S3
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../securitygroup/index.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Security Groups
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../sts/index.html" class="md-nav__link">
+      <a href="sts.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -842,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../vpc/index.html" class="md-nav__link">
+      <a href="vpc.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -918,11 +897,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../community/principles.html" class="md-nav__link">
+      <a href="../community/community.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Principles
+    How to contribute
   </span>
   
 
@@ -958,7 +937,7 @@
             
   
   <span class="md-ellipsis">
-    How to contribute
+    Development
   </span>
   
 
@@ -967,117 +946,6 @@
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
-            <span class="md-nav__icon md-icon"></span>
-            How to contribute
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../community/contribute/issues.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Issues
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../community/contribute/discussions.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Discussions
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../community/contribute/pr.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Pull Requests
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
-            
-  
-  <span class="md-ellipsis">
-    Development
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
             <span class="md-nav__icon md-icon"></span>
             Development
           </label>
@@ -1090,7 +958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/setup.html" class="md-nav__link">
+      <a href="../development/setup.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1111,7 +979,28 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/adding.html" class="md-nav__link">
+      <a href="../development/principles.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Project Principles
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/adding.html" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1214,7 +1103,7 @@
                   
 
   
-    <a href="https://github.com/Method-Security/methodaws/blob/main/docs/docs/eks/index.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/Method-Security/methodaws/blob/main/docs/docs/securitygroup.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
     </a>
@@ -1222,22 +1111,25 @@
   
 
 
-<h1 id="eks">EKS</h1>
-<p>The <code>methodaws eks</code> family of commands provide information about an account's EKS clusters.</p>
-<h2 id="enumerate">Enumerate</h2>
-<p>The enumerate command will gather information about all of the EKS clsuters that the provided credentials have access to.</p>
-<h3 id="usage">Usage</h3>
-<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>eks<span class="w"> </span>enumerate<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--output<span class="w"> </span>json
+<h1 id="security-groups">Security Groups<a class="headerlink" href="#security-groups" title="Permanent link">#</a></h1>
+<p>The <code>methodaws securitygroup</code> family of commands provide information about an account's EC2 instances.</p>
+<h2 id="enumerate">Enumerate<a class="headerlink" href="#enumerate" title="Permanent link">#</a></h2>
+<p>The enumerate command will gather information about all of the Security Groups that the provided credentials have access to.</p>
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>securitygroup<span class="w"> </span>enumerate<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--output<span class="w"> </span>json
 </code></pre></div>
-<h3 id="help-text">Help Text</h3>
-<div class="highlight"><pre><span></span><code>$<span class="w"> </span>methodaws<span class="w"> </span>eks<span class="w"> </span>enumerate<span class="w"> </span>-h
-Enumerate<span class="w"> </span>EKS<span class="w"> </span>instances
+<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>sg<span class="w"> </span>enumerate<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--output<span class="w"> </span>json
+</code></pre></div>
+<h3 id="help-text">Help Text<a class="headerlink" href="#help-text" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>methodaws<span class="w"> </span>securitygroup<span class="w"> </span>enumerate<span class="w"> </span>-h
+Enumerate<span class="w"> </span>security<span class="w"> </span>groups
 
 Usage:
-<span class="w">  </span>methodaws<span class="w"> </span>eks<span class="w"> </span>enumerate<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+<span class="w">  </span>methodaws<span class="w"> </span>securitygroup<span class="w"> </span>enumerate<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
 
 Flags:
-<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>enumerate
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">         </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>enumerate
+<span class="w">      </span>--vpc<span class="w"> </span>string<span class="w">   </span>VPC<span class="w"> </span>ID<span class="w"> </span>to<span class="w"> </span>filter<span class="w"> </span>security<span class="w"> </span>groups<span class="w"> </span>by
 
 Global<span class="w"> </span>Flags:
 <span class="w">  </span>-o,<span class="w"> </span>--output<span class="w"> </span>string<span class="w">        </span>Output<span class="w"> </span>format<span class="w"> </span><span class="o">(</span>signal,<span class="w"> </span>json,<span class="w"> </span>yaml<span class="o">)</span>.<span class="w"> </span>Default<span class="w"> </span>value<span class="w"> </span>is<span class="w"> </span>signal<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="s2">&quot;signal&quot;</span><span class="o">)</span>
@@ -1277,7 +1169,7 @@ Global<span class="w"> </span>Flags:
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../ec2/index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: EC2">
+          <a href="s3.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: S3">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1287,20 +1179,20 @@ Global<span class="w"> </span>Flags:
                 Previous
               </span>
               <div class="md-ellipsis">
-                EC2
+                S3
               </div>
             </div>
           </a>
         
         
           
-          <a href="../iam/index.html" class="md-footer__link md-footer__link--next" aria-label="Next: IAM">
+          <a href="sts.html" class="md-footer__link md-footer__link--next" aria-label="Next: STS">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                IAM
+                STS
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1366,10 +1258,10 @@ Global<span class="w"> </span>Flags:
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["header.autohide", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.footer", "content.action.edit", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "method": "mike", "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["header.autohide", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.footer", "content.action.edit", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "method": "mike", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

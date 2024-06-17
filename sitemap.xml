@@ -2,107 +2,92 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://method-security.github.io/methodaws/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/community/principles.html</loc>
-         <lastmod>2024-06-14</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://method-security.github.io/methodaws/community/contribute/discussions.html</loc>
-         <lastmod>2024-06-14</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://method-security.github.io/methodaws/community/contribute/issues.html</loc>
-         <lastmod>2024-06-14</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://method-security.github.io/methodaws/community/contribute/pr.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/community/community.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://method-security.github.io/methodaws/development/adding.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://method-security.github.io/methodaws/development/principles.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://method-security.github.io/methodaws/development/setup.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://method-security.github.io/methodaws/docs/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/output.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/current.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/current_instance/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/ec2.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/ec2/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/eks.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/eks/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/iam.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/iam/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/rds.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/rds/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/route53.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/route53/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/s3.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/s3/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/securitygroup.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/securitygroup/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/sts.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://method-security.github.io/methodaws/docs/sts/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://method-security.github.io/methodaws/docs/vpc/index.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <loc>https://method-security.github.io/methodaws/docs/vpc.html</loc>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://method-security.github.io/methodaws/getting-started/basic-usage.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://method-security.github.io/methodaws/getting-started/installation.html</loc>
-         <lastmod>2024-06-14</lastmod>
+         <lastmod>2024-06-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
