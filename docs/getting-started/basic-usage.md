@@ -19,5 +19,5 @@ docker run \
   -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
-  ghcr.io/method-security/methodaws:0.0.1 methodaws sts arn --region us-east-1 --output json
+  methodsecurity/methodaws sts arn --region us-east-1 --output json
 ```
