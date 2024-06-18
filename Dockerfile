@@ -25,3 +25,4 @@ USER method
 WORKDIR /opt/method/methodaws/
 
 ENV PATH="/opt/method/methodaws/service/bin:${PATH}"
+ENTRYPOINT [ "methodaws" ]
