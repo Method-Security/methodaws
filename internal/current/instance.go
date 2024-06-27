@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
+// AWSResource contains the instance identity document, hostname, public IP, and public hostname of the current AWS instance.
+// It is used to represent the current state of the instance.
 type AWSResource struct {
 	IdentityDocument imds.InstanceIdentityDocument `json:"identityDocument" yaml:"identityDocument"`
 	Hostname         string                        `json:"hostname" yaml:"hostname"`
@@ -16,6 +18,8 @@ type AWSResource struct {
 	PublicHostname   string                        `json:"publicHostname" yaml:"publicHostname"`
 }
 
+// AWSResourceReport contains the AWSResource and any errors that occurred during the execution of the
+// `methodaws current instance` subcommand.
 type AWSResourceReport struct {
 	Resource AWSResource `json:"resource" yaml:"resource"`
 	Errors   []string    `json:"errors" yaml:"errors"`
@@ -69,6 +73,9 @@ func getPublicHostname(ctx context.Context, client *imds.Client) (string, error)
 	return publicHostname, nil
 }
 
+// InstanceDetails is responsible for gathering the instance identity document, hostname, public IP, and public hostname
+// of the current AWS instance. It returns an AWSResourceReport struct that contains any non-fatal errors that occurred
+// during the execution of the subcommand.
 func InstanceDetails(ctx context.Context, cfg aws.Config) (AWSResourceReport, error) {
 	client := imds.NewFromConfig(cfg)
 

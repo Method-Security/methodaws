@@ -1,3 +1,5 @@
+// Package eks contains all of the logic and data structures relevant to enumerating EKS instances and their related
+// resources. It is primarily leveraged by the `methodaws eks` subcommand.
 package eks
 
 import (
@@ -11,30 +13,38 @@ import (
 	eksTypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 )
 
+// EC2Instance represents an EC2 instance in the context of an EKS node group.
 type EC2Instance struct {
 	InstanceID string `json:"instance_id" yaml:"instance_id"`
 }
 
+// NodeGroup represents an EKS node group and its associated EC2 instances.
 type NodeGroup struct {
 	Name      string        `json:"name" yaml:"name"`
 	NodeRole  string        `json:"node_role" yaml:"node_role"`
 	Instances []EC2Instance `json:"instances" yaml:"instances"`
 }
 
+// ClusterInfo represents an EKS cluster and its associated node groups.
 type ClusterInfo struct {
 	eksTypes.Cluster
 	NodeGroups []NodeGroup `json:"node_groups" yaml:"node_groups"`
 }
 
+// AWSResources contains all EKS resources.
 type AWSResources struct {
 	EKSClusters []ClusterInfo `json:"eks_clusters" yaml:"eks_clusters"`
 }
 
+// AWSResourceReport contains the EKS resources and any non-fatal errors that occurred during the execution of the
 type AWSResourceReport struct {
 	Resources AWSResources `json:"resources"`
 	Errors    []string     `json:"errors"`
 }
 
+// EnumerateEks enumerates all EKS clusters and their associated node groups and EC2 instances. Non-fatal errors
+// will be captured and returned in the report. However, if a fatal error occurs (e.g., during the initial listing of
+// clusters), the function will return early with the error.
 func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
 	eksSvc := eks.NewFromConfig(cfg)
 	resources := AWSResources{}

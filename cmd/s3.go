@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
 func (a *MethodAws) InitS3Command() {
 	a.S3Cmd = &cobra.Command{
 		Use:   "s3",

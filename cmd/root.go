@@ -1,3 +1,6 @@
+// Package cmd implements the CobraCLI commands for the methodaws CLI. Subcommands for the CLI should all live within
+// this package. Logic should be delegated to internal packages and functions to keep the CLI commands clean and
+// focused on CLI I/O.
 package cmd
 
 import (
@@ -15,6 +18,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// MethodAws is the main struct that holds the root command and all subcommands that are used throughout execution
+// of the CLI. It is also responsible for holding the AWS configuration, Output configuration, and Output signal
+// for use by subcommands. The output signal is used to write the output of the command to the desired output format
+// after the execution of the invoked commands Run function.
 type MethodAws struct {
 	version            string
 	RootFlags          config.RootFlags
@@ -35,6 +42,9 @@ type MethodAws struct {
 	VpcCmd             *cobra.Command
 }
 
+// NewMethodAws returns a new MethodAws struct with the provided version string. The MethodAws struct is used to
+// initialize the root command and all subcommands that are used throughout execution of the CLI.
+// We pass the version command in here from the main.go file, where we set the version string during the build process.
 func NewMethodAws(version string) *MethodAws {
 	methodAws := MethodAws{
 		version: version,
@@ -50,6 +60,13 @@ func NewMethodAws(version string) *MethodAws {
 	return &methodAws
 }
 
+// InitRootCommand initializes the root command for the methodaws CLI. This command is used to set the global flags
+// that are used by all subcommands, such as the region, output format, and output file. It also initializes the
+// version command that prints the version of the CLI.
+// Critically, this sets the PersistentPreRunE and PersistentPostRunE functions that are inherited by all subcommands.
+// The PersistentPreRunE function is used to validate the region flag and set the AWS configuration. The PersistentPostRunE
+// function is used to write the output of the command to the desired output format after the execution of the invoked
+// command's Run function.
 func (a *MethodAws) InitRootCommand() {
 	var outputFormat string
 	var outputFile string
@@ -120,6 +137,7 @@ func (a *MethodAws) InitRootCommand() {
 	a.RootCmd.AddCommand(a.VersionCmd)
 }
 
+// A utility function to validate that the provided output format is one of the supported formats: json, yaml, signal.
 func validateOutputFormat(output string) (writer.Format, error) {
 	var format writer.FormatValue
 	switch strings.ToLower(output) {

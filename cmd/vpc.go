@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// InitVPCCommand initializes the `methodaws vpc` subcommand that deals with enumerating VPCs and related resources in
+// the AWS account.
 func (a *MethodAws) InitVPCCommand() {
 	a.VpcCmd = &cobra.Command{
 		Use:   "vpc",
