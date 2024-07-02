@@ -9,16 +9,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
-// EnumerateIamRoles retrieves all IAM roles available to the caller. It returns a RoleReport struct that contains all
+// EnumerateIamRoles retrieves all IAM roles available to the caller. It returns a AWSResourceReport struct that contains all
 // roles, attached or inline policies, and any non-fatal errors that occurred during the execution of the function.
-func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*RoleReport, error) {
+func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
 	client := iam.NewFromConfig(cfg)
 	policies := []PolicyResource{}
-	report := RoleReport{
-		Roles:    []RoleResource{},
-		Policies: PolicyReport{},
-		Errors:   []string{},
+	report := AWSResourceReport{
+		Resources: AWSResources{},
+		Errors:    []string{},
 	}
+	report.Resources.Roles = []RoleResource{}
 
 	roles, err := GetAllRoles(ctx, client)
 	if err != nil {
@@ -36,10 +36,10 @@ func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*RoleReport, error)
 			policies = append(policies, attachedPolicies...)
 		}
 
-		report.Roles = append(report.Roles, roleResource)
+		report.Resources.Roles = append(report.Resources.Roles, roleResource)
 	}
 
-	report.Policies = PolicyReport{
+	report.Resources.Policies = PolicyReport{
 		Policies: distinctPoliciesFromResource(policies),
 		Errors:   []string{},
 	}
