@@ -7,7 +7,7 @@ import (
 
 // InitRoute53Command initializes the `methodaws route53` subcommand that deals with enumerating Route53 resources.
 func (a *MethodAws) InitRoute53Command() {
-	a.Route53Cmd = &cobra.Command{
+	route53Cmd := &cobra.Command{
 		Use:   "route53",
 		Short: "Enumerate Route53 resources",
 		Long:  `Enumerate Route53 resources`,
@@ -28,6 +28,6 @@ func (a *MethodAws) InitRoute53Command() {
 		},
 	}
 
-	a.Route53Cmd.AddCommand(enumerateCmd)
-	a.RootCmd.AddCommand(a.Route53Cmd)
+	route53Cmd.AddCommand(enumerateCmd)
+	a.RootCmd.AddCommand(route53Cmd)
 }
