@@ -18,7 +18,7 @@ func convertTargetGroupType(targetType types.TargetTypeEnum) methodaws.TargetTyp
 	}
 }
 
-func convertTargetGroupIpAddressType(ipAddressType types.TargetGroupIpAddressTypeEnum) methodaws.TargetGroupIpAddressType {
+func convertTargetGroupIPAddressType(ipAddressType types.TargetGroupIpAddressTypeEnum) methodaws.TargetGroupIpAddressType {
 	switch ipAddressType {
 	case types.TargetGroupIpAddressTypeEnumIpv4:
 		return methodaws.TargetGroupIpAddressTypeIpv4
@@ -29,7 +29,7 @@ func convertTargetGroupIpAddressType(ipAddressType types.TargetGroupIpAddressTyp
 	}
 }
 
-func convertIpAddressType(ipAddressType types.IpAddressType) methodaws.IpAddressType {
+func convertIPAddressType(ipAddressType types.IpAddressType) methodaws.IpAddressType {
 	switch ipAddressType {
 	case types.IpAddressTypeIpv4:
 		return methodaws.IpAddressTypeIpv4

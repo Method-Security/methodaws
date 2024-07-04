@@ -3,11 +3,10 @@ package loadbalancer
 import (
 	"context"
 
+	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
-
-	methodaws "github.com/Method-Security/methodaws/generated/go"
 )
 
 func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerReport {
@@ -33,7 +32,7 @@ func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerR
 				Name:             aws.ToString(lb.LoadBalancerName),
 				CreatedTime:      aws.ToTime(lb.CreatedTime),
 				DnsName:          aws.ToString(lb.DNSName),
-				IpAddressType:    convertIpAddressType(lb.IpAddressType),
+				IpAddressType:    convertIPAddressType(lb.IpAddressType),
 				SecurityGroupIds: lb.SecurityGroups,
 				State:            loadBalancerCodeToState(lb.State),
 				VpcId:            aws.ToString(lb.VpcId),
@@ -104,7 +103,7 @@ func targetGroupForLoadBalancer(ctx context.Context, client *elasticloadbalancin
 			targetGroup := methodaws.TargetGroup{
 				Arn:             aws.ToString(awsTargetGroup.TargetGroupArn),
 				Name:            aws.ToString(awsTargetGroup.TargetGroupName),
-				IpAddressType:   convertTargetGroupIpAddressType(awsTargetGroup.IpAddressType),
+				IpAddressType:   convertTargetGroupIPAddressType(awsTargetGroup.IpAddressType),
 				Port:            int(aws.ToInt32(awsTargetGroup.Port)),
 				Protocol:        convertProtocol(awsTargetGroup.Protocol),
 				VpcId:           aws.ToString(awsTargetGroup.VpcId),

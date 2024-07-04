@@ -3,8 +3,9 @@
 package option
 
 import (
-	core "github.com/Method-Security/methodaws/generated/go/core"
 	http "net/http"
+
+	core "github.com/Method-Security/methodaws/generated/go/core"
 )
 
 // RequestOption adapts the behavior of an indivdual request.
