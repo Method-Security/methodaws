@@ -371,7 +371,7 @@ type Target struct {
 	Id               string     `json:"id" url:"id"`
 	Type             TargetType `json:"type" url:"type"`
 	Port             int        `json:"port" url:"port"`
-	AvailabilityZone string     `json:"availabilityZone" url:"availabilityZone"`
+	AvailabilityZone *string    `json:"availabilityZone,omitempty" url:"availabilityZone,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage

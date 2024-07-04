@@ -12,7 +12,7 @@ class Target(pydantic_v1.BaseModel):
     id: str
     type: TargetType
     port: int
-    availability_zone: str = pydantic_v1.Field(alias="availabilityZone")
+    availability_zone: typing.Optional[str] = pydantic_v1.Field(alias="availabilityZone", default=None)
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

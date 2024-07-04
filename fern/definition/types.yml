@@ -35,7 +35,7 @@ types:
       id: string
       type: TargetType
       port: integer
-      availabilityZone: string
+      availabilityZone: optional<string>
   TargetGroup:
     properties:
       arn: string

@@ -102,12 +102,13 @@ func targetGroupForLoadBalancer(ctx context.Context, client *elasticloadbalancin
 
 		for _, awsTargetGroup := range page.TargetGroups {
 			targetGroup := methodaws.TargetGroup{
-				Arn:           aws.ToString(awsTargetGroup.TargetGroupArn),
-				Name:          aws.ToString(awsTargetGroup.TargetGroupName),
-				IpAddressType: convertTargetGroupIpAddressType(awsTargetGroup.IpAddressType),
-				Port:          int(aws.ToInt32(awsTargetGroup.Port)),
-				Protocol:      convertProtocol(awsTargetGroup.Protocol),
-				VpcId:         aws.ToString(awsTargetGroup.VpcId),
+				Arn:             aws.ToString(awsTargetGroup.TargetGroupArn),
+				Name:            aws.ToString(awsTargetGroup.TargetGroupName),
+				IpAddressType:   convertTargetGroupIpAddressType(awsTargetGroup.IpAddressType),
+				Port:            int(aws.ToInt32(awsTargetGroup.Port)),
+				Protocol:        convertProtocol(awsTargetGroup.Protocol),
+				VpcId:           aws.ToString(awsTargetGroup.VpcId),
+				LoadBalancerArn: awsTargetGroup.LoadBalancerArns[0],
 			}
 
 			targets, err := targetsForTargetGroup(ctx, client, awsTargetGroup)
@@ -131,11 +132,15 @@ func targetsForTargetGroup(ctx context.Context, client *elasticloadbalancingv2.C
 		return targets, err
 	}
 	for _, targetHealth := range output.TargetHealthDescriptions {
+		var availabilityZone *string = nil
+		if targetHealth.Target.AvailabilityZone != nil {
+			availabilityZone = targetHealth.Target.AvailabilityZone
+		}
 		targets = append(targets, &methodaws.Target{
 			Id:               aws.ToString(targetHealth.Target.Id),
 			Port:             int(aws.ToInt32(targetHealth.Target.Port)),
 			Type:             convertTargetGroupType(targetGroup.TargetType),
-			AvailabilityZone: *targetHealth.Target.AvailabilityZone,
+			AvailabilityZone: availabilityZone,
 		})
 	}
 	return targets, nil
