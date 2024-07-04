@@ -34,6 +34,7 @@ jobs:
         run: |
           if [[ -n $(git status --porcelain) ]]; then
             echo "Repository is dirty."
+            git status
             exit 1
           else
             echo "Repository is clean."
