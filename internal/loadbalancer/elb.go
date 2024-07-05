@@ -4,6 +4,7 @@ import (
 	"context"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
@@ -16,11 +17,22 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 	loadBalancers := []*methodaws.LoadBalancerV1{}
 	errorMessages := []string{}
 
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		errorMessages = append(errorMessages, err.Error())
+		return methodaws.LoadBalancerReport{
+			AccountId:       aws.ToString(accountID),
+			V1LoadBalancers: loadBalancers,
+			Errors:          errorMessages,
+		}
+	}
+
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 			return methodaws.LoadBalancerReport{
+				AccountId:       aws.ToString(accountID),
 				V1LoadBalancers: loadBalancers,
 				Errors:          errorMessages,
 			}
@@ -45,6 +57,7 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 		}
 	}
 	return methodaws.LoadBalancerReport{
+		AccountId:       aws.ToString(accountID),
 		V1LoadBalancers: loadBalancers,
 		Errors:          errorMessages,
 	}

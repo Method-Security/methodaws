@@ -122,6 +122,7 @@ func (l *Listener) String() string {
 }
 
 type LoadBalancerReport struct {
+	AccountId       string            `json:"accountId" url:"accountId"`
 	V2LoadBalancers []*LoadBalancerV2 `json:"v2LoadBalancers,omitempty" url:"v2LoadBalancers,omitempty"`
 	V1LoadBalancers []*LoadBalancerV1 `json:"v1LoadBalancers,omitempty" url:"v1LoadBalancers,omitempty"`
 	Errors          []string          `json:"errors,omitempty" url:"errors,omitempty"`

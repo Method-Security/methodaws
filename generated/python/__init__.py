@@ -13,7 +13,7 @@ from .resources import (
     TargetGroup,
     TargetGroupIpAddressType,
     TargetType,
-    types,
+    loadbalancer,
 )
 
 __all__ = [
@@ -29,5 +29,5 @@ __all__ = [
     "TargetGroup",
     "TargetGroupIpAddressType",
     "TargetType",
-    "types",
+    "loadbalancer",
 ]

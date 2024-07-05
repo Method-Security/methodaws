@@ -86,6 +86,7 @@ types:
       targets: list<Target>
   LoadBalancerReport:
     properties:
+      accountId: string
       v2LoadBalancers: list<LoadBalancerV2>
       v1LoadBalancers: list<LoadBalancerV1>
       errors: list<string>
