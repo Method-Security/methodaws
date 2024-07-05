@@ -11,10 +11,10 @@ from .protocol import Protocol
 
 class Listener(pydantic_v1.BaseModel):
     arn: typing.Optional[str] = None
-    protocol: Protocol
+    protocol: typing.Optional[Protocol] = None
     port: int
     certificates: typing.List[Certificate]
-    load_balancer_arn: str = pydantic_v1.Field(alias="loadBalancerArn")
+    load_balancer_arn: typing.Optional[str] = pydantic_v1.Field(alias="loadBalancerArn", default=None)
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
