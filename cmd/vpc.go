@@ -8,7 +8,7 @@ import (
 // InitVPCCommand initializes the `methodaws vpc` subcommand that deals with enumerating VPCs and related resources in
 // the AWS account.
 func (a *MethodAws) InitVPCCommand() {
-	a.VpcCmd = &cobra.Command{
+	vpcCmd := &cobra.Command{
 		Use:   "vpc",
 		Short: "Audit and manage VPC services",
 		Long:  `Audit and manage VPC services`,
@@ -29,6 +29,6 @@ func (a *MethodAws) InitVPCCommand() {
 		},
 	}
 
-	a.VpcCmd.AddCommand(enumerateCmd)
-	a.RootCmd.AddCommand(a.VpcCmd)
+	vpcCmd.AddCommand(enumerateCmd)
+	a.RootCmd.AddCommand(vpcCmd)
 }

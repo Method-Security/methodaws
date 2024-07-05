@@ -7,7 +7,7 @@ import (
 
 // InitRdsCommand initializes the `methodaws rds` subcommand that deals with enumerating RDS instances in the AWS account.
 func (a *MethodAws) InitRdsCommand() {
-	a.RdsCmd = &cobra.Command{
+	rdsCmd := &cobra.Command{
 		Use:   "rds",
 		Short: "Audit and manage RDS instances",
 		Long:  `Audit and manage RDS instances`,
@@ -28,6 +28,6 @@ func (a *MethodAws) InitRdsCommand() {
 		},
 	}
 
-	a.RdsCmd.AddCommand(enumerateCmd)
-	a.RootCmd.AddCommand(a.RdsCmd)
+	rdsCmd.AddCommand(enumerateCmd)
+	a.RootCmd.AddCommand(rdsCmd)
 }
