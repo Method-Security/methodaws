@@ -91,7 +91,7 @@ func listenersForLoadBalancer(ctx context.Context, client *elasticloadbalancingv
 				Arn:             listener.ListenerArn,
 				Port:            int(aws.ToInt32(listener.Port)),
 				Protocol:        convertProtocol(listener.Protocol),
-				LoadBalancerArn: aws.ToString(listener.LoadBalancerArn),
+				LoadBalancerArn: listener.LoadBalancerArn,
 				Certificates:    certificatesForListener(listener.Certificates),
 			})
 		}

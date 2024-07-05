@@ -5,6 +5,7 @@ import typing
 
 from ...core.datetime_utils import serialize_datetime
 from ...core.pydantic_utilities import deep_union_pydantic_dicts, pydantic_v1
+from .listener import Listener
 from .target import Target
 
 
@@ -17,6 +18,7 @@ class LoadBalancerV1(pydantic_v1.BaseModel):
     subnet_ids: typing.List[str] = pydantic_v1.Field(alias="subnetIds")
     hosted_zone_id: typing.Optional[str] = pydantic_v1.Field(alias="hostedZoneId", default=None)
     targets: typing.List[Target]
+    listeners: typing.List[Listener]
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}

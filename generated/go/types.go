@@ -78,10 +78,10 @@ func (i IpAddressType) Ptr() *IpAddressType {
 
 type Listener struct {
 	Arn             *string        `json:"arn,omitempty" url:"arn,omitempty"`
-	Protocol        Protocol       `json:"protocol" url:"protocol"`
+	Protocol        *Protocol      `json:"protocol,omitempty" url:"protocol,omitempty"`
 	Port            int            `json:"port" url:"port"`
 	Certificates    []*Certificate `json:"certificates,omitempty" url:"certificates,omitempty"`
-	LoadBalancerArn string         `json:"loadBalancerArn" url:"loadBalancerArn"`
+	LoadBalancerArn *string        `json:"loadBalancerArn,omitempty" url:"loadBalancerArn,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -194,14 +194,15 @@ func (l LoadBalancerState) Ptr() *LoadBalancerState {
 }
 
 type LoadBalancerV1 struct {
-	Name             string    `json:"name" url:"name"`
-	CreatedTime      time.Time `json:"createdTime" url:"createdTime"`
-	DnsName          string    `json:"dnsName" url:"dnsName"`
-	SecurityGroupIds []string  `json:"securityGroupIds,omitempty" url:"securityGroupIds,omitempty"`
-	VpcId            string    `json:"vpcId" url:"vpcId"`
-	SubnetIds        []string  `json:"subnetIds,omitempty" url:"subnetIds,omitempty"`
-	HostedZoneId     *string   `json:"hostedZoneId,omitempty" url:"hostedZoneId,omitempty"`
-	Targets          []*Target `json:"targets,omitempty" url:"targets,omitempty"`
+	Name             string      `json:"name" url:"name"`
+	CreatedTime      time.Time   `json:"createdTime" url:"createdTime"`
+	DnsName          string      `json:"dnsName" url:"dnsName"`
+	SecurityGroupIds []string    `json:"securityGroupIds,omitempty" url:"securityGroupIds,omitempty"`
+	VpcId            string      `json:"vpcId" url:"vpcId"`
+	SubnetIds        []string    `json:"subnetIds,omitempty" url:"subnetIds,omitempty"`
+	HostedZoneId     *string     `json:"hostedZoneId,omitempty" url:"hostedZoneId,omitempty"`
+	Targets          []*Target   `json:"targets,omitempty" url:"targets,omitempty"`
+	Listeners        []*Listener `json:"listeners,omitempty" url:"listeners,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -418,7 +419,7 @@ type TargetGroup struct {
 	IpAddressType   TargetGroupIpAddressType `json:"ipAddressType" url:"ipAddressType"`
 	LoadBalancerArn string                   `json:"loadBalancerArn" url:"loadBalancerArn"`
 	Port            int                      `json:"port" url:"port"`
-	Protocol        Protocol                 `json:"protocol" url:"protocol"`
+	Protocol        *Protocol                `json:"protocol,omitempty" url:"protocol,omitempty"`
 	VpcId           string                   `json:"vpcId" url:"vpcId"`
 	Targets         []*Target                `json:"targets,omitempty" url:"targets,omitempty"`
 

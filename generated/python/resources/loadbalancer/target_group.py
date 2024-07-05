@@ -16,7 +16,7 @@ class TargetGroup(pydantic_v1.BaseModel):
     ip_address_type: TargetGroupIpAddressType = pydantic_v1.Field(alias="ipAddressType")
     load_balancer_arn: str = pydantic_v1.Field(alias="loadBalancerArn")
     port: int
-    protocol: Protocol
+    protocol: typing.Optional[Protocol] = None
     vpc_id: str = pydantic_v1.Field(alias="vpcId")
     targets: typing.List[Target]
 

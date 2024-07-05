@@ -17,10 +17,10 @@ types:
   Listener:
     properties:
       arn: optional<string>
-      protocol: Protocol
+      protocol: optional<Protocol>
       port: integer
       certificates: list<Certificate>
-      loadBalancerArn: string
+      loadBalancerArn: optional<string>
   TargetGroupIpAddressType:
     enum:
       - IPV4
@@ -43,7 +43,7 @@ types:
       ipAddressType: TargetGroupIpAddressType
       loadBalancerArn: string
       port: integer
-      protocol: Protocol
+      protocol: optional<Protocol>
       vpcId: string
       targets: list<Target>
   LoadBalancerState:
@@ -84,6 +84,7 @@ types:
       subnetIds: list<string>
       hostedZoneId: optional<string>
       targets: list<Target>
+      listeners: list<Listener>
   LoadBalancerReport:
     properties:
       accountId: string
