@@ -19,7 +19,7 @@ types:
       arn: optional<string>
       protocol: optional<Protocol>
       port: integer
-      certificates: list<Certificate>
+      certificates: optional<list<Certificate>>
       loadBalancerArn: optional<string>
   TargetGroupIpAddressType:
     enum:

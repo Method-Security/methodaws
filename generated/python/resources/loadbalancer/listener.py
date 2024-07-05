@@ -13,7 +13,7 @@ class Listener(pydantic_v1.BaseModel):
     arn: typing.Optional[str] = None
     protocol: typing.Optional[Protocol] = None
     port: int
-    certificates: typing.List[Certificate]
+    certificates: typing.Optional[typing.List[Certificate]] = None
     load_balancer_arn: typing.Optional[str] = pydantic_v1.Field(alias="loadBalancerArn", default=None)
 
     def json(self, **kwargs: typing.Any) -> str:
