@@ -11,6 +11,10 @@ on:
         default: ""
         required: false
         type: string
+      chainguard_identity_name:
+        description: "Github Action secret name for Chainguard identity"
+        required: true
+        type: string
 
 env:
   GO_VERSION: "1.22"
@@ -51,7 +55,7 @@ jobs:
       - name: Authenticate with Chainguard
         uses: chainguard-dev/setup-chainctl@v0.2.1
         with:
-          identity: ${{ secrets.CHAINCTL_IDENTITY }}
+          identity: ${{ secrets[inputs.chainguard_identity_name] }}
 
       - name: Checkout code
         uses: actions/checkout@v4.1.6
