@@ -10,6 +10,7 @@ from .load_balancer_v_2 import LoadBalancerV2
 
 
 class LoadBalancerReport(pydantic_v1.BaseModel):
+    account_id: str = pydantic_v1.Field(alias="accountId")
     v_2_load_balancers: typing.List[LoadBalancerV2] = pydantic_v1.Field(alias="v2LoadBalancers")
     v_1_load_balancers: typing.List[LoadBalancerV1] = pydantic_v1.Field(alias="v1LoadBalancers")
     errors: typing.List[str]
