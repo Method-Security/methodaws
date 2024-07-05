@@ -53,6 +53,13 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 				errorMessages = append(errorMessages, errors...)
 			}
 			loadBalancer.Targets = targets
+
+			listeners, errors := listenersForLoadBalancerV1(lb)
+			if len(errors) > 0 {
+				errorMessages = append(errorMessages, errors...)
+			}
+			loadBalancer.Listeners = listeners
+
 			loadBalancers = append(loadBalancers, &loadBalancer)
 		}
 	}
@@ -80,4 +87,18 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*me
 		errorMessages = append(errorMessages, "Mismatch between instances and backend server descriptions")
 	}
 	return targets, errorMessages
+}
+
+func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*methodaws.Listener, []string) {
+	listeners := []*methodaws.Listener{}
+	errorMessages := []string{}
+
+	for _, listener := range loadBalancer.ListenerDescriptions {
+		listener := methodaws.Listener{
+			Protocol: convertProtocolFromString(listener.Listener.Protocol),
+			Port:     int(listener.Listener.LoadBalancerPort),
+		}
+		listeners = append(listeners, &listener)
+	}
+	return listeners, errorMessages
 }

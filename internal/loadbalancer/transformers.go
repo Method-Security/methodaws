@@ -59,19 +59,44 @@ func loadBalancerCodeToState(code *types.LoadBalancerState) *methodaws.LoadBalan
 	return &state
 }
 
-func convertProtocol(protocol types.ProtocolEnum) methodaws.Protocol {
+func convertProtocol(protocol types.ProtocolEnum) *methodaws.Protocol {
+	var methodProtocol methodaws.Protocol
 	switch protocol {
 	case types.ProtocolEnumHttp:
-		return methodaws.ProtocolHttp
+		methodProtocol = methodaws.ProtocolHttp
 	case types.ProtocolEnumHttps:
-		return methodaws.ProtocolHttps
+		methodProtocol = methodaws.ProtocolHttps
 	case types.ProtocolEnumTcp:
-		return methodaws.ProtocolTcp
+		methodProtocol = methodaws.ProtocolTcp
 	case types.ProtocolEnumTls:
-		return methodaws.ProtocolTls
+		methodProtocol = methodaws.ProtocolTls
 	case types.ProtocolEnumUdp:
-		return methodaws.ProtocolUdp
+		methodProtocol = methodaws.ProtocolUdp
 	default:
-		return methodaws.ProtocolHttp
+		return nil
 	}
+	return &methodProtocol
+}
+
+func convertProtocolFromString(protocol *string) *methodaws.Protocol {
+	if protocol == nil {
+		return nil
+	}
+
+	var methodProtocol methodaws.Protocol
+
+	switch *protocol {
+	case "HTTP":
+		methodProtocol = methodaws.ProtocolHttp
+	case "HTTPS":
+		methodProtocol = methodaws.ProtocolHttps
+	case "TCP":
+		methodProtocol = methodaws.ProtocolTcp
+	case "TLS":
+		methodProtocol = methodaws.ProtocolTls
+	default:
+		return nil
+	}
+
+	return &methodProtocol
 }
