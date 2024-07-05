@@ -88,6 +88,6 @@ types:
   LoadBalancerReport:
     properties:
       accountId: string
-      v2LoadBalancers: list<LoadBalancerV2>
-      v1LoadBalancers: list<LoadBalancerV1>
-      errors: list<string>
+      v2LoadBalancers: optional<list<LoadBalancerV2>>
+      v1LoadBalancers: optional<list<LoadBalancerV1>>
+      errors: optional<list<string>>
