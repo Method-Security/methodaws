@@ -1,3 +1,3 @@
-FROM cgr.dev/chainguard/static:latest
+FROM chainguard/static:latest
 COPY methodaws /
 ENTRYPOINT [ "/methodaws" ]
