@@ -23,23 +23,12 @@ import (
 // for use by subcommands. The output signal is used to write the output of the command to the desired output format
 // after the execution of the invoked commands Run function.
 type MethodAws struct {
-	version            string
-	RootFlags          config.RootFlags
-	OutputConfig       writer.OutputConfig
-	OutputSignal       signal.Signal
-	AwsConfig          *aws.Config
-	RootCmd            *cobra.Command
-	VersionCmd         *cobra.Command
-	Ec2Cmd             *cobra.Command
-	S3Cmd              *cobra.Command
-	EksCmd             *cobra.Command
-	RdsCmd             *cobra.Command
-	Route53Cmd         *cobra.Command
-	CurrentInstanceCmd *cobra.Command
-	StsCmd             *cobra.Command
-	IamCmd             *cobra.Command
-	SecurityGroupCmd   *cobra.Command
-	VpcCmd             *cobra.Command
+	version      string
+	RootFlags    config.RootFlags
+	OutputConfig writer.OutputConfig
+	OutputSignal signal.Signal
+	AwsConfig    *aws.Config
+	RootCmd      *cobra.Command
 }
 
 // NewMethodAws returns a new MethodAws struct with the provided version string. The MethodAws struct is used to
@@ -120,7 +109,7 @@ func (a *MethodAws) InitRootCommand() {
 	a.RootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "f", "", "Path to output file. If blank, will output to STDOUT")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "signal", "Output format (signal, json, yaml). Default value is signal")
 
-	a.VersionCmd = &cobra.Command{
+	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of methodaws",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -134,7 +123,7 @@ func (a *MethodAws) InitRootCommand() {
 		},
 	}
 
-	a.RootCmd.AddCommand(a.VersionCmd)
+	a.RootCmd.AddCommand(versionCmd)
 }
 
 // A utility function to validate that the provided output format is one of the supported formats: json, yaml, signal.

@@ -7,7 +7,7 @@ import (
 
 // InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
 func (a *MethodAws) InitS3Command() {
-	a.S3Cmd = &cobra.Command{
+	s3Cmd := &cobra.Command{
 		Use:   "s3",
 		Short: "Audit and manage S3 services",
 		Long:  `Audit and manage S3 services`,
@@ -53,7 +53,7 @@ func (a *MethodAws) InitS3Command() {
 
 	lsCmd.Flags().String("name", "", "Name of the S3 bucket")
 
-	a.S3Cmd.AddCommand(enumerateCmd)
-	a.S3Cmd.AddCommand(lsCmd)
-	a.RootCmd.AddCommand(a.S3Cmd)
+	s3Cmd.AddCommand(enumerateCmd)
+	s3Cmd.AddCommand(lsCmd)
+	a.RootCmd.AddCommand(s3Cmd)
 }

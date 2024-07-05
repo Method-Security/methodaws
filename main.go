@@ -24,6 +24,7 @@ func main() {
 	methodaws.InitIamCommand()
 	methodaws.InitSecurityGroupCommand()
 	methodaws.InitVPCCommand()
+	methodaws.InitLoadBalancerCommand()
 
 	if err := methodaws.RootCmd.Execute(); err != nil {
 		os.Exit(1)

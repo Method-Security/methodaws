@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  Certificate:
+    properties:
+      arn: string
+      isDefault: boolean
+  Protocol:
+    enum:
+      - HTTP
+      - HTTPS
+      - TCP
+      - TLS
+      - UDP
+      - TCP_UDP
+      - GENEVE
+  Listener:
+    properties:
+      arn: optional<string>
+      protocol: Protocol
+      port: integer
+      certificates: list<Certificate>
+      loadBalancerArn: string
+  TargetGroupIpAddressType:
+    enum:
+      - IPV4
+      - IPV6
+  TargetType:
+    enum:
+      - INSTANCE
+      - IP
+      - LAMBDA
+  Target:
+    properties:
+      id: string
+      type: TargetType
+      port: integer
+      availabilityZone: optional<string>
+  TargetGroup:
+    properties:
+      arn: string
+      name: string
+      ipAddressType: TargetGroupIpAddressType
+      loadBalancerArn: string
+      port: integer
+      protocol: Protocol
+      vpcId: string
+      targets: list<Target>
+  LoadBalancerState:
+    enum:
+      - ACTIVE
+      - PROVISIONING
+      - ACTIVE_IMPAIRED
+      - FAILED
+  IpAddressType:
+    enum:
+      - IPV4
+      - DUALSTACK
+      - DUALSTACK_WITHOUT_PUBLIC_IPV4
+  LoadBalancerV2:
+    docs: |
+      LoadBalancer represents a load balancer that distributes incoming network traffic across multiple servers.
+      As defined by the AWS Go SDK (https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2@v1.33.1/types#LoadBalancer)
+    properties:
+      arn: string
+      name: string
+      createdTime: datetime
+      dnsName: string
+      ipAddressType: IpAddressType
+      securityGroupIds: list<string>
+      state: optional<LoadBalancerState>
+      vpcId: string
+      listeners: optional<list<Listener>>
+      subnetIds: list<string>
+      hostedZoneId: optional<string>
+      targetGroups: list<TargetGroup>
+  LoadBalancerV1:
+    properties:
+      name: string
+      createdTime: datetime
+      dnsName: string
+      securityGroupIds: list<string>
+      vpcId: string
+      subnetIds: list<string>
+      hostedZoneId: optional<string>
+      targets: list<Target>
+  LoadBalancerReport:
+    properties:
+      v2LoadBalancers: list<LoadBalancerV2>
+      v1LoadBalancers: list<LoadBalancerV1>
+      errors: list<string>
