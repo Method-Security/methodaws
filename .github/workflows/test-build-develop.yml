@@ -1,11 +1,8 @@
 name: 🔨 Build Test
 on:
-  pull_request:
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "mkdocs.yml"
-      - "LICENSE"
+  push:
+    branches:
+      - develop
 
 jobs:
   build:
@@ -14,7 +11,7 @@ jobs:
     with:
       goreleaser_config: goreleaser.yml
       goreleaser_options: "--clean --snapshot"
-      chainguard_identity_name: CHAINCTL_IDENTITY
+      chainguard_identity_name: CHAINCTL_IDENTITY_DEVELOP
     secrets: inherit
     permissions:
       id-token: write # For cosign
