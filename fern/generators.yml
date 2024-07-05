@@ -3,14 +3,14 @@ groups:
   local:
     generators:
       - name: fernapi/fern-go-sdk
-        version: 0.22.1
+        version: 0.22.2
         config:
           importpath: github.com/Method-Security/methodaws/generated/go
         output:
           location: local-file-system
           path: ../generated/go
       - name: fernapi/fern-pydantic-model
-        version: 0.10.0-rc0
+        version: 0.9.1
         output:
           location: local-file-system
           path: ../generated/python
