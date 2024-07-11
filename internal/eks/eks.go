@@ -5,6 +5,7 @@ package eks
 import (
 	"context"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -38,6 +39,7 @@ type AWSResources struct {
 
 // AWSResourceReport contains the EKS resources and any non-fatal errors that occurred during the execution of the
 type AWSResourceReport struct {
+	AccountID string       `json:"account_id" yaml:"account_id"`
 	Resources AWSResources `json:"resources"`
 	Errors    []string     `json:"errors"`
 }
@@ -49,6 +51,17 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 	eksSvc := eks.NewFromConfig(cfg)
 	resources := AWSResources{}
 	errors := []string{}
+
+	// Get the account ID
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		errors = append(errors, err.Error())
+		return &AWSResourceReport{
+			AccountID: aws.ToString(accountID),
+			Resources: resources,
+			Errors:    errors,
+		}, nil
+	}
 
 	clusterList, err := eksSvc.ListClusters(ctx, &eks.ListClustersInput{})
 	if err != nil {
@@ -104,6 +117,7 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 	}
 
 	report := AWSResourceReport{
+		AccountID: aws.ToString(accountID),
 		Resources: resources,
 		Errors:    errors,
 	}

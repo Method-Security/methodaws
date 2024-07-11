@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
@@ -19,6 +20,15 @@ func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*AWSResourceReport,
 		Errors:    []string{},
 	}
 	report.Resources.Roles = []RoleResource{}
+
+	// Get the account ID
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		report.Errors = append(report.Errors, err.Error())
+		report.AccountID = aws.ToString(accountID)
+		return &report, nil
+
+	}
 
 	roles, err := GetAllRoles(ctx, client)
 	if err != nil {
@@ -43,6 +53,7 @@ func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*AWSResourceReport,
 		Policies: distinctPoliciesFromResource(policies),
 		Errors:   []string{},
 	}
+	report.AccountID = aws.ToString(accountID)
 
 	return &report, nil
 }
