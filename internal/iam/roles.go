@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/iam/types"
-
-	"github.com/Method-Security/methodaws/internal/sts"
 )
 
 // EnumerateIamRoles retrieves all IAM roles available to the caller. It returns a AWSResourceReport struct that contains all
@@ -28,7 +27,7 @@ func EnumerateIamRoles(ctx context.Context, cfg aws.Config) (*AWSResourceReport,
 		report.Errors = append(report.Errors, err.Error())
 		report.AccountID = aws.ToString(accountID)
 		return &report, nil
-		
+
 	}
 
 	roles, err := GetAllRoles(ctx, client)

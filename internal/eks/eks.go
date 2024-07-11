@@ -5,14 +5,13 @@ package eks
 import (
 	"context"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	eksTypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
-
-	"github.com/Method-Security/methodaws/internal/sts"
 )
 
 // EC2Instance represents an EC2 instance in the context of an EKS node group.
@@ -40,9 +39,9 @@ type AWSResources struct {
 
 // AWSResourceReport contains the EKS resources and any non-fatal errors that occurred during the execution of the
 type AWSResourceReport struct {
-	AccountID string 		`json:"account_id" yaml:"account_id"`
-	Resources AWSResources 	`json:"resources"`
-	Errors    []string     	`json:"errors"`
+	AccountID string       `json:"account_id" yaml:"account_id"`
+	Resources AWSResources `json:"resources"`
+	Errors    []string     `json:"errors"`
 }
 
 // EnumerateEks enumerates all EKS clusters and their associated node groups and EC2 instances. Non-fatal errors
@@ -58,9 +57,9 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 	if err != nil {
 		errors = append(errors, err.Error())
 		return &AWSResourceReport{
-			AccountID:      aws.ToString(accountID),
-			Resources: 		resources,
-			Errors:         errors,
+			AccountID: aws.ToString(accountID),
+			Resources: resources,
+			Errors:    errors,
 		}, nil
 	}
 

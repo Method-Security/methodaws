@@ -5,8 +5,9 @@ package methodaws
 import (
 	json "encoding/json"
 	fmt "fmt"
-	core "github.com/Method-Security/methodaws/generated/go/core"
 	time "time"
+
+	core "github.com/Method-Security/methodaws/generated/go/core"
 )
 
 type Certificate struct {

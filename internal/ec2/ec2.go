@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
-
-	"github.com/Method-Security/methodaws/internal/sts"
 )
 
 // EnumerateEc2 enumerates all of the EC2 instances that the caller has access to. It returns a ResourceReport struct
@@ -26,9 +25,9 @@ func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) 
 	if err != nil {
 		errors = append(errors, err.Error())
 		return &ResourceReport{
-			AccountID:      aws.ToString(accountID),
-			Resources: 		resources,
-			Errors:         errors,
+			AccountID: aws.ToString(accountID),
+			Resources: resources,
+			Errors:    errors,
 		}, nil
 	}
 
@@ -71,9 +70,9 @@ func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) 
 	}
 
 	report := ResourceReport{
-		AccountID:      aws.ToString(accountID),
-		Resources: 		resources,
-		Errors:    		errors,
+		AccountID: aws.ToString(accountID),
+		Resources: resources,
+		Errors:    errors,
 	}
 
 	return &report, nil
@@ -99,7 +98,7 @@ func constructIAMRoleARN(roleName, accountID string) string {
 // getIAMRoles retrieves the IAM roles associated with the the instance profile name
 func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn string) ([]string, error) {
 	instanceProfileName := extractInstanceProfileName(instanceProfileArn)
-	accountId := extractAccountIDFromARN(instanceProfileArn)
+	accountID := extractAccountIDFromARN(instanceProfileArn)
 	roles := []string{}
 
 	input := &iam.GetInstanceProfileInput{
@@ -112,7 +111,7 @@ func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn str
 	}
 
 	for _, role := range result.InstanceProfile.Roles {
-		roles = append(roles, constructIAMRoleARN(*role.RoleName, accountId))
+		roles = append(roles, constructIAMRoleARN(*role.RoleName, accountID))
 	}
 
 	return roles, fmt.Errorf("no roles found in instance profile - %s", instanceProfileName)

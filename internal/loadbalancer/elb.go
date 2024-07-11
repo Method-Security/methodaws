@@ -3,12 +3,11 @@ package loadbalancer
 import (
 	"context"
 
+	methodaws "github.com/Method-Security/methodaws/generated/go"
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
-
-	methodaws "github.com/Method-Security/methodaws/generated/go"
-	"github.com/Method-Security/methodaws/internal/sts"
 )
 
 func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerReport {
