@@ -11,6 +11,8 @@ import (
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	eksTypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+
+	"github.com/Method-Security/methodaws/internal/sts"
 )
 
 // EC2Instance represents an EC2 instance in the context of an EKS node group.
@@ -38,8 +40,9 @@ type AWSResources struct {
 
 // AWSResourceReport contains the EKS resources and any non-fatal errors that occurred during the execution of the
 type AWSResourceReport struct {
-	Resources AWSResources `json:"resources"`
-	Errors    []string     `json:"errors"`
+	AccountID string 		`json:"account_id" yaml:"account_id"`
+	Resources AWSResources 	`json:"resources"`
+	Errors    []string     	`json:"errors"`
 }
 
 // EnumerateEks enumerates all EKS clusters and their associated node groups and EC2 instances. Non-fatal errors
@@ -49,6 +52,17 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 	eksSvc := eks.NewFromConfig(cfg)
 	resources := AWSResources{}
 	errors := []string{}
+
+	// Get the account ID
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		errors = append(errors, err.Error())
+		return &AWSResourceReport{
+			AccountID:      aws.ToString(accountID),
+			Resources: 		resources,
+			Errors:         errors,
+		}, nil
+	}
 
 	clusterList, err := eksSvc.ListClusters(ctx, &eks.ListClustersInput{})
 	if err != nil {
@@ -104,6 +118,7 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 	}
 
 	report := AWSResourceReport{
+		AccountID: aws.ToString(accountID),
 		Resources: resources,
 		Errors:    errors,
 	}
