@@ -68,6 +68,7 @@ type AWSResources struct {
 // represent the output of the `methodaws iam role` subcommand, easing data integration and providing a more holistic
 // view of all of the IAM roles and policies that are available to the current AWS account.
 type AWSResourceReport struct {
+	AccountID string       `json:"account_id" yaml:"account_id"`
 	Resources AWSResources `json:"resources" yaml:"resources"`
 	Errors    []string     `json:"errors" yaml:"errors"`
 }
