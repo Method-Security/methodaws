@@ -32,5 +32,8 @@ go.work.sum
 # mkdocs
 /site
 
+# Fern Python Testing
+generated/python/**
+
 # Don't ignore vendors
 !vendor/**
