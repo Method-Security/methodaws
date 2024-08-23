@@ -9,6 +9,93 @@ import (
 	time "time"
 )
 
+type CredentialInfo struct {
+	Url    string  `json:"url" url:"url"`
+	Token  string  `json:"token" url:"token"`
+	CaCert *string `json:"caCert,omitempty" url:"caCert,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (c *CredentialInfo) GetExtraProperties() map[string]interface{} {
+	return c.extraProperties
+}
+
+func (c *CredentialInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler CredentialInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*c = CredentialInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *c)
+	if err != nil {
+		return err
+	}
+	c.extraProperties = extraProperties
+
+	c._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (c *CredentialInfo) String() string {
+	if len(c._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(c._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(c); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", c)
+}
+
+type CredentialReport struct {
+	AccountId   string          `json:"accountId" url:"accountId"`
+	ClusterName string          `json:"clusterName" url:"clusterName"`
+	Credential  *CredentialInfo `json:"credential,omitempty" url:"credential,omitempty"`
+	Errors      []string        `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (c *CredentialReport) GetExtraProperties() map[string]interface{} {
+	return c.extraProperties
+}
+
+func (c *CredentialReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler CredentialReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*c = CredentialReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *c)
+	if err != nil {
+		return err
+	}
+	c.extraProperties = extraProperties
+
+	c._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (c *CredentialReport) String() string {
+	if len(c._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(c._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(c); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", c)
+}
+
 type Certificate struct {
 	Arn       string `json:"arn" url:"arn"`
 	IsDefault bool   `json:"isDefault" url:"isDefault"`

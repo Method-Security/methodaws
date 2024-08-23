@@ -29,6 +29,32 @@ func (a *MethodAws) InitEksCommand() {
 		},
 	}
 
+	credsCmd := &cobra.Command{
+		Use:   "creds",
+		Short: "Generate a K8s Credential for an EKS instance",
+		Long:  `Generate a K8s Credential for an EKS instance`,
+		Run: func(cmd *cobra.Command, args []string) {
+			clusterName, err := cmd.Flags().GetString("name")
+			if err != nil {
+				errorMessage := err.Error()
+				a.OutputSignal.ErrorMessage = &errorMessage
+				a.OutputSignal.Status = 1
+				return
+			}
+
+			report, err := eks.CredsEks(cmd.Context(), *a.AwsConfig, clusterName)
+			if err != nil {
+				errorMessage := err.Error()
+				a.OutputSignal.ErrorMessage = &errorMessage
+				a.OutputSignal.Status = 1
+			}
+			a.OutputSignal.Content = report
+		},
+	}
+
+	credsCmd.Flags().String("name", "", "Name of the EKS instance")
+
 	eksCmd.AddCommand(enumerateCmd)
+	eksCmd.AddCommand(credsCmd)
 	a.RootCmd.AddCommand(eksCmd)
 }
