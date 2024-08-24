@@ -60,22 +60,14 @@ func CredsEks(ctx context.Context, cfg aws.Config, clusterName string) (*methoda
 		}, nil
 	}
 
-	ca, err := base64.StdEncoding.DecodeString(aws.ToString(clusterOutput.Cluster.CertificateAuthority.Data))
-	if err != nil {
-		errors = append(errors, err.Error())
-		return &methodaws.CredentialReport{
-			AccountId:   account,
-			ClusterName: clusterName,
-			Errors:      errors,
-		}, nil
-	}
-
-	caCert := base64.StdEncoding.EncodeToString(ca)
+	expiration := tok.Expiration
+	caCert := aws.ToString(clusterOutput.Cluster.CertificateAuthority.Data)
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(tok.Token))
 	credInfo := methodaws.CredentialInfo{
-		Url:    aws.ToString(clusterOutput.Cluster.Endpoint),
-		Token:  encodedToken,
-		CaCert: &caCert,
+		Url:        aws.ToString(clusterOutput.Cluster.Endpoint),
+		Token:      encodedToken,
+		CaCert:     &caCert,
+		Expiration: &expiration,
 	}
 
 	report := methodaws.CredentialReport{
