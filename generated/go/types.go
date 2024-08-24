@@ -10,9 +10,10 @@ import (
 )
 
 type CredentialInfo struct {
-	Url    string  `json:"url" url:"url"`
-	Token  string  `json:"token" url:"token"`
-	CaCert *string `json:"caCert,omitempty" url:"caCert,omitempty"`
+	Url        string     `json:"url" url:"url"`
+	Token      string     `json:"token" url:"token"`
+	CaCert     *string    `json:"caCert,omitempty" url:"caCert,omitempty"`
+	Expiration *time.Time `json:"expiration,omitempty" url:"expiration,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -23,12 +24,18 @@ func (c *CredentialInfo) GetExtraProperties() map[string]interface{} {
 }
 
 func (c *CredentialInfo) UnmarshalJSON(data []byte) error {
-	type unmarshaler CredentialInfo
-	var value unmarshaler
-	if err := json.Unmarshal(data, &value); err != nil {
+	type embed CredentialInfo
+	var unmarshaler = struct {
+		embed
+		Expiration *core.DateTime `json:"expiration,omitempty"`
+	}{
+		embed: embed(*c),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
 		return err
 	}
-	*c = CredentialInfo(value)
+	*c = CredentialInfo(unmarshaler.embed)
+	c.Expiration = unmarshaler.Expiration.TimePtr()
 
 	extraProperties, err := core.ExtractExtraProperties(data, *c)
 	if err != nil {
@@ -38,6 +45,18 @@ func (c *CredentialInfo) UnmarshalJSON(data []byte) error {
 
 	c._rawJSON = json.RawMessage(data)
 	return nil
+}
+
+func (c *CredentialInfo) MarshalJSON() ([]byte, error) {
+	type embed CredentialInfo
+	var marshaler = struct {
+		embed
+		Expiration *core.DateTime `json:"expiration,omitempty"`
+	}{
+		embed:      embed(*c),
+		Expiration: core.NewOptionalDateTime(c.Expiration),
+	}
+	return json.Marshal(marshaler)
 }
 
 func (c *CredentialInfo) String() string {
