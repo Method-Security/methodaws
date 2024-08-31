@@ -53,7 +53,28 @@ func (a *MethodAws) InitS3Command() {
 
 	lsCmd.Flags().String("name", "", "Name of the S3 bucket")
 
+	externalEnumerateCmd := &cobra.Command{
+		Use:   "externalenumerate",
+		Short: "Enumerate a single public facing S3 bucket.",
+		Long:  `Enumerate a single public facing S3 bucket with no credentials..`,
+		Run: func(cmd *cobra.Command, args []string) {
+			bucketUrl, err := cmd.Flags().GetString("url")
+			if err != nil {
+				errorMessage := err.Error()
+				a.OutputSignal.ErrorMessage = &errorMessage
+				a.OutputSignal.Status = 1
+				return
+			}
+
+			report := s3.ExternalEnumerateS3(cmd.Context(), bucketUrl)
+			a.OutputSignal.Content = report
+		},
+	}
+
+	externalEnumerateCmd.Flags().String("url", "", "Top level URL for the S3 bucket")
+
 	s3Cmd.AddCommand(enumerateCmd)
 	s3Cmd.AddCommand(lsCmd)
+	s3Cmd.AddCommand(externalEnumerateCmd)
 	a.RootCmd.AddCommand(s3Cmd)
 }

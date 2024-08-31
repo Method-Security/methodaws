@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  BucketVersioningStatus:
+    enum:
+      - Enabled
+      - Suspended
+  S3MFADeleteStatus:
+    enum:
+      - Enabled
+      - Disabled
+  S3ServerSideEncryption:
+    enum:
+      - name: "AES256"
+        value: "AES256"
+      - name: "awskms"
+        value: "aws:kms"
+      - name: "awskmsdsse"
+        value: "aws:kms:dsse"
+  S3PublicAccessBlockConfiguration:
+    properties:
+      blockPublicAcls: boolean
+      ignorePublicAcls: boolean
+      blockPublicPolicy: boolean
+      restrictPublicBuckets: boolean
+  EncryptionRule:
+    properties:
+      sseAlgorithm: S3ServerSideEncryption
+      kmsMasterKeyID: string
+  Bucket:
+    properties:
+      name: string
+      arn: string
+      url: string
+      creationDate: datetime
+      ownerID: string
+      ownerName: string
+      policy: string
+      bucketVersioning: BucketVersioningStatus
+      mfaDelete: S3MFADeleteStatus
+      encryptionRules: list<EncryptionRule>
+      publicAccessConfig: S3PublicAccessBlockConfiguration
+  S3Report:
+    properties:
+      accountId: string
+      s3Buckets: optional<list<Bucket>>
+      errors: optional<list<string>>
+  ExternalBucket:
+    properties:
+      url: string
+  ExternalS3Report:
+    properties:
+      externalBucket: optional<ExternalBucket>
+      errors: optional<list<string>>

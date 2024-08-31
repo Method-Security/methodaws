@@ -613,3 +613,353 @@ func NewTargetTypeFromString(s string) (TargetType, error) {
 func (t TargetType) Ptr() *TargetType {
 	return &t
 }
+
+type Bucket struct {
+	Name               string                            `json:"name" url:"name"`
+	Arn                string                            `json:"arn" url:"arn"`
+	Url                string                            `json:"url" url:"url"`
+	CreationDate       time.Time                         `json:"creationDate" url:"creationDate"`
+	OwnerId            string                            `json:"ownerID" url:"ownerID"`
+	OwnerName          string                            `json:"ownerName" url:"ownerName"`
+	Policy             string                            `json:"policy" url:"policy"`
+	BucketVersioning   BucketVersioningStatus            `json:"bucketVersioning" url:"bucketVersioning"`
+	MfaDelete          S3MfaDeleteStatus                 `json:"mfaDelete" url:"mfaDelete"`
+	EncryptionRules    []*EncryptionRule                 `json:"encryptionRules,omitempty" url:"encryptionRules,omitempty"`
+	PublicAccessConfig *S3PublicAccessBlockConfiguration `json:"publicAccessConfig,omitempty" url:"publicAccessConfig,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (b *Bucket) GetExtraProperties() map[string]interface{} {
+	return b.extraProperties
+}
+
+func (b *Bucket) UnmarshalJSON(data []byte) error {
+	type embed Bucket
+	var unmarshaler = struct {
+		embed
+		CreationDate *core.DateTime `json:"creationDate"`
+	}{
+		embed: embed(*b),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*b = Bucket(unmarshaler.embed)
+	b.CreationDate = unmarshaler.CreationDate.Time()
+
+	extraProperties, err := core.ExtractExtraProperties(data, *b)
+	if err != nil {
+		return err
+	}
+	b.extraProperties = extraProperties
+
+	b._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (b *Bucket) MarshalJSON() ([]byte, error) {
+	type embed Bucket
+	var marshaler = struct {
+		embed
+		CreationDate *core.DateTime `json:"creationDate"`
+	}{
+		embed:        embed(*b),
+		CreationDate: core.NewDateTime(b.CreationDate),
+	}
+	return json.Marshal(marshaler)
+}
+
+func (b *Bucket) String() string {
+	if len(b._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(b._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(b); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", b)
+}
+
+type BucketVersioningStatus string
+
+const (
+	BucketVersioningStatusEnabled   BucketVersioningStatus = "Enabled"
+	BucketVersioningStatusSuspended BucketVersioningStatus = "Suspended"
+)
+
+func NewBucketVersioningStatusFromString(s string) (BucketVersioningStatus, error) {
+	switch s {
+	case "Enabled":
+		return BucketVersioningStatusEnabled, nil
+	case "Suspended":
+		return BucketVersioningStatusSuspended, nil
+	}
+	var t BucketVersioningStatus
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (b BucketVersioningStatus) Ptr() *BucketVersioningStatus {
+	return &b
+}
+
+type EncryptionRule struct {
+	SseAlgorithm   S3ServerSideEncryption `json:"sseAlgorithm" url:"sseAlgorithm"`
+	KmsMasterKeyId string                 `json:"kmsMasterKeyID" url:"kmsMasterKeyID"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (e *EncryptionRule) GetExtraProperties() map[string]interface{} {
+	return e.extraProperties
+}
+
+func (e *EncryptionRule) UnmarshalJSON(data []byte) error {
+	type unmarshaler EncryptionRule
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*e = EncryptionRule(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *e)
+	if err != nil {
+		return err
+	}
+	e.extraProperties = extraProperties
+
+	e._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (e *EncryptionRule) String() string {
+	if len(e._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(e); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", e)
+}
+
+type ExternalBucket struct {
+	Url string `json:"url" url:"url"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (e *ExternalBucket) GetExtraProperties() map[string]interface{} {
+	return e.extraProperties
+}
+
+func (e *ExternalBucket) UnmarshalJSON(data []byte) error {
+	type unmarshaler ExternalBucket
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*e = ExternalBucket(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *e)
+	if err != nil {
+		return err
+	}
+	e.extraProperties = extraProperties
+
+	e._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (e *ExternalBucket) String() string {
+	if len(e._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(e); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", e)
+}
+
+type ExternalS3Report struct {
+	ExternalBucket *ExternalBucket `json:"externalBucket,omitempty" url:"externalBucket,omitempty"`
+	Errors         []string        `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (e *ExternalS3Report) GetExtraProperties() map[string]interface{} {
+	return e.extraProperties
+}
+
+func (e *ExternalS3Report) UnmarshalJSON(data []byte) error {
+	type unmarshaler ExternalS3Report
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*e = ExternalS3Report(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *e)
+	if err != nil {
+		return err
+	}
+	e.extraProperties = extraProperties
+
+	e._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (e *ExternalS3Report) String() string {
+	if len(e._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(e); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", e)
+}
+
+type S3MfaDeleteStatus string
+
+const (
+	S3MfaDeleteStatusEnabled  S3MfaDeleteStatus = "Enabled"
+	S3MfaDeleteStatusDisabled S3MfaDeleteStatus = "Disabled"
+)
+
+func NewS3MfaDeleteStatusFromString(s string) (S3MfaDeleteStatus, error) {
+	switch s {
+	case "Enabled":
+		return S3MfaDeleteStatusEnabled, nil
+	case "Disabled":
+		return S3MfaDeleteStatusDisabled, nil
+	}
+	var t S3MfaDeleteStatus
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s S3MfaDeleteStatus) Ptr() *S3MfaDeleteStatus {
+	return &s
+}
+
+type S3PublicAccessBlockConfiguration struct {
+	BlockPublicAcls       bool `json:"blockPublicAcls" url:"blockPublicAcls"`
+	IgnorePublicAcls      bool `json:"ignorePublicAcls" url:"ignorePublicAcls"`
+	BlockPublicPolicy     bool `json:"blockPublicPolicy" url:"blockPublicPolicy"`
+	RestrictPublicBuckets bool `json:"restrictPublicBuckets" url:"restrictPublicBuckets"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (s *S3PublicAccessBlockConfiguration) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *S3PublicAccessBlockConfiguration) UnmarshalJSON(data []byte) error {
+	type unmarshaler S3PublicAccessBlockConfiguration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = S3PublicAccessBlockConfiguration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	s._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *S3PublicAccessBlockConfiguration) String() string {
+	if len(s._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+type S3Report struct {
+	AccountId string    `json:"accountId" url:"accountId"`
+	S3Buckets []*Bucket `json:"s3Buckets,omitempty" url:"s3Buckets,omitempty"`
+	Errors    []string  `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (s *S3Report) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *S3Report) UnmarshalJSON(data []byte) error {
+	type unmarshaler S3Report
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = S3Report(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	s._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *S3Report) String() string {
+	if len(s._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+type S3ServerSideEncryption string
+
+const (
+	S3ServerSideEncryptionAes256     S3ServerSideEncryption = "AES256"
+	S3ServerSideEncryptionAwskms     S3ServerSideEncryption = "aws:kms"
+	S3ServerSideEncryptionAwskmsdsse S3ServerSideEncryption = "aws:kms:dsse"
+)
+
+func NewS3ServerSideEncryptionFromString(s string) (S3ServerSideEncryption, error) {
+	switch s {
+	case "AES256":
+		return S3ServerSideEncryptionAes256, nil
+	case "aws:kms":
+		return S3ServerSideEncryptionAwskms, nil
+	case "aws:kms:dsse":
+		return S3ServerSideEncryptionAwskmsdsse, nil
+	}
+	var t S3ServerSideEncryption
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s S3ServerSideEncryption) Ptr() *S3ServerSideEncryption {
+	return &s
+}

@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+
+	methodaws "github.com/Method-Security/methodaws/generated/go"
 )
 
 // EncryptionRule contains the server-side encryption configuration for an S3 bucket alongside the KMS master key ID
@@ -45,7 +47,7 @@ type EnumerateResourceReport struct {
 	Errors    []string           `json:"errors" yaml:"errors"`
 }
 
-func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bucket, error) {
+func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetPublicAccessBlockInput{
 		Bucket: bucket.Name,
 	}
@@ -59,7 +61,7 @@ func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bu
 	return bucket, nil
 }
 
-func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bucket, error) {
+func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetBucketEncryptionInput{
 		Bucket: aws.String(*bucket.Name),
 	}
@@ -83,7 +85,7 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *Bucket) 
 	return bucket, nil
 }
 
-func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bucket, error) {
+func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetBucketVersioningInput{
 		Bucket: aws.String(*bucket.Name),
 	}
@@ -98,7 +100,7 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *Bucket) 
 	return bucket, nil
 }
 
-func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bucket, error) {
+func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := s3.GetBucketPolicyInput{
 		Bucket: aws.String(*bucket.Name),
 	}
@@ -115,57 +117,66 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *Bucket) (*Bu
 // EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
-func EnumerateS3(ctx context.Context, cfg aws.Config) (*EnumerateResourceReport, error) {
-	s3Client := s3.NewFromConfig(cfg)
-	resources := EnumerateResources{}
-	errors := []string{}
+func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
+	client := s3.NewFromConfig(cfg)
+
+	s3Buckets := []*methodaws.Bucket{}
+	errorMessages := []string{}
 
 	accountID, err := sts.GetAccountID(ctx, cfg)
 	if err != nil {
-		errors = append(errors, err.Error())
-		return &EnumerateResourceReport{Errors: errors}, err
-	}
-
-	listBucketsOutput, err := s3Client.ListBuckets(ctx, &s3.ListBucketsInput{})
-	if err != nil {
-		errors = append(errors, err.Error())
-	} else {
-		for _, bucket := range listBucketsOutput.Buckets {
-			s3Bucket := &Bucket{
-				CreationDate: bucket.CreationDate,
-				Name:         bucket.Name,
-				Owner:        *listBucketsOutput.Owner,
-			}
-
-			s3Bucket, err = bucketPolicy(ctx, s3Client, s3Bucket)
-			if err != nil {
-				errors = append(errors, err.Error())
-			}
-
-			s3Bucket, err = objectVersioning(ctx, s3Client, s3Bucket)
-			if err != nil {
-				errors = append(errors, err.Error())
-			}
-
-			s3Bucket, err = bucketEncryption(ctx, s3Client, s3Bucket)
-			if err != nil {
-				errors = append(errors, err.Error())
-			}
-
-			s3Bucket, err = publicAccess(ctx, s3Client, s3Bucket)
-			if err != nil {
-				errors = append(errors, err.Error())
-			}
-
-			resources.S3Buckets = append(resources.S3Buckets, *s3Bucket)
+		errorMessages = append(errorMessages, err.Error())
+		return methodaws.S3Report{
+			AccountId:  aws.ToString(accountID),
+			S3Buckets: 	s3Buckets,
+			Errors:    	errorMessages,
 		}
 	}
 
-	report := EnumerateResourceReport{
-		AccountID: *accountID,
-		Resources: resources,
-		Errors:    errors,
+	listBucketsOutput, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
+	if err != nil {
+		errorMessages = append(errorMessages, err.Error())
+		return methodaws.S3Report{
+			AccountId:  aws.ToString(accountID),
+			S3Buckets: 	s3Buckets,
+			Errors:    	errorMessages,
+		}
+	} else {
+		for _, bucket := range listBucketsOutput.Buckets {
+			s3Bucket := &methodaws.Bucket{
+				CreationDate: aws.ToTime(bucket.CreationDate),
+				Name:         aws.ToString(bucket.Name),
+				OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
+				OwnerName:	  aws.ToString(listBucketsOutput.Owner.DisplayName),
+			}
+
+			s3Bucket, err = bucketPolicy(ctx, client, s3Bucket)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			s3Bucket, err = objectVersioning(ctx, client, s3Bucket)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			s3Bucket, err = bucketEncryption(ctx, client, s3Bucket)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			s3Bucket, err = publicAccess(ctx, client, s3Bucket)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			s3Buckets = append(s3Buckets, s3Bucket)
+		}
 	}
 
-	return &report, nil
+	return methodaws.S3Report{
+		AccountId:  aws.ToString(accountID),
+		S3Buckets: 	s3Buckets,
+		Errors:    	errorMessages,
+	}
 }
