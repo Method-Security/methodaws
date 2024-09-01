@@ -49,7 +49,7 @@ type EnumerateResourceReport struct {
 
 func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetPublicAccessBlockInput{
-		Bucket: bucket.Name,
+		Bucket: aws.String(bucket.Name),
 	}
 
 	result, err := s3Client.GetPublicAccessBlock(ctx, input)
@@ -57,13 +57,19 @@ func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 		return bucket, err
 	}
 
-	bucket.PublicAccessConfig = *result.PublicAccessBlockConfiguration
+	bucket.PublicAccessConfig = &methodaws.S3PublicAccessBlockConfiguration{
+		BlockPublicAcls:       *result.PublicAccessBlockConfiguration.BlockPublicAcls,
+		IgnorePublicAcls:      *result.PublicAccessBlockConfiguration.IgnorePublicAcls,
+		BlockPublicPolicy:     *result.PublicAccessBlockConfiguration.BlockPublicPolicy,
+		RestrictPublicBuckets: *result.PublicAccessBlockConfiguration.RestrictPublicBuckets,
+	}
+
 	return bucket, nil
 }
 
 func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetBucketEncryptionInput{
-		Bucket: aws.String(*bucket.Name),
+		Bucket: aws.String(bucket.Name),
 	}
 
 	result, err := s3Client.GetBucketEncryption(ctx, input)
@@ -73,12 +79,17 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *methodaw
 	}
 
 	if result.ServerSideEncryptionConfiguration != nil {
-		var encryptionRules []EncryptionRule
+		encryptionRules := []*methodaws.EncryptionRule{}
 		for _, rule := range result.ServerSideEncryptionConfiguration.Rules {
-			encryptionRules = append(encryptionRules, EncryptionRule{
-				SSEAlgorithm:   rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm,
-				KMSMasterKeyID: rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID,
-			})
+			encryptionRule := methodaws.EncryptionRule{}
+			sseAlgorithm, err := methodaws.NewS3ServerSideEncryptionFromString(string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm))
+			if err != nil {
+				encryptionRule.SseAlgorithm = sseAlgorithm
+			}
+			if rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID != nil {
+				encryptionRule.KmsMasterKeyId = *rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
+			}
+			encryptionRules = append(encryptionRules, &encryptionRule)
 		}
 		bucket.EncryptionRules = encryptionRules
 	}
@@ -87,7 +98,7 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *methodaw
 
 func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetBucketVersioningInput{
-		Bucket: aws.String(*bucket.Name),
+		Bucket: aws.String(bucket.Name),
 	}
 
 	result, err := s3Client.GetBucketVersioning(ctx, input)
@@ -95,14 +106,21 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *methodaw
 		return bucket, err
 	}
 
-	bucket.BucketVersioning = result.Status
-	bucket.MFADelete = result.MFADelete
+	bucketVersioning, err := methodaws.NewBucketVersioningStatusFromString(string(result.Status))
+	if err != nil {
+		bucket.BucketVersioning = bucketVersioning
+	}
+	mfaDelete, err := methodaws.NewS3MfaDeleteStatusFromString(string(result.MFADelete))
+	if err != nil {
+		bucket.MfaDelete = mfaDelete
+	}
+
 	return bucket, nil
 }
 
 func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := s3.GetBucketPolicyInput{
-		Bucket: aws.String(*bucket.Name),
+		Bucket: aws.String(bucket.Name),
 	}
 
 	result, err := s3Client.GetBucketPolicy(ctx, &input)
@@ -110,7 +128,10 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 		return bucket, err
 	}
 
-	bucket.Policy = result.Policy
+	if result.Policy != nil {
+		bucket.Policy = *result.Policy
+	}
+
 	return bucket, nil
 }
 
