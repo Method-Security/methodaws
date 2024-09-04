@@ -104,6 +104,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
+			Region:    cfg.Region,
 			S3Buckets: s3Buckets,
 			Errors:    errorMessages,
 		}
@@ -114,6 +115,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
+			Region:    cfg.Region,
 			S3Buckets: s3Buckets,
 			Errors:    errorMessages,
 		}
@@ -162,6 +164,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 
 	return methodaws.S3Report{
 		AccountId: aws.ToString(accountID),
+		Region:    cfg.Region,
 		S3Buckets: s3Buckets,
 		Errors:    errorMessages,
 	}
