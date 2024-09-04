@@ -62,6 +62,100 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 	return true, nil
 }
 
+// listBucketContents lists all objects in a bucket
+func listBucketContents(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3ObjectDetails, error) {
+	directoryContents := []*methodaws.S3ObjectDetails{}
+	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+
+	// Capture all objects in the bucket
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error listing bucket contents: %v", err)
+		}
+
+		for _, object := range page.Contents {
+			var size int
+			if object.Size != nil {
+				size = int(*object.Size)
+			}
+			var ownerID string
+			var ownerName string
+			if object.Owner != nil {
+				ownerID = *object.Owner.ID
+				ownerName = *object.Owner.DisplayName
+			}
+			directoryContents = append(directoryContents, &methodaws.S3ObjectDetails{
+				Key:          *object.Key,
+				LastModified: object.LastModified,
+				Size:         &size,
+				OwnerId:      &ownerID,
+				OwnerName:    &ownerName,
+			})
+		}
+	}
+
+	return directoryContents, nil
+}
+
+// checkListingAllowed checks if listing objects is allowed on a bucket
+func checkListingAllowed(ctx context.Context, client *s3.Client, bucketName string) bool {
+	maxKeys := int32(1)
+	_, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket:  aws.String(bucketName),
+		MaxKeys: &maxKeys,
+	})
+	return err == nil
+}
+
+// checkAnonymousReadAllowed checks if anonymous read is allowed on a bucket
+func checkAnonymousReadAllowed(ctx context.Context, client *s3.Client, bucketName string, directoryContents []*methodaws.S3ObjectDetails) bool {
+	if len(directoryContents) > 0 {
+		_, err := client.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(directoryContents[0].Key),
+		})
+		return err == nil
+	}
+	return false
+}
+
+// checkPolicy checks the bucket policy
+func checkPolicy(ctx context.Context, client *s3.Client, bucketName string) (string, error) {
+	policyOutput, err := client.GetBucketPolicy(ctx, &s3.GetBucketPolicyInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err == nil && policyOutput.Policy != nil {
+		return *policyOutput.Policy, nil
+	}
+	return "", fmt.Errorf("error getting bucket policy: %v", err)
+}
+
+// checkAcl checks the bucket ACL
+func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3BucketAcl, error) {
+	aclOutput, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting bucket ACL: %v", err)
+	}
+
+	acls := []*methodaws.S3BucketAcl{}
+	for _, grant := range aclOutput.Grants {
+		if grant.Grantee.URI != nil {
+			acl := &methodaws.S3BucketAcl{
+				GranteeUri: *grant.Grantee.URI,
+				Permission: string(grant.Permission),
+			}
+			acls = append(acls, acl)
+		}
+	}
+
+	return acls, nil
+}
+
 // externalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region.
 // If the bucket does not exist, it will return an unmodified report (with potential new errors).
 func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
@@ -95,83 +189,30 @@ func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 	externalBucket.Region = region
 
 	// List bucket contents
-	directoryContents := []*methodaws.S3ObjectDetails{}
-	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
-		Bucket: aws.String(bucketName),
-	})
-
-	// Capture all objects in the bucket
-	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			report.Errors = append(report.Errors, fmt.Sprintf("error listing bucket contents: %v", err))
-			break
-		}
-
-		for _, object := range page.Contents {
-			var size int
-			if object.Size != nil {
-				size = int(*object.Size)
-			}
-			var ownerID string
-			var ownerName string
-			if object.Owner != nil {
-				ownerID = *object.Owner.ID
-				ownerName = *object.Owner.DisplayName
-			}
-			directoryContents = append(directoryContents, &methodaws.S3ObjectDetails{
-				Key:          *object.Key,
-				LastModified: object.LastModified,
-				Size:         &size,
-				OwnerId:      &ownerID,
-				OwnerName:    &ownerName,
-			})
-		}
+	directoryContents, err := listBucketContents(ctx, client, bucketName)
+	if err != nil {
+		report.Errors = append(report.Errors, fmt.Sprintf("error listing bucket contents: %v", err))
+	} else {
+		externalBucket.DirectoryContents = directoryContents
 	}
-	externalBucket.DirectoryContents = directoryContents
 
 	// Check if listing is allowed
-	maxKeys := int32(1)
-	_, err = client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucketName),
-		MaxKeys: &maxKeys,
-	})
-	externalBucket.AllowDirectoryListing = (err == nil)
+	externalBucket.AllowDirectoryListing = checkListingAllowed(ctx, client, bucketName)
 
 	// Check if anonymous read is allowed using the first object key, if available
-	if len(directoryContents) > 0 {
-		_, err = client.GetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(directoryContents[0].Key),
-		})
-		externalBucket.AllowAnonymousRead = (err == nil)
-	} else {
-		externalBucket.AllowAnonymousRead = false
-	}
+	externalBucket.AllowAnonymousRead = checkAnonymousReadAllowed(ctx, client, bucketName, directoryContents)
 
 	// Check bucket policy
-	policyOutput, err := client.GetBucketPolicy(ctx, &s3.GetBucketPolicyInput{
-		Bucket: aws.String(bucketName),
-	})
-	if err == nil && policyOutput.Policy != nil {
-		externalBucket.Policy = policyOutput.Policy
+	policy, err := checkPolicy(ctx, client, bucketName)
+	if err == nil {
+		externalBucket.Policy = &policy
+	} else {
+		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket policy: %v", err))
 	}
 
 	// Check bucket ACL
-	aclOutput, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
-		Bucket: aws.String(bucketName),
-	})
+	acls, err := checkACL(ctx, client, bucketName)
 	if err == nil {
-		acls := []*methodaws.S3BucketAcl{}
-		for _, grant := range aclOutput.Grants {
-			if grant.Grantee.URI != nil {
-				acl := &methodaws.S3BucketAcl{
-					GranteeUri: *grant.Grantee.URI,
-					Permission: string(grant.Permission),
-				}
-				acls = append(acls, acl)
-			}
-		}
 		externalBucket.Acls = acls
 	} else {
 		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
