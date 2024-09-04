@@ -5,8 +5,9 @@ package methodaws
 import (
 	json "encoding/json"
 	fmt "fmt"
-	core "github.com/Method-Security/methodaws/generated/go/core"
 	time "time"
+
+	core "github.com/Method-Security/methodaws/generated/go/core"
 )
 
 type CredentialInfo struct {
@@ -1009,6 +1010,7 @@ func (s *S3PublicAccessBlockConfiguration) String() string {
 
 type S3Report struct {
 	AccountId string    `json:"accountId" url:"accountId"`
+	Region    string    `json:"region" url:"region"`
 	S3Buckets []*Bucket `json:"s3Buckets,omitempty" url:"s3Buckets,omitempty"`
 	Errors    []string  `json:"errors,omitempty" url:"errors,omitempty"`
 
