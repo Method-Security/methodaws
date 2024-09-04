@@ -3,49 +3,14 @@ package s3
 
 import (
 	"context"
-	"time"
-
-	"github.com/Method-Security/methodaws/internal/sts"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"fmt"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
+	"github.com/Method-Security/methodaws/internal/sts"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
-
-// EncryptionRule contains the server-side encryption configuration for an S3 bucket alongside the KMS master key ID
-// used for encryption (if it exists).
-type EncryptionRule struct {
-	SSEAlgorithm   types.ServerSideEncryption `json:"sse_algorithm" yaml:"sse_algorithm"`
-	KMSMasterKeyID *string                    `json:"kms_master_key_id" yaml:"kms_master_key_id"`
-}
-
-// Bucket contains the metadata for an S3 bucket, including its creation date, name, owner, policy,
-// bucket versioning status, etc. This data typically requires multiple API calls to retrieve, so collecting
-// it all in one struct is useful for reporting purposes.
-type Bucket struct {
-	CreationDate       *time.Time                           `json:"creation_date" yaml:"creation_date"`
-	Name               *string                              `json:"name" yaml:"name"`
-	Owner              types.Owner                          `json:"owner" yaml:"owner"`
-	Policy             *string                              `json:"policy" yaml:"policy"`
-	BucketVersioning   types.BucketVersioningStatus         `json:"bucket_versioning" yaml:"bucket_versioning"`
-	MFADelete          types.MFADeleteStatus                `json:"mfa_delete" yaml:"mfa_delete"`
-	EncryptionRules    []EncryptionRule                     `json:"encryption_rules" yaml:"encryption_rules"`
-	PublicAccessConfig types.PublicAccessBlockConfiguration `json:"public_access_config" yaml:"public_access_config"`
-}
-
-// EnumerateResources contains the S3 buckets that were enumerated.
-type EnumerateResources struct {
-	S3Buckets []Bucket `json:"s3_buckets" yaml:"s3_buckets"`
-}
-
-// EnumerateResourceReport contains the account ID that the S3 buckets were discovered in, the resources themselves,
-// and any non-fatal errors that occurred during the execution of the `methodaws s3 enumerate` subcommand.
-type EnumerateResourceReport struct {
-	AccountID string             `json:"account_id" yaml:"account_id"`
-	Resources EnumerateResources `json:"resources" yaml:"resources"`
-	Errors    []string           `json:"errors" yaml:"errors"`
-}
 
 func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bucket) (*methodaws.Bucket, error) {
 	input := &s3.GetPublicAccessBlockInput{
@@ -82,13 +47,9 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *methodaw
 		encryptionRules := []*methodaws.EncryptionRule{}
 		for _, rule := range result.ServerSideEncryptionConfiguration.Rules {
 			encryptionRule := methodaws.EncryptionRule{}
-			sseAlgorithm, err := methodaws.NewS3ServerSideEncryptionFromString(string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm))
-			if err != nil {
-				encryptionRule.SseAlgorithm = sseAlgorithm
-			}
-			if rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID != nil {
-				encryptionRule.KmsMasterKeyId = *rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
-			}
+			sseAlgorithm, _ := methodaws.NewS3ServerSideEncryptionFromString(string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm))
+			encryptionRule.SseAlgorithm = &sseAlgorithm
+			encryptionRule.KmsMasterKeyId = rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
 			encryptionRules = append(encryptionRules, &encryptionRule)
 		}
 		bucket.EncryptionRules = encryptionRules
@@ -106,14 +67,10 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *methodaw
 		return bucket, err
 	}
 
-	bucketVersioning, err := methodaws.NewBucketVersioningStatusFromString(string(result.Status))
-	if err != nil {
-		bucket.BucketVersioning = bucketVersioning
-	}
-	mfaDelete, err := methodaws.NewS3MfaDeleteStatusFromString(string(result.MFADelete))
-	if err != nil {
-		bucket.MfaDelete = mfaDelete
-	}
+	bucketVersioning, _ := methodaws.NewBucketVersioningStatusFromString(string(result.Status))
+	bucket.BucketVersioning = &bucketVersioning
+	mfaDelete, _ := methodaws.NewS3MfaDeleteStatusFromString(string(result.MFADelete))
+	bucket.MfaDelete = &mfaDelete
 
 	return bucket, nil
 }
@@ -128,9 +85,7 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 		return bucket, err
 	}
 
-	if result.Policy != nil {
-		bucket.Policy = *result.Policy
-	}
+	bucket.Policy = result.Policy
 
 	return bucket, nil
 }
@@ -148,9 +103,9 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 	if err != nil {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
-			AccountId:  aws.ToString(accountID),
-			S3Buckets: 	s3Buckets,
-			Errors:    	errorMessages,
+			AccountId: aws.ToString(accountID),
+			S3Buckets: s3Buckets,
+			Errors:    errorMessages,
 		}
 	}
 
@@ -158,46 +113,56 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 	if err != nil {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
-			AccountId:  aws.ToString(accountID),
-			S3Buckets: 	s3Buckets,
-			Errors:    	errorMessages,
-		}
-	} else {
-		for _, bucket := range listBucketsOutput.Buckets {
-			s3Bucket := &methodaws.Bucket{
-				CreationDate: aws.ToTime(bucket.CreationDate),
-				Name:         aws.ToString(bucket.Name),
-				OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
-				OwnerName:	  aws.ToString(listBucketsOutput.Owner.DisplayName),
-			}
-
-			s3Bucket, err = bucketPolicy(ctx, client, s3Bucket)
-			if err != nil {
-				errorMessages = append(errorMessages, err.Error())
-			}
-
-			s3Bucket, err = objectVersioning(ctx, client, s3Bucket)
-			if err != nil {
-				errorMessages = append(errorMessages, err.Error())
-			}
-
-			s3Bucket, err = bucketEncryption(ctx, client, s3Bucket)
-			if err != nil {
-				errorMessages = append(errorMessages, err.Error())
-			}
-
-			s3Bucket, err = publicAccess(ctx, client, s3Bucket)
-			if err != nil {
-				errorMessages = append(errorMessages, err.Error())
-			}
-
-			s3Buckets = append(s3Buckets, s3Bucket)
+			AccountId: aws.ToString(accountID),
+			S3Buckets: s3Buckets,
+			Errors:    errorMessages,
 		}
 	}
 
+	for _, bucket := range listBucketsOutput.Buckets {
+		s3Bucket := &methodaws.Bucket{
+			CreationDate: aws.ToTime(bucket.CreationDate),
+			Name:         aws.ToString(bucket.Name),
+			OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
+			OwnerName:    aws.ToString(listBucketsOutput.Owner.DisplayName),
+		}
+
+		s3Bucket, err = bucketPolicy(ctx, client, s3Bucket)
+		if err != nil {
+			errorMessages = append(errorMessages, err.Error())
+		}
+
+		s3Bucket, err = objectVersioning(ctx, client, s3Bucket)
+		if err != nil {
+			errorMessages = append(errorMessages, err.Error())
+		}
+
+		s3Bucket, err = bucketEncryption(ctx, client, s3Bucket)
+		if err != nil {
+			errorMessages = append(errorMessages, err.Error())
+		}
+
+		s3Bucket, err = publicAccess(ctx, client, s3Bucket)
+		if err != nil {
+			errorMessages = append(errorMessages, err.Error())
+		}
+
+		// Use virtual host style URL; path based is still valid but less common
+		s3Bucket.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", *bucket.Name, cfg.Region)
+
+		bucketARN := arn.ARN{
+			Partition: "aws",
+			Service:   "s3",
+			Resource:  *bucket.Name,
+		}
+		s3Bucket.Arn = bucketARN.String()
+
+		s3Buckets = append(s3Buckets, s3Bucket)
+	}
+
 	return methodaws.S3Report{
-		AccountId:  aws.ToString(accountID),
-		S3Buckets: 	s3Buckets,
-		Errors:    	errorMessages,
+		AccountId: aws.ToString(accountID),
+		S3Buckets: s3Buckets,
+		Errors:    errorMessages,
 	}
 }

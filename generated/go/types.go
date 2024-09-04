@@ -5,8 +5,9 @@ package methodaws
 import (
 	json "encoding/json"
 	fmt "fmt"
-	core "github.com/Method-Security/methodaws/generated/go/core"
 	time "time"
+
+	core "github.com/Method-Security/methodaws/generated/go/core"
 )
 
 type CredentialInfo struct {
@@ -621,11 +622,11 @@ type Bucket struct {
 	CreationDate       time.Time                         `json:"creationDate" url:"creationDate"`
 	OwnerId            string                            `json:"ownerID" url:"ownerID"`
 	OwnerName          string                            `json:"ownerName" url:"ownerName"`
-	Policy             string                            `json:"policy" url:"policy"`
-	BucketVersioning   BucketVersioningStatus            `json:"bucketVersioning" url:"bucketVersioning"`
-	MfaDelete          S3MfaDeleteStatus                 `json:"mfaDelete" url:"mfaDelete"`
-	EncryptionRules    []*EncryptionRule                 `json:"encryptionRules,omitempty" url:"encryptionRules,omitempty"`
 	PublicAccessConfig *S3PublicAccessBlockConfiguration `json:"publicAccessConfig,omitempty" url:"publicAccessConfig,omitempty"`
+	Policy             *string                           `json:"policy,omitempty" url:"policy,omitempty"`
+	BucketVersioning   *BucketVersioningStatus           `json:"bucketVersioning,omitempty" url:"bucketVersioning,omitempty"`
+	MfaDelete          *S3MfaDeleteStatus                `json:"mfaDelete,omitempty" url:"mfaDelete,omitempty"`
+	EncryptionRules    []*EncryptionRule                 `json:"encryptionRules,omitempty" url:"encryptionRules,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -706,8 +707,8 @@ func (b BucketVersioningStatus) Ptr() *BucketVersioningStatus {
 }
 
 type EncryptionRule struct {
-	SseAlgorithm   S3ServerSideEncryption `json:"sseAlgorithm" url:"sseAlgorithm"`
-	KmsMasterKeyId string                 `json:"kmsMasterKeyID" url:"kmsMasterKeyID"`
+	SseAlgorithm   *S3ServerSideEncryption `json:"sseAlgorithm,omitempty" url:"sseAlgorithm,omitempty"`
+	KmsMasterKeyId *string                 `json:"kmsMasterKeyID,omitempty" url:"kmsMasterKeyID,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -748,7 +749,13 @@ func (e *EncryptionRule) String() string {
 }
 
 type ExternalBucket struct {
-	Url string `json:"url" url:"url"`
+	Url                   string             `json:"url" url:"url"`
+	Region                string             `json:"region" url:"region"`
+	DirectoryContents     []*S3ObjectDetails `json:"directoryContents,omitempty" url:"directoryContents,omitempty"`
+	AllowDirectoryListing bool               `json:"allowDirectoryListing" url:"allowDirectoryListing"`
+	AllowAnonymousRead    bool               `json:"allowAnonymousRead" url:"allowAnonymousRead"`
+	Policy                *string            `json:"policy,omitempty" url:"policy,omitempty"`
+	Acls                  []*S3BucketAcl     `json:"acls,omitempty" url:"acls,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -789,8 +796,8 @@ func (e *ExternalBucket) String() string {
 }
 
 type ExternalS3Report struct {
-	ExternalBucket *ExternalBucket `json:"externalBucket,omitempty" url:"externalBucket,omitempty"`
-	Errors         []string        `json:"errors,omitempty" url:"errors,omitempty"`
+	ExternalBuckets []*ExternalBucket `json:"externalBuckets,omitempty" url:"externalBuckets,omitempty"`
+	Errors          []string          `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
 	_rawJSON        json.RawMessage
@@ -830,6 +837,48 @@ func (e *ExternalS3Report) String() string {
 	return fmt.Sprintf("%#v", e)
 }
 
+type S3BucketAcl struct {
+	GranteeUri string `json:"granteeURI" url:"granteeURI"`
+	Permission string `json:"permission" url:"permission"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (s *S3BucketAcl) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *S3BucketAcl) UnmarshalJSON(data []byte) error {
+	type unmarshaler S3BucketAcl
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = S3BucketAcl(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	s._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *S3BucketAcl) String() string {
+	if len(s._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
 type S3MfaDeleteStatus string
 
 const (
@@ -850,6 +899,69 @@ func NewS3MfaDeleteStatusFromString(s string) (S3MfaDeleteStatus, error) {
 
 func (s S3MfaDeleteStatus) Ptr() *S3MfaDeleteStatus {
 	return &s
+}
+
+type S3ObjectDetails struct {
+	Key          string     `json:"key" url:"key"`
+	LastModified *time.Time `json:"lastModified,omitempty" url:"lastModified,omitempty"`
+	Size         *int       `json:"size,omitempty" url:"size,omitempty"`
+	OwnerId      *string    `json:"ownerID,omitempty" url:"ownerID,omitempty"`
+	OwnerName    *string    `json:"ownerName,omitempty" url:"ownerName,omitempty"`
+
+	extraProperties map[string]interface{}
+	_rawJSON        json.RawMessage
+}
+
+func (s *S3ObjectDetails) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *S3ObjectDetails) UnmarshalJSON(data []byte) error {
+	type embed S3ObjectDetails
+	var unmarshaler = struct {
+		embed
+		LastModified *core.DateTime `json:"lastModified,omitempty"`
+	}{
+		embed: embed(*s),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*s = S3ObjectDetails(unmarshaler.embed)
+	s.LastModified = unmarshaler.LastModified.TimePtr()
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	s._rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *S3ObjectDetails) MarshalJSON() ([]byte, error) {
+	type embed S3ObjectDetails
+	var marshaler = struct {
+		embed
+		LastModified *core.DateTime `json:"lastModified,omitempty"`
+	}{
+		embed:        embed(*s),
+		LastModified: core.NewOptionalDateTime(s.LastModified),
+	}
+	return json.Marshal(marshaler)
+}
+
+func (s *S3ObjectDetails) String() string {
+	if len(s._rawJSON) > 0 {
+		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
 }
 
 type S3PublicAccessBlockConfiguration struct {

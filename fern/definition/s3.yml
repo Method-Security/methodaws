@@ -1,6 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
+  S3BucketACL:
+    properties:
+      granteeURI: string
+      permission: string
   BucketVersioningStatus:
     enum:
       - Enabled
@@ -25,8 +29,8 @@ types:
       restrictPublicBuckets: boolean
   EncryptionRule:
     properties:
-      sseAlgorithm: S3ServerSideEncryption
-      kmsMasterKeyID: string
+      sseAlgorithm: optional<S3ServerSideEncryption>
+      kmsMasterKeyID: optional<string>
   Bucket:
     properties:
       name: string
@@ -35,20 +39,33 @@ types:
       creationDate: datetime
       ownerID: string
       ownerName: string
-      policy: string
-      bucketVersioning: BucketVersioningStatus
-      mfaDelete: S3MFADeleteStatus
-      encryptionRules: list<EncryptionRule>
       publicAccessConfig: S3PublicAccessBlockConfiguration
+      policy: optional<string>
+      bucketVersioning: optional<BucketVersioningStatus>
+      mfaDelete: optional<S3MFADeleteStatus>
+      encryptionRules: list<EncryptionRule>
   S3Report:
     properties:
       accountId: string
       s3Buckets: optional<list<Bucket>>
       errors: optional<list<string>>
+  S3ObjectDetails:
+    properties:
+      key: string
+      lastModified: optional<datetime>
+      size: optional<integer>
+      ownerID: optional<string>
+      ownerName: optional<string>
   ExternalBucket:
     properties:
       url: string
+      region: string
+      directoryContents: optional<list<S3ObjectDetails>>
+      allowDirectoryListing: boolean
+      allowAnonymousRead: boolean
+      policy: optional<string>
+      acls: optional<list<S3BucketACL>>
   ExternalS3Report:
     properties:
-      externalBucket: optional<ExternalBucket>
+      externalBuckets: optional<list<ExternalBucket>>
       errors: optional<list<string>>

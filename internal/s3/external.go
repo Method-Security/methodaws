@@ -3,101 +3,201 @@ package s3
 import (
 	"context"
 	"fmt"
-	"net/url"
-	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
 
-// TODO proper docs
-func ExternalEnumerateS3(ctx context.Context, bucketURL string) methodaws.ExternalS3Report {
-	// Parse the URL to extract bucket name and region
+func getAWSRegions() []string {
+	resolver := endpoints.DefaultResolver()
+	partitions := resolver.(endpoints.EnumPartitions).Partitions()
 
-	parsedURL, err := url.Parse(bucketURL)
-	if err != nil {
-		fmt.Printf("error parsing URL: %v", err)
-		return methodaws.ExternalS3Report{}
+	var regions []string
+	for _, p := range partitions {
+		for region := range p.Regions() {
+			regions = append(regions, region)
+		}
 	}
 
-	bucketName := strings.Split(parsedURL.Hostname(), ".")[0]
-	region := "us-east-1" // Default to us-east-1, adjust if needed
+	return regions
+}
 
+func bucketExists(ctx context.Context, region string, bucketName string) (bool, error) {
 	// Create a custom AWS config with anonymous credentials
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("", "", "")),
+		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	)
 	if err != nil {
-		fmt.Printf("error loading AWS config: %v", err)
-		return methodaws.ExternalS3Report{}
+		return false, fmt.Errorf("error loading AWS config: %v", err)
 	}
 
 	// Create an S3 client
 	client := s3.NewFromConfig(cfg)
 
+	// Call HeadBucket operation
+	_, err = client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "NotFound":
+				return false, nil
+			case "Forbidden":
+				return true, nil
+			default:
+				return false, fmt.Errorf("error checking bucket: %v", err)
+			}
+		}
+		return false, fmt.Errorf("error checking bucket: %v", err)
+	}
+
+	// If there's no error, the bucket exists
+	return true, nil
+}
+
+// externalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region.
+// If the bucket does not exist, it will return an unmodified report (with potential new errors).
+func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
+	// Check if bucket exists before proceeding
+	exists, err := bucketExists(ctx, region, bucketName)
+	if err != nil {
+		return report
+	}
+	if !exists {
+		return report
+	}
+
+	// Enumerate the bucket
+	externalBucket := methodaws.ExternalBucket{}
+
+	// Create a custom AWS config with anonymous credentials
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
+	)
+	if err != nil {
+		report.Errors = append(report.Errors, fmt.Sprintf("error loading AWS config: %v", err))
+		return report
+	}
+
+	// Create an S3 client
+	client := s3.NewFromConfig(cfg)
+
+	// Populate basic information
+	externalBucket.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucketName, cfg.Region)
+	externalBucket.Region = region
+
 	// List bucket contents
-	fmt.Println("Bucket Contents:")
+	directoryContents := []*methodaws.S3ObjectDetails{}
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 	})
 
+	// Capture all objects in the bucket
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(context.TODO())
+		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			fmt.Printf("error listing bucket contents: %v", err)
-			return methodaws.ExternalS3Report{}
+			report.Errors = append(report.Errors, fmt.Sprintf("error listing bucket contents: %v", err))
+			break
 		}
 
 		for _, object := range page.Contents {
-			fmt.Printf("- %s (Size: %d, Last Modified: %s)\n", *object.Key, object.Size, object.LastModified)
+			var size int
+			if object.Size != nil {
+				size = int(*object.Size)
+			}
+			var ownerID string
+			var ownerName string
+			if object.Owner != nil {
+				ownerID = *object.Owner.ID
+				ownerName = *object.Owner.DisplayName
+			}
+			directoryContents = append(directoryContents, &methodaws.S3ObjectDetails{
+				Key:          *object.Key,
+				LastModified: object.LastModified,
+				Size:         &size,
+				OwnerId:      &ownerID,
+				OwnerName:    &ownerName,
+			})
 		}
 	}
-
-	// Check permissions and settings
-	fmt.Println("\nPermissions and Settings:")
+	externalBucket.DirectoryContents = directoryContents
 
 	// Check if listing is allowed
 	maxKeys := int32(1)
-	_, err = client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+	_, err = client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucketName),
 		MaxKeys: &maxKeys,
 	})
-	fmt.Printf("Directory Listing: %v\n", err == nil)
+	externalBucket.AllowDirectoryListing = (err == nil)
 
-	// Check if anonymous read is allowed
-	_, err = client.GetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String("test-object"),
-	})
-	fmt.Printf("Anonymous Read: %v\n", err == nil)
-
-	// Check for website configuration
-	_, err = client.GetBucketWebsite(context.TODO(), &s3.GetBucketWebsiteInput{
-		Bucket: aws.String(bucketName),
-	})
-	fmt.Printf("Website Enabled: %v\n", err == nil)
+	// Check if anonymous read is allowed using the first object key, if available
+	if len(directoryContents) > 0 {
+		_, err = client.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(directoryContents[0].Key),
+		})
+		externalBucket.AllowAnonymousRead = (err == nil)
+	} else {
+		externalBucket.AllowAnonymousRead = false
+	}
 
 	// Check bucket policy
-	_, err = client.GetBucketPolicy(context.TODO(), &s3.GetBucketPolicyInput{
+	policyOutput, err := client.GetBucketPolicy(ctx, &s3.GetBucketPolicyInput{
 		Bucket: aws.String(bucketName),
 	})
-	fmt.Printf("Has Bucket Policy: %v\n", err == nil)
+	if err == nil && policyOutput.Policy != nil {
+		externalBucket.Policy = policyOutput.Policy
+	}
 
 	// Check bucket ACL
-	aclOutput, err := client.GetBucketAcl(context.TODO(), &s3.GetBucketAclInput{
+	aclOutput, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err == nil {
-		fmt.Println("Bucket ACL:")
+		acls := []*methodaws.S3BucketAcl{}
 		for _, grant := range aclOutput.Grants {
-			fmt.Printf("- Grantee: %s, Permission: %s\n", *grant.Grantee.URI, grant.Permission)
+			if grant.Grantee.URI != nil {
+				acl := &methodaws.S3BucketAcl{
+					GranteeUri: *grant.Grantee.URI,
+					Permission: string(grant.Permission),
+				}
+				acls = append(acls, acl)
+			}
+		}
+		externalBucket.Acls = acls
+	} else {
+		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
+	}
+
+	report.ExternalBuckets = append(report.ExternalBuckets, &externalBucket)
+	return report
+}
+
+// ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials.
+// If the bucket does not exist, it will return an empty report.
+// If region is "all", it will attempt to enumerate the bucket in all regions.
+func ExternalEnumerateS3(ctx context.Context, cfg aws.Config, bucketName string) methodaws.ExternalS3Report {
+	report := methodaws.ExternalS3Report{
+		ExternalBuckets: []*methodaws.ExternalBucket{},
+		Errors:          []string{},
+	}
+
+	// If region is not "all", use specified region, otherwise attempt all regions
+	if cfg.Region != "all" {
+		report = externalEnumerateS3Region(ctx, report, bucketName, cfg.Region)
+	} else {
+		for _, region := range getAWSRegions() {
+			report = externalEnumerateS3Region(ctx, report, bucketName, region)
 		}
 	}
 
-	return methodaws.ExternalS3Report{}
+	return report
 }
