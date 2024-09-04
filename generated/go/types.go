@@ -5,9 +5,8 @@ package methodaws
 import (
 	json "encoding/json"
 	fmt "fmt"
-	time "time"
-
 	core "github.com/Method-Security/methodaws/generated/go/core"
+	time "time"
 )
 
 type CredentialInfo struct {
