@@ -796,6 +796,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#externalenumerate" class="md-nav__link">
+    <span class="md-ellipsis">
+      externalenumerate
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="externalenumerate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-text_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help Text
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1154,6 +1187,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#externalenumerate" class="md-nav__link">
+    <span class="md-ellipsis">
+      externalenumerate
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="externalenumerate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#help-text_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Help Text
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1214,6 +1280,29 @@ Usage:
 
 Flags:
 <span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">          </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>ls
+<span class="w">      </span>--name<span class="w"> </span>string<span class="w">   </span>Name<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>S3<span class="w"> </span>bucket
+
+Global<span class="w"> </span>Flags:
+<span class="w">  </span>-o,<span class="w"> </span>--output<span class="w"> </span>string<span class="w">        </span>Output<span class="w"> </span>format<span class="w"> </span><span class="o">(</span>signal,<span class="w"> </span>json,<span class="w"> </span>yaml<span class="o">)</span>.<span class="w"> </span>Default<span class="w"> </span>value<span class="w"> </span>is<span class="w"> </span>signal<span class="w"> </span><span class="o">(</span>default<span class="w"> </span><span class="s2">&quot;signal&quot;</span><span class="o">)</span>
+<span class="w">  </span>-f,<span class="w"> </span>--output-file<span class="w"> </span>string<span class="w">   </span>Path<span class="w"> </span>to<span class="w"> </span>output<span class="w"> </span>file.<span class="w"> </span>If<span class="w"> </span>blank,<span class="w"> </span>will<span class="w"> </span>output<span class="w"> </span>to<span class="w"> </span>STDOUT
+<span class="w">  </span>-q,<span class="w"> </span>--quiet<span class="w">                </span>Suppress<span class="w"> </span>output
+<span class="w">  </span>-r,<span class="w"> </span>--region<span class="w"> </span>string<span class="w">        </span>AWS<span class="w"> </span>region
+<span class="w">  </span>-v,<span class="w"> </span>--verbose<span class="w">              </span>Verbose<span class="w"> </span>output
+</code></pre></div>
+<h2 id="externalenumerate">externalenumerate<a class="headerlink" href="#externalenumerate" title="Permanent link">#</a></h2>
+<p>The externalenumerate command attempts to enumearte a public facing S3 bucket with anonymous credentials.</p>
+<h3 id="usage_2">Usage<a class="headerlink" href="#usage_2" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>methodaws<span class="w"> </span>s3<span class="w"> </span>externalenumerate<span class="w"> </span>--region<span class="w"> </span>us-east-1<span class="w"> </span>--name<span class="w"> </span>bucketname<span class="w"> </span>--output<span class="w"> </span>json
+</code></pre></div>
+<h3 id="help-text_2">Help Text<a class="headerlink" href="#help-text_2" title="Permanent link">#</a></h3>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>methodaws<span class="w"> </span>s3<span class="w"> </span>externalenumerate<span class="w"> </span>-h
+Enumerate<span class="w"> </span>a<span class="w"> </span>single<span class="w"> </span>public<span class="w"> </span>facing<span class="w"> </span>S3<span class="w"> </span>bucket<span class="w"> </span>with<span class="w"> </span>no<span class="w"> </span>credentials.
+
+Usage:
+<span class="w">  </span>methodaws<span class="w"> </span>s3<span class="w"> </span>externalenumerate<span class="w"> </span><span class="o">[</span>flags<span class="o">]</span>
+
+Flags:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">          </span><span class="nb">help</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>externalenumerate
 <span class="w">      </span>--name<span class="w"> </span>string<span class="w">   </span>Name<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>S3<span class="w"> </span>bucket
 
 Global<span class="w"> </span>Flags:
