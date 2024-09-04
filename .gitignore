@@ -37,3 +37,7 @@ generated/python/**
 
 # Don't ignore vendors
 !vendor/**
+
+# IDE
+.idea/
+.vscode/
