@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  S3BucketACL:
+    properties:
+      granteeURI: string
+      permission: string
+  BucketVersioningStatus:
+    enum:
+      - Enabled
+      - Suspended
+  S3MFADeleteStatus:
+    enum:
+      - Enabled
+      - Disabled
+  S3ServerSideEncryption:
+    enum:
+      - name: "AES256"
+        value: "AES256"
+      - name: "awskms"
+        value: "aws:kms"
+      - name: "awskmsdsse"
+        value: "aws:kms:dsse"
+  S3PublicAccessBlockConfiguration:
+    properties:
+      blockPublicAcls: boolean
+      ignorePublicAcls: boolean
+      blockPublicPolicy: boolean
+      restrictPublicBuckets: boolean
+  EncryptionRule:
+    properties:
+      sseAlgorithm: optional<S3ServerSideEncryption>
+      kmsMasterKeyID: optional<string>
+  Bucket:
+    properties:
+      name: string
+      arn: string
+      url: string
+      creationDate: datetime
+      ownerID: string
+      ownerName: string
+      publicAccessConfig: S3PublicAccessBlockConfiguration
+      policy: optional<string>
+      bucketVersioning: optional<BucketVersioningStatus>
+      mfaDelete: optional<S3MFADeleteStatus>
+      encryptionRules: list<EncryptionRule>
+  S3Report:
+    properties:
+      accountId: string
+      s3Buckets: optional<list<Bucket>>
+      errors: optional<list<string>>
+  S3ObjectDetails:
+    properties:
+      key: string
+      lastModified: optional<datetime>
+      size: optional<integer>
+      ownerID: optional<string>
+      ownerName: optional<string>
+  ExternalBucket:
+    properties:
+      url: string
+      region: string
+      directoryContents: optional<list<S3ObjectDetails>>
+      allowDirectoryListing: boolean
+      allowAnonymousRead: boolean
+      policy: optional<string>
+      acls: optional<list<S3BucketACL>>
+  ExternalS3Report:
+    properties:
+      externalBuckets: optional<list<ExternalBucket>>
+      errors: optional<list<string>>
