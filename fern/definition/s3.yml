@@ -59,6 +59,7 @@ types:
       ownerName: optional<string>
   ExternalBucket:
     properties:
+      name: string
       url: string
       region: string
       directoryContents: optional<list<S3ObjectDetails>>
