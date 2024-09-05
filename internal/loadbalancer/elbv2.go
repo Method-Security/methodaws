@@ -47,7 +47,7 @@ func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerR
 				IpAddressType:    convertIPAddressType(lb.IpAddressType),
 				SecurityGroupIds: lb.SecurityGroups,
 				State:            loadBalancerCodeToState(lb.State),
-				VpcId:            aws.ToString(lb.VpcId),
+				VpcId:            lb.VpcId,
 				SubnetIds:        getSubnetIds(lb.AvailabilityZones),
 			}
 
@@ -119,7 +119,7 @@ func targetGroupForLoadBalancer(ctx context.Context, client *elasticloadbalancin
 				IpAddressType:   convertTargetGroupIPAddressType(awsTargetGroup.IpAddressType),
 				Port:            int(aws.ToInt32(awsTargetGroup.Port)),
 				Protocol:        convertProtocol(awsTargetGroup.Protocol),
-				VpcId:           aws.ToString(awsTargetGroup.VpcId),
+				VpcId:           awsTargetGroup.VpcId,
 				LoadBalancerArn: awsTargetGroup.LoadBalancerArns[0],
 			}
 
