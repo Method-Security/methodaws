@@ -44,8 +44,8 @@ types:
       loadBalancerArn: string
       port: integer
       protocol: optional<Protocol>
-      vpcId: string
-      targets: list<Target>
+      vpcId: optional<string>
+      targets: optional<list<Target>>
   LoadBalancerState:
     enum:
       - ACTIVE
@@ -67,24 +67,24 @@ types:
       createdTime: datetime
       dnsName: string
       ipAddressType: IpAddressType
-      securityGroupIds: list<string>
+      securityGroupIds: optional<list<string>>
       state: optional<LoadBalancerState>
-      vpcId: string
+      vpcId: optional<string>
       listeners: optional<list<Listener>>
-      subnetIds: list<string>
+      subnetIds: optional<list<string>>
       hostedZoneId: optional<string>
-      targetGroups: list<TargetGroup>
+      targetGroups: optional<list<TargetGroup>>
   LoadBalancerV1:
     properties:
       name: string
       createdTime: datetime
       dnsName: string
-      securityGroupIds: list<string>
-      vpcId: string
-      subnetIds: list<string>
+      securityGroupIds: optional<list<string>>
+      vpcId: optional<string>
+      subnetIds: optional<list<string>>
       hostedZoneId: optional<string>
-      targets: list<Target>
-      listeners: list<Listener>
+      targets: optional<list<Target>>
+      listeners: optional<list<Listener>>
   LoadBalancerReport:
     properties:
       accountId: string
