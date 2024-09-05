@@ -748,6 +748,7 @@ func (e *EncryptionRule) String() string {
 }
 
 type ExternalBucket struct {
+	Name                  string             `json:"name" url:"name"`
 	Url                   string             `json:"url" url:"url"`
 	Region                string             `json:"region" url:"region"`
 	DirectoryContents     []*S3ObjectDetails `json:"directoryContents,omitempty" url:"directoryContents,omitempty"`
