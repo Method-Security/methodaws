@@ -185,6 +185,7 @@ func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 	client := s3.NewFromConfig(cfg)
 
 	// Populate basic information
+	externalBucket.Name = bucketName
 	externalBucket.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucketName, cfg.Region)
 	externalBucket.Region = region
 
