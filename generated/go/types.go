@@ -304,7 +304,7 @@ type LoadBalancerV1 struct {
 	CreatedTime      time.Time   `json:"createdTime" url:"createdTime"`
 	DnsName          string      `json:"dnsName" url:"dnsName"`
 	SecurityGroupIds []string    `json:"securityGroupIds,omitempty" url:"securityGroupIds,omitempty"`
-	VpcId            string      `json:"vpcId" url:"vpcId"`
+	VpcId            *string     `json:"vpcId,omitempty" url:"vpcId,omitempty"`
 	SubnetIds        []string    `json:"subnetIds,omitempty" url:"subnetIds,omitempty"`
 	HostedZoneId     *string     `json:"hostedZoneId,omitempty" url:"hostedZoneId,omitempty"`
 	Targets          []*Target   `json:"targets,omitempty" url:"targets,omitempty"`
@@ -376,7 +376,7 @@ type LoadBalancerV2 struct {
 	IpAddressType    IpAddressType      `json:"ipAddressType" url:"ipAddressType"`
 	SecurityGroupIds []string           `json:"securityGroupIds,omitempty" url:"securityGroupIds,omitempty"`
 	State            *LoadBalancerState `json:"state,omitempty" url:"state,omitempty"`
-	VpcId            string             `json:"vpcId" url:"vpcId"`
+	VpcId            *string            `json:"vpcId,omitempty" url:"vpcId,omitempty"`
 	Listeners        []*Listener        `json:"listeners,omitempty" url:"listeners,omitempty"`
 	SubnetIds        []string           `json:"subnetIds,omitempty" url:"subnetIds,omitempty"`
 	HostedZoneId     *string            `json:"hostedZoneId,omitempty" url:"hostedZoneId,omitempty"`
@@ -526,7 +526,7 @@ type TargetGroup struct {
 	LoadBalancerArn string                   `json:"loadBalancerArn" url:"loadBalancerArn"`
 	Port            int                      `json:"port" url:"port"`
 	Protocol        *Protocol                `json:"protocol,omitempty" url:"protocol,omitempty"`
-	VpcId           string                   `json:"vpcId" url:"vpcId"`
+	VpcId           *string                  `json:"vpcId,omitempty" url:"vpcId,omitempty"`
 	Targets         []*Target                `json:"targets,omitempty" url:"targets,omitempty"`
 
 	extraProperties map[string]interface{}

@@ -44,7 +44,7 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 				CreatedTime:      aws.ToTime(lb.CreatedTime),
 				DnsName:          aws.ToString(lb.DNSName),
 				SecurityGroupIds: lb.SecurityGroups,
-				VpcId:            aws.ToString(lb.VPCId),
+				VpcId:            lb.VPCId,
 				SubnetIds:        lb.Subnets,
 				HostedZoneId:     lb.CanonicalHostedZoneNameID,
 			}
