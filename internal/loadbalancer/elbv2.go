@@ -10,7 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 )
 
-func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerReport {
+func EnumerateV2LBsForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.LoadBalancerReport {
+	cfg.Region = region
+
 	client := elasticloadbalancingv2.NewFromConfig(cfg)
 	paginator := elasticloadbalancingv2.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancingv2.DescribeLoadBalancersInput{})
 
@@ -49,6 +51,7 @@ func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerR
 				State:            loadBalancerCodeToState(lb.State),
 				VpcId:            lb.VpcId,
 				SubnetIds:        getSubnetIds(lb.AvailabilityZones),
+				Region:           region,
 			}
 
 			listeners, errors := listenersForLoadBalancer(ctx, client, loadBalancer)
@@ -71,6 +74,31 @@ func EnumerateV2LBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerR
 		V2LoadBalancers: loadBalancers,
 		Errors:          errorMessages,
 	}
+}
+
+func EnumerateV2LBs(ctx context.Context, cfg aws.Config, regions []string) methodaws.LoadBalancerReport {
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return methodaws.LoadBalancerReport{
+			AccountId:       aws.ToString(accountID),
+			V2LoadBalancers: []*methodaws.LoadBalancerV2{},
+			Errors:          []string{err.Error()},
+		}
+	}
+
+	report := methodaws.LoadBalancerReport{
+		AccountId:       aws.ToString(accountID),
+		V2LoadBalancers: []*methodaws.LoadBalancerV2{},
+		Errors:          []string{},
+	}
+
+	for _, region := range regions {
+		r := EnumerateV2LBsForRegion(ctx, cfg, region)
+		report.Errors = append(report.Errors, r.Errors...)
+		report.V2LoadBalancers = append(report.V2LoadBalancers, r.V2LoadBalancers...)
+	}
+
+	return report
 }
 
 func listenersForLoadBalancer(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancer methodaws.LoadBalancerV2) ([]*methodaws.Listener, []string) {

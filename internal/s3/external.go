@@ -9,22 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
-
-func getAWSRegions() []string {
-	resolver := endpoints.DefaultResolver()
-	partitions := resolver.(endpoints.EnumPartitions).Partitions()
-
-	var regions []string
-	for _, p := range partitions {
-		for region := range p.Regions() {
-			regions = append(regions, region)
-		}
-	}
-
-	return regions
-}
 
 func bucketExists(ctx context.Context, region string, bucketName string) (bool, error) {
 	// Create a custom AWS config with anonymous credentials
@@ -158,7 +143,7 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*met
 
 // externalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region.
 // If the bucket does not exist, it will return an unmodified report (with potential new errors).
-func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
+func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
 	// Check if bucket exists before proceeding
 	exists, err := bucketExists(ctx, region, bucketName)
 	if err != nil {
@@ -225,20 +210,16 @@ func externalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials.
 // If the bucket does not exist, it will return an empty report.
-// If region is "all", it will attempt to enumerate the bucket in all regions.
-func ExternalEnumerateS3(ctx context.Context, cfg aws.Config, bucketName string) methodaws.ExternalS3Report {
+func ExternalEnumerateS3(ctx context.Context, cfg aws.Config, bucketName string, regions []string) methodaws.ExternalS3Report {
 	report := methodaws.ExternalS3Report{
 		ExternalBuckets: []*methodaws.ExternalBucket{},
 		Errors:          []string{},
 	}
 
-	// If region is not "all", use specified region, otherwise attempt all regions
-	if cfg.Region != "all" {
-		report = externalEnumerateS3Region(ctx, report, bucketName, cfg.Region)
-	} else {
-		for _, region := range getAWSRegions() {
-			report = externalEnumerateS3Region(ctx, report, bucketName, region)
-		}
+	for _, region := range regions {
+		r := ExternalEnumerateS3Region(ctx, report, bucketName, region)
+		report.Errors = append(report.Errors, r.Errors...)
+		report.ExternalBuckets = append(report.ExternalBuckets, r.ExternalBuckets...)
 	}
 
 	return report

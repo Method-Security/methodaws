@@ -10,7 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
 )
 
-func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancerReport {
+// Returns v1 Load Balancers for the specified Region
+func EnumerateV1ELBsForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.LoadBalancerReport {
+	cfg.Region = region
+
 	client := elasticloadbalancing.NewFromConfig(cfg)
 	paginator := elasticloadbalancing.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancing.DescribeLoadBalancersInput{})
 
@@ -47,6 +50,7 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 				VpcId:            lb.VPCId,
 				SubnetIds:        lb.Subnets,
 				HostedZoneId:     lb.CanonicalHostedZoneNameID,
+				Region:           region,
 			}
 			targets, errors := targetsForLoadBalancerV1(lb)
 			if len(errors) > 0 {
@@ -68,6 +72,32 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config) methodaws.LoadBalancer
 		V1LoadBalancers: loadBalancers,
 		Errors:          errorMessages,
 	}
+}
+
+// Returns v1 Load Balancers for the specified Regions and will consolidate all regional reports into a single report
+func EnumerateV1ELBs(ctx context.Context, cfg aws.Config, regions []string) methodaws.LoadBalancerReport {
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return methodaws.LoadBalancerReport{
+			AccountId:       aws.ToString(accountID),
+			V1LoadBalancers: []*methodaws.LoadBalancerV1{},
+			Errors:          []string{err.Error()},
+		}
+	}
+
+	report := methodaws.LoadBalancerReport{
+		AccountId:       aws.ToString(accountID),
+		V1LoadBalancers: []*methodaws.LoadBalancerV1{},
+		Errors:          []string{},
+	}
+
+	for _, region := range regions {
+		r := EnumerateV1ELBsForRegion(ctx, cfg, region)
+		report.Errors = append(report.Errors, r.Errors...)
+		report.V1LoadBalancers = append(report.V1LoadBalancers, r.V1LoadBalancers...)
+	}
+
+	return report
 }
 
 func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*methodaws.Target, []string) {

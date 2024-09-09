@@ -13,7 +13,9 @@ import (
 
 // EnumerateEc2 enumerates all of the EC2 instances that the caller has access to. It returns a ResourceReport struct
 // that contains the EC2 instances and any non-fatal errors that occurred during the execution of the subcommand.
-func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) {
+func EnumerateEc2ForRegion(ctx context.Context, cfg aws.Config, region string) (*ResourceReport, error) {
+	cfg.Region = region
+
 	// Create EC2 and IAM service clients
 	svc := ec2.NewFromConfig(cfg)
 	iamSvc := iam.NewFromConfig(cfg)
@@ -50,6 +52,7 @@ func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) 
 			for _, inst := range r.Instances {
 				instanceWithRole := InstanceWithIAMRole{
 					Instance: inst,
+					Region:   region,
 				}
 
 				if inst.IamInstanceProfile != nil {
@@ -73,6 +76,34 @@ func EnumerateEc2(ctx context.Context, cfg aws.Config) (*ResourceReport, error) 
 		AccountID: aws.ToString(accountID),
 		Resources: resources,
 		Errors:    errors,
+	}
+
+	return &report, nil
+}
+
+func EnumerateEc2(ctx context.Context, cfg aws.Config, regions []string) (*ResourceReport, error) {
+	// Get the account ID
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return &ResourceReport{
+			AccountID: aws.ToString(accountID),
+			Resources: Instances{},
+			Errors:    []string{err.Error()},
+		}, err
+	}
+
+	report := ResourceReport{
+		AccountID: aws.ToString(accountID),
+		Resources: Instances{},
+		Errors:    []string{},
+	}
+
+	for _, region := range regions {
+		r, err := EnumerateEc2ForRegion(ctx, cfg, region)
+		if err != nil {
+			report.Errors = append(report.Errors, err.Error())
+		}
+		report.Resources.EC2Instances = append(report.Resources.EC2Instances, r.Resources.EC2Instances...)
 	}
 
 	return &report, nil

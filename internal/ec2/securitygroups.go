@@ -12,7 +12,9 @@ import (
 // EnumerateSecurityGroups lists all of the security groups available to the caller alongside any non-fatal errors that
 // occurred during the execution of the `methodaws securitygroup enumerate` subcommand.
 // If vpcID is not nil, it will only return security groups associated with that VPC.
-func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, vpcID *string) (SecurityGroupReport, error) {
+func EnumerateSecurityGroupsForRegion(ctx context.Context, cfg aws.Config, vpcID *string, region string) (SecurityGroupReport, error) {
+	cfg.Region = region
+
 	svc := ec2.NewFromConfig(cfg)
 	errors := []string{}
 	var securityGroups []types.SecurityGroup

@@ -40,7 +40,9 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 }
 
 // EnumerateRds retrieves all RDS instances available to the caller and returns an AWSResourceReport struct
-func EnumerateRds(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
+func EnumerateRdsForRegion(ctx context.Context, cfg aws.Config, region string) (*AWSResourceReport, error) {
+	cfg.Region = region
+
 	rdsClient := rds.NewFromConfig(cfg)
 	resources := AWSResources{}
 	errors := []string{}
@@ -62,6 +64,29 @@ func EnumerateRds(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 		AccountID: *accountID,
 		Resources: resources,
 		Errors:    errors,
+	}
+
+	return &report, nil
+}
+
+func EnumerateRds(ctx context.Context, cfg aws.Config, regions []string) (*AWSResourceReport, error) {
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return &AWSResourceReport{Errors: []string{err.Error()}}, err
+	}
+
+	report := AWSResourceReport{
+		AccountID: *accountID,
+		Resources: AWSResources{},
+		Errors:    []string{},
+	}
+
+	for _, region := range regions {
+		r, err := EnumerateRdsForRegion(ctx, cfg, region)
+		if err != nil {
+			report.Errors = append(report.Errors, err.Error())
+		}
+		report.Resources.RDSInstances = append(report.Resources.RDSInstances, r.Resources.RDSInstances...)
 	}
 
 	return &report, nil

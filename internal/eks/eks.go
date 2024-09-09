@@ -30,6 +30,7 @@ type NodeGroup struct {
 type ClusterInfo struct {
 	eksTypes.Cluster
 	NodeGroups []NodeGroup `json:"node_groups" yaml:"node_groups"`
+	Region     string      `json:"region" yaml:"region"`
 }
 
 // AWSResources contains all EKS resources.
@@ -44,10 +45,12 @@ type AWSResourceReport struct {
 	Errors    []string     `json:"errors"`
 }
 
-// EnumerateEks enumerates all EKS clusters and their associated node groups and EC2 instances. Non-fatal errors
+// EnumerateEks enumerates all EKS clusters in a specified regionand their associated node groups and EC2 instances. Non-fatal errors
 // will be captured and returned in the report. However, if a fatal error occurs (e.g., during the initial listing of
 // clusters), the function will return early with the error.
-func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, error) {
+func EnumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) (*AWSResourceReport, error) {
+	cfg.Region = region
+
 	eksSvc := eks.NewFromConfig(cfg)
 	resources := AWSResources{}
 	errors := []string{}
@@ -75,7 +78,7 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 			errors = append(errors, err.Error())
 			continue
 		}
-		cluster := ClusterInfo{Cluster: *clusterDetail.Cluster}
+		cluster := ClusterInfo{Cluster: *clusterDetail.Cluster, Region: region}
 
 		nodeGroupList, err := eksSvc.ListNodegroups(ctx, &eks.ListNodegroupsInput{ClusterName: &clusterName})
 		if err != nil {
@@ -120,6 +123,34 @@ func EnumerateEks(ctx context.Context, cfg aws.Config) (*AWSResourceReport, erro
 		AccountID: aws.ToString(accountID),
 		Resources: resources,
 		Errors:    errors,
+	}
+
+	return &report, nil
+}
+
+func EnumerateEks(ctx context.Context, cfg aws.Config, regions []string) (*AWSResourceReport, error) {
+	// Get the account ID
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return &AWSResourceReport{
+			AccountID: aws.ToString(accountID),
+			Resources: AWSResources{},
+			Errors:    []string{err.Error()},
+		}, nil
+	}
+
+	report := AWSResourceReport{
+		AccountID: aws.ToString(accountID),
+		Resources: AWSResources{},
+		Errors:    []string{},
+	}
+
+	for _, region := range regions {
+		r, err := EnumerateEksForRegion(ctx, cfg, region)
+		if err != nil {
+			report.Errors = append(report.Errors, err.Error())
+		}
+		report.Resources.EKSClusters = append(report.Resources.EKSClusters, r.Resources.EKSClusters...)
 	}
 
 	return &report, nil

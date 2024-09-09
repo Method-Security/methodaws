@@ -93,7 +93,9 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 // EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
-func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
+func EnumerateS3ForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.S3Report {
+	cfg.Region = region
+
 	client := s3.NewFromConfig(cfg)
 
 	s3Buckets := []*methodaws.Bucket{}
@@ -104,7 +106,6 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
-			Region:    cfg.Region,
 			S3Buckets: s3Buckets,
 			Errors:    errorMessages,
 		}
@@ -115,7 +116,6 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
-			Region:    cfg.Region,
 			S3Buckets: s3Buckets,
 			Errors:    errorMessages,
 		}
@@ -127,6 +127,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 			Name:         aws.ToString(bucket.Name),
 			OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
 			OwnerName:    aws.ToString(listBucketsOutput.Owner.DisplayName),
+			Region:       region,
 		}
 
 		s3Bucket, err = bucketPolicy(ctx, client, s3Bucket)
@@ -164,8 +165,34 @@ func EnumerateS3(ctx context.Context, cfg aws.Config) methodaws.S3Report {
 
 	return methodaws.S3Report{
 		AccountId: aws.ToString(accountID),
-		Region:    cfg.Region,
 		S3Buckets: s3Buckets,
 		Errors:    errorMessages,
 	}
+}
+
+func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaws.S3Report {
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return methodaws.S3Report{
+			AccountId: aws.ToString(accountID),
+			S3Buckets: []*methodaws.Bucket{},
+			Errors:    []string{err.Error()},
+		}
+	}
+
+	report := methodaws.S3Report{
+		AccountId: aws.ToString(accountID),
+		S3Buckets: []*methodaws.Bucket{},
+		Errors:    []string{},
+	}
+
+	for _, region := range regions {
+		r := EnumerateS3ForRegion(ctx, cfg, region)
+		if r.Errors != nil {
+			report.Errors = append(report.Errors, r.Errors...)
+		}
+		report.S3Buckets = append(report.S3Buckets, r.S3Buckets...)
+	}
+
+	return report
 }

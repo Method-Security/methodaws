@@ -8,10 +8,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
-// EnumerateVPC lists the VPCs available to the caller and returns a Report struct. The Report contains all non-fatal errors
-// that occurred during the execution of the `methodaws vpc enumerate` subcommand. EnumerateVPC will return an error
-// if the account ID cannot be retrieved.
-func EnumerateVPC(ctx context.Context, cfg aws.Config) (report Report, err error) {
+// EnumerateVPC lists the VPCs available to the caller for a particular regionand returns a Report struct. The Report
+// contains all non-fatal errors that occurred during the execution of the `methodaws vpc enumerate` subcommand.
+// EnumerateVPC will return an error if the account ID cannot be retrieved.
+func EnumerateVPCForRegion(ctx context.Context, cfg aws.Config, region string) (report Report, err error) {
+	cfg.Region = region
+
 	svc := ec2.NewFromConfig(cfg)
 	paginator := ec2.NewDescribeVpcsPaginator(svc, &ec2.DescribeVpcsInput{})
 
@@ -35,7 +37,7 @@ func EnumerateVPC(ctx context.Context, cfg aws.Config) (report Report, err error
 		}
 
 		for _, vpc := range result.Vpcs {
-			vpcs = append(vpcs, Instance{VPC: vpc})
+			vpcs = append(vpcs, Instance{VPC: vpc, Region: region})
 		}
 	}
 
@@ -44,4 +46,34 @@ func EnumerateVPC(ctx context.Context, cfg aws.Config) (report Report, err error
 		VPCs:      vpcs,
 		Errors:    errors,
 	}, nil
+}
+
+// EnumerateVPC lists the VPCs available to the caller and returns a Report struct for each specified region. The Report
+// contains all non-fatal errors that occurred during the execution of the `methodaws vpc enumerate` subcommand.
+// This method consolidates individual region reports into a single report.
+func EnumerateVPC(ctx context.Context, cfg aws.Config, regions []string) (report Report, err error) {
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return Report{
+			AccountID: "",
+			VPCs:      []Instance{},
+			Errors:    []string{err.Error()},
+		}, err
+	}
+
+	report = Report{
+		AccountID: *accountID,
+		VPCs:      []Instance{},
+		Errors:    []string{},
+	}
+
+	for _, region := range regions {
+		r, err := EnumerateVPCForRegion(ctx, cfg, region)
+		if err != nil {
+			report.Errors = append(report.Errors, err.Error())
+		}
+		report.VPCs = append(report.VPCs, r.VPCs...)
+	}
+
+	return report, nil
 }
