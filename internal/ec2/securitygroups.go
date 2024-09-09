@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-// EnumerateSecurityGroups lists all of the security groups available to the caller alongside any non-fatal errors that
+// EnumerateSecurityGroupsForRegion lists all of the security groups available to the caller alongside any non-fatal errors that
 // occurred during the execution of the `methodaws securitygroup enumerate` subcommand.
 // If vpcID is not nil, it will only return security groups associated with that VPC.
 func EnumerateSecurityGroupsForRegion(ctx context.Context, cfg aws.Config, vpcID *string, region string) (SecurityGroupReport, error) {

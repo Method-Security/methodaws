@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
-// EnumerateVPC lists the VPCs available to the caller for a particular regionand returns a Report struct. The Report
+// EnumerateVPCForRegion lists the VPCs available to the caller for a particular regionand returns a Report struct. The Report
 // contains all non-fatal errors that occurred during the execution of the `methodaws vpc enumerate` subcommand.
-// EnumerateVPC will return an error if the account ID cannot be retrieved.
+// EnumerateVPCForRegion will return an error if the account ID cannot be retrieved.
 func EnumerateVPCForRegion(ctx context.Context, cfg aws.Config, region string) (report Report, err error) {
 	cfg.Region = region
 

@@ -39,7 +39,7 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 	return instances, nil
 }
 
-// EnumerateRds retrieves all RDS instances available to the caller and returns an AWSResourceReport struct
+// EnumerateRdsForRegion retrieves all RDS instances available to the caller and returns an AWSResourceReport struct
 func EnumerateRdsForRegion(ctx context.Context, cfg aws.Config, region string) (*AWSResourceReport, error) {
 	cfg.Region = region
 

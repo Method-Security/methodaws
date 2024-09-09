@@ -45,7 +45,7 @@ type AWSResourceReport struct {
 	Errors    []string     `json:"errors"`
 }
 
-// EnumerateEks enumerates all EKS clusters in a specified regionand their associated node groups and EC2 instances. Non-fatal errors
+// EnumerateEksForRegion enumerates all EKS clusters in a specified regionand their associated node groups and EC2 instances. Non-fatal errors
 // will be captured and returned in the report. However, if a fatal error occurs (e.g., during the initial listing of
 // clusters), the function will return early with the error.
 func EnumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) (*AWSResourceReport, error) {

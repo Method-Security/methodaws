@@ -141,7 +141,7 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*met
 	return acls, nil
 }
 
-// externalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region.
+// ExternalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region.
 // If the bucket does not exist, it will return an unmodified report (with potential new errors).
 func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
 	// Check if bucket exists before proceeding

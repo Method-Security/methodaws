@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 )
 
-// EnumerateEc2 enumerates all of the EC2 instances that the caller has access to. It returns a ResourceReport struct
+// EnumerateEc2ForRegion enumerates all of the EC2 instances that the caller has access to. It returns a ResourceReport struct
 // that contains the EC2 instances and any non-fatal errors that occurred during the execution of the subcommand.
 func EnumerateEc2ForRegion(ctx context.Context, cfg aws.Config, region string) (*ResourceReport, error) {
 	cfg.Region = region

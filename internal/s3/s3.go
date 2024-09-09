@@ -90,7 +90,7 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 	return bucket, nil
 }
 
-// EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
+// EnumerateS3ForRegion retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
 func EnumerateS3ForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.S3Report {

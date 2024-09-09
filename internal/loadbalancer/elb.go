@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
 )
 
-// Returns v1 Load Balancers for the specified Region
+// EnumerateV1ELBsForRegion returns v1 Load Balancers for the specified Region
 func EnumerateV1ELBsForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.LoadBalancerReport {
 	cfg.Region = region
 
@@ -74,7 +74,7 @@ func EnumerateV1ELBsForRegion(ctx context.Context, cfg aws.Config, region string
 	}
 }
 
-// Returns v1 Load Balancers for the specified Regions and will consolidate all regional reports into a single report
+// EnumerateV1ELBs returns v1 Load Balancers for the specified Regions and will consolidate all regional reports into a single report
 func EnumerateV1ELBs(ctx context.Context, cfg aws.Config, regions []string) methodaws.LoadBalancerReport {
 	accountID, err := sts.GetAccountID(ctx, cfg)
 	if err != nil {
