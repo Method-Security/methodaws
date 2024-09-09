@@ -7,7 +7,8 @@ import (
 
 // The Instance struct contains the VPC data that was enumerated, wrapping the AWS values
 type Instance struct {
-	VPC types.Vpc `json:"vpc" yaml:"vpc"`
+	VPC    types.Vpc `json:"vpc" yaml:"vpc"`
+	Region string    `json:"region" yaml:"region"`
 }
 
 // The Report struct contains the account ID that the VPCs were discovered in, the resources themselves,

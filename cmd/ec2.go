@@ -19,7 +19,7 @@ func (a *MethodAws) InitEc2Command() {
 		Short: "Enumerate EC2 instances",
 		Long:  `Enumerate EC2 instances`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := ec2.EnumerateEc2(cmd.Context(), *a.AwsConfig)
+			report, err := ec2.EnumerateEc2(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage

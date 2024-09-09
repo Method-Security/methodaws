@@ -64,6 +64,7 @@ types:
     properties:
       arn: string
       name: string
+      region: string
       createdTime: datetime
       dnsName: string
       ipAddressType: IpAddressType
@@ -77,6 +78,7 @@ types:
   LoadBalancerV1:
     properties:
       name: string
+      region: string
       createdTime: datetime
       dnsName: string
       securityGroupIds: optional<list<string>>

@@ -301,6 +301,7 @@ func (l LoadBalancerState) Ptr() *LoadBalancerState {
 
 type LoadBalancerV1 struct {
 	Name             string      `json:"name" url:"name"`
+	Region           string      `json:"region" url:"region"`
 	CreatedTime      time.Time   `json:"createdTime" url:"createdTime"`
 	DnsName          string      `json:"dnsName" url:"dnsName"`
 	SecurityGroupIds []string    `json:"securityGroupIds,omitempty" url:"securityGroupIds,omitempty"`
@@ -371,6 +372,7 @@ func (l *LoadBalancerV1) String() string {
 type LoadBalancerV2 struct {
 	Arn              string             `json:"arn" url:"arn"`
 	Name             string             `json:"name" url:"name"`
+	Region           string             `json:"region" url:"region"`
 	CreatedTime      time.Time          `json:"createdTime" url:"createdTime"`
 	DnsName          string             `json:"dnsName" url:"dnsName"`
 	IpAddressType    IpAddressType      `json:"ipAddressType" url:"ipAddressType"`
@@ -618,6 +620,7 @@ type Bucket struct {
 	Name               string                            `json:"name" url:"name"`
 	Arn                string                            `json:"arn" url:"arn"`
 	Url                string                            `json:"url" url:"url"`
+	Region             string                            `json:"region" url:"region"`
 	CreationDate       time.Time                         `json:"creationDate" url:"creationDate"`
 	OwnerId            string                            `json:"ownerID" url:"ownerID"`
 	OwnerName          string                            `json:"ownerName" url:"ownerName"`
@@ -1010,7 +1013,6 @@ func (s *S3PublicAccessBlockConfiguration) String() string {
 
 type S3Report struct {
 	AccountId string    `json:"accountId" url:"accountId"`
-	Region    string    `json:"region" url:"region"`
 	S3Buckets []*Bucket `json:"s3Buckets,omitempty" url:"s3Buckets,omitempty"`
 	Errors    []string  `json:"errors,omitempty" url:"errors,omitempty"`
 

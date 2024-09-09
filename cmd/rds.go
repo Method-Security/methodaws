@@ -18,7 +18,7 @@ func (a *MethodAws) InitRdsCommand() {
 		Short: "Enumerate RDS instances",
 		Long:  `Enumerate RDS instances in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := rds.EnumerateRds(cmd.Context(), *a.AwsConfig)
+			report, err := rds.EnumerateRds(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage
