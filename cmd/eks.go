@@ -19,7 +19,7 @@ func (a *MethodAws) InitEksCommand() {
 		Short: "Enumerate EKS instances",
 		Long:  `Enumerate EKS instances`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := eks.EnumerateEks(cmd.Context(), *a.AwsConfig)
+			report, err := eks.EnumerateEks(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage

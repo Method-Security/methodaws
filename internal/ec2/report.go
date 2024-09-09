@@ -8,6 +8,7 @@ import (
 type InstanceWithIAMRole struct {
 	Instance types.Instance `json:"instance" yaml:"instance"`
 	IAMRoles []string       `json:"iam_roles,omitempty" yaml:"iam_roles,omitempty"`
+	Region   string         `json:"region,omitempty" yaml:"region,omitempty"`
 }
 
 // Instances represents all of the EC2 instances that were returned during the reporting process

@@ -34,13 +34,13 @@ func (a *MethodAws) InitLoadBalancerCommand() {
 			}
 
 			if loadBalancerVersions == "all" || loadBalancerVersions == "v1" {
-				v1Report := loadbalancer.EnumerateV1ELBs(cmd.Context(), *a.AwsConfig)
+				v1Report := loadbalancer.EnumerateV1ELBs(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 				report.V1LoadBalancers = v1Report.V1LoadBalancers
 				report.AccountId = v1Report.AccountId
 				report.Errors = append(report.Errors, v1Report.Errors...)
 			}
 			if loadBalancerVersions == "all" || loadBalancerVersions == "v2" {
-				v2Report := loadbalancer.EnumerateV2LBs(cmd.Context(), *a.AwsConfig)
+				v2Report := loadbalancer.EnumerateV2LBs(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 				report.V2LoadBalancers = v2Report.V2LoadBalancers
 				report.AccountId = v2Report.AccountId
 				report.Errors = append(report.Errors, v2Report.Errors...)

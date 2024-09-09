@@ -19,7 +19,7 @@ func (a *MethodAws) InitVPCCommand() {
 		Short: "Enumerate all VPCs",
 		Long:  `Enumerate all VPCs in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := vpc.EnumerateVPC(cmd.Context(), *a.AwsConfig)
+			report, err := vpc.EnumerateVPC(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage

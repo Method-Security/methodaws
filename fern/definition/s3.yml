@@ -36,6 +36,7 @@ types:
       name: string
       arn: string
       url: string
+      region: string
       creationDate: datetime
       ownerID: string
       ownerName: string
@@ -47,7 +48,6 @@ types:
   S3Report:
     properties:
       accountId: string
-      region: string
       s3Buckets: optional<list<Bucket>>
       errors: optional<list<string>>
   S3ObjectDetails:

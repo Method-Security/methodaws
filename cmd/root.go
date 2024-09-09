@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/config"
 	"github.com/Method-Security/pkg/signal"
 	"github.com/Method-Security/pkg/writer"
@@ -23,7 +24,7 @@ import (
 // for use by subcommands. The output signal is used to write the output of the command to the desired output format
 // after the execution of the invoked commands Run function.
 type MethodAws struct {
-	version      string
+	Version      string
 	RootFlags    config.RootFlags
 	OutputConfig writer.OutputConfig
 	OutputSignal signal.Signal
@@ -36,11 +37,11 @@ type MethodAws struct {
 // We pass the version command in here from the main.go file, where we set the version string during the build process.
 func NewMethodAws(version string) *MethodAws {
 	methodAws := MethodAws{
-		version: version,
+		Version: version,
 		RootFlags: config.RootFlags{
 			Quiet:   false,
 			Verbose: false,
-			Region:  "",
+			Regions: []string{},
 		},
 		OutputConfig: writer.NewOutputConfig(nil, writer.NewFormat(writer.SIGNAL)),
 		OutputSignal: signal.NewSignal(nil, datetime.DateTime(time.Now()), nil, 0, nil),
@@ -66,9 +67,6 @@ func (a *MethodAws) InitRootCommand() {
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			var err error
-			if a.RootFlags.Region == "" {
-				return errors.New("region is required")
-			}
 
 			format, err := validateOutputFormat(outputFormat)
 			if err != nil {
@@ -81,12 +79,14 @@ func (a *MethodAws) InitRootCommand() {
 				outputFilePointer = nil
 			}
 			a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
+			a.RootFlags.Regions = common.GetAWSRegions(a.RootFlags.Regions)
 			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
-			awsconfig, err := awsconfig.LoadDefaultConfig(cmd.Context(), awsconfig.WithRegion(a.RootFlags.Region))
+			awsconfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
 			if err != nil {
 				return err
 			}
 			a.AwsConfig = &awsconfig
+
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
@@ -105,7 +105,7 @@ func (a *MethodAws) InitRootCommand() {
 
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Quiet, "quiet", "q", false, "Suppress output")
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Verbose, "verbose", "v", false, "Verbose output")
-	a.RootCmd.PersistentFlags().StringVarP(&a.RootFlags.Region, "region", "r", "", "AWS region")
+	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "region", "r", []string{}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "f", "", "Path to output file. If blank, will output to STDOUT")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "signal", "Output format (signal, json, yaml). Default value is signal")
 
@@ -116,7 +116,7 @@ func (a *MethodAws) InitRootCommand() {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Println(a.version)
+			cmd.Println(a.Version)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
 			return nil

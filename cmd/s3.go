@@ -18,7 +18,7 @@ func (a *MethodAws) InitS3Command() {
 		Short: "Enumerate all S3 buckets",
 		Long:  `Enumerate all S3 buckets in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report := s3.EnumerateS3(cmd.Context(), *a.AwsConfig)
+			report := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			a.OutputSignal.Content = report
 		},
 	}
@@ -61,7 +61,7 @@ func (a *MethodAws) InitS3Command() {
 				return
 			}
 
-			report := s3.ExternalEnumerateS3(cmd.Context(), *a.AwsConfig, bucketName)
+			report := s3.ExternalEnumerateS3(cmd.Context(), *a.AwsConfig, bucketName, a.RootFlags.Regions)
 			a.OutputSignal.Content = report
 		},
 	}

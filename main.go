@@ -7,12 +7,12 @@ import (
 	"github.com/Method-Security/methodaws/cmd"
 )
 
-var version = "none"
+var Version = "none"
 
 func main() {
 	flag.Parse()
 
-	methodaws := cmd.NewMethodAws(version)
+	methodaws := cmd.NewMethodAws(Version)
 	methodaws.InitRootCommand()
 	methodaws.InitEc2Command()
 	methodaws.InitS3Command()
