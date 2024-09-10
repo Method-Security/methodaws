@@ -86,6 +86,7 @@ func (a *MethodAws) InitRootCommand() {
 				return err
 			}
 			a.AwsConfig = &awsconfig
+			a.AwsConfig.Region = a.RootFlags.Regions[0]
 
 			return nil
 		},
