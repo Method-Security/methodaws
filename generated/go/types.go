@@ -16,7 +16,6 @@ type CredentialInfo struct {
 	Expiration *time.Time `json:"expiration,omitempty" url:"expiration,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (c *CredentialInfo) GetExtraProperties() map[string]interface{} {
@@ -43,7 +42,6 @@ func (c *CredentialInfo) UnmarshalJSON(data []byte) error {
 	}
 	c.extraProperties = extraProperties
 
-	c._rawJSON = json.RawMessage(data)
 	return nil
 }
 
@@ -60,11 +58,6 @@ func (c *CredentialInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (c *CredentialInfo) String() string {
-	if len(c._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(c._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(c); err == nil {
 		return value
 	}
@@ -78,7 +71,6 @@ type CredentialReport struct {
 	Errors      []string        `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (c *CredentialReport) GetExtraProperties() map[string]interface{} {
@@ -99,16 +91,10 @@ func (c *CredentialReport) UnmarshalJSON(data []byte) error {
 	}
 	c.extraProperties = extraProperties
 
-	c._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (c *CredentialReport) String() string {
-	if len(c._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(c._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(c); err == nil {
 		return value
 	}
@@ -120,7 +106,6 @@ type Certificate struct {
 	IsDefault bool   `json:"isDefault" url:"isDefault"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (c *Certificate) GetExtraProperties() map[string]interface{} {
@@ -141,16 +126,10 @@ func (c *Certificate) UnmarshalJSON(data []byte) error {
 	}
 	c.extraProperties = extraProperties
 
-	c._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (c *Certificate) String() string {
-	if len(c._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(c._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(c); err == nil {
 		return value
 	}
@@ -190,7 +169,6 @@ type Listener struct {
 	LoadBalancerArn *string        `json:"loadBalancerArn,omitempty" url:"loadBalancerArn,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (l *Listener) GetExtraProperties() map[string]interface{} {
@@ -211,16 +189,10 @@ func (l *Listener) UnmarshalJSON(data []byte) error {
 	}
 	l.extraProperties = extraProperties
 
-	l._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (l *Listener) String() string {
-	if len(l._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(l._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(l); err == nil {
 		return value
 	}
@@ -234,7 +206,6 @@ type LoadBalancerReport struct {
 	Errors          []string          `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (l *LoadBalancerReport) GetExtraProperties() map[string]interface{} {
@@ -255,16 +226,10 @@ func (l *LoadBalancerReport) UnmarshalJSON(data []byte) error {
 	}
 	l.extraProperties = extraProperties
 
-	l._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (l *LoadBalancerReport) String() string {
-	if len(l._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(l._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(l); err == nil {
 		return value
 	}
@@ -312,7 +277,6 @@ type LoadBalancerV1 struct {
 	Listeners        []*Listener `json:"listeners,omitempty" url:"listeners,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (l *LoadBalancerV1) GetExtraProperties() map[string]interface{} {
@@ -339,7 +303,6 @@ func (l *LoadBalancerV1) UnmarshalJSON(data []byte) error {
 	}
 	l.extraProperties = extraProperties
 
-	l._rawJSON = json.RawMessage(data)
 	return nil
 }
 
@@ -356,11 +319,6 @@ func (l *LoadBalancerV1) MarshalJSON() ([]byte, error) {
 }
 
 func (l *LoadBalancerV1) String() string {
-	if len(l._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(l._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(l); err == nil {
 		return value
 	}
@@ -385,7 +343,6 @@ type LoadBalancerV2 struct {
 	TargetGroups     []*TargetGroup     `json:"targetGroups,omitempty" url:"targetGroups,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (l *LoadBalancerV2) GetExtraProperties() map[string]interface{} {
@@ -412,7 +369,6 @@ func (l *LoadBalancerV2) UnmarshalJSON(data []byte) error {
 	}
 	l.extraProperties = extraProperties
 
-	l._rawJSON = json.RawMessage(data)
 	return nil
 }
 
@@ -429,11 +385,6 @@ func (l *LoadBalancerV2) MarshalJSON() ([]byte, error) {
 }
 
 func (l *LoadBalancerV2) String() string {
-	if len(l._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(l._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(l); err == nil {
 		return value
 	}
@@ -484,7 +435,6 @@ type Target struct {
 	AvailabilityZone *string    `json:"availabilityZone,omitempty" url:"availabilityZone,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (t *Target) GetExtraProperties() map[string]interface{} {
@@ -505,16 +455,10 @@ func (t *Target) UnmarshalJSON(data []byte) error {
 	}
 	t.extraProperties = extraProperties
 
-	t._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (t *Target) String() string {
-	if len(t._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(t._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(t); err == nil {
 		return value
 	}
@@ -532,7 +476,6 @@ type TargetGroup struct {
 	Targets         []*Target                `json:"targets,omitempty" url:"targets,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (t *TargetGroup) GetExtraProperties() map[string]interface{} {
@@ -553,16 +496,10 @@ func (t *TargetGroup) UnmarshalJSON(data []byte) error {
 	}
 	t.extraProperties = extraProperties
 
-	t._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (t *TargetGroup) String() string {
-	if len(t._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(t._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(t); err == nil {
 		return value
 	}
@@ -631,7 +568,6 @@ type Bucket struct {
 	EncryptionRules    []*EncryptionRule                 `json:"encryptionRules,omitempty" url:"encryptionRules,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (b *Bucket) GetExtraProperties() map[string]interface{} {
@@ -658,7 +594,6 @@ func (b *Bucket) UnmarshalJSON(data []byte) error {
 	}
 	b.extraProperties = extraProperties
 
-	b._rawJSON = json.RawMessage(data)
 	return nil
 }
 
@@ -675,11 +610,6 @@ func (b *Bucket) MarshalJSON() ([]byte, error) {
 }
 
 func (b *Bucket) String() string {
-	if len(b._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(b._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(b); err == nil {
 		return value
 	}
@@ -713,7 +643,6 @@ type EncryptionRule struct {
 	KmsMasterKeyId *string                 `json:"kmsMasterKeyID,omitempty" url:"kmsMasterKeyID,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (e *EncryptionRule) GetExtraProperties() map[string]interface{} {
@@ -734,16 +663,10 @@ func (e *EncryptionRule) UnmarshalJSON(data []byte) error {
 	}
 	e.extraProperties = extraProperties
 
-	e._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (e *EncryptionRule) String() string {
-	if len(e._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(e); err == nil {
 		return value
 	}
@@ -761,7 +684,6 @@ type ExternalBucket struct {
 	Acls                  []*S3BucketAcl     `json:"acls,omitempty" url:"acls,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (e *ExternalBucket) GetExtraProperties() map[string]interface{} {
@@ -782,16 +704,10 @@ func (e *ExternalBucket) UnmarshalJSON(data []byte) error {
 	}
 	e.extraProperties = extraProperties
 
-	e._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (e *ExternalBucket) String() string {
-	if len(e._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(e); err == nil {
 		return value
 	}
@@ -803,7 +719,6 @@ type ExternalS3Report struct {
 	Errors          []string          `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (e *ExternalS3Report) GetExtraProperties() map[string]interface{} {
@@ -824,16 +739,10 @@ func (e *ExternalS3Report) UnmarshalJSON(data []byte) error {
 	}
 	e.extraProperties = extraProperties
 
-	e._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (e *ExternalS3Report) String() string {
-	if len(e._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(e._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(e); err == nil {
 		return value
 	}
@@ -845,7 +754,6 @@ type S3BucketAcl struct {
 	Permission string `json:"permission" url:"permission"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (s *S3BucketAcl) GetExtraProperties() map[string]interface{} {
@@ -866,16 +774,10 @@ func (s *S3BucketAcl) UnmarshalJSON(data []byte) error {
 	}
 	s.extraProperties = extraProperties
 
-	s._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (s *S3BucketAcl) String() string {
-	if len(s._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(s); err == nil {
 		return value
 	}
@@ -912,7 +814,6 @@ type S3ObjectDetails struct {
 	OwnerName    *string    `json:"ownerName,omitempty" url:"ownerName,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (s *S3ObjectDetails) GetExtraProperties() map[string]interface{} {
@@ -939,7 +840,6 @@ func (s *S3ObjectDetails) UnmarshalJSON(data []byte) error {
 	}
 	s.extraProperties = extraProperties
 
-	s._rawJSON = json.RawMessage(data)
 	return nil
 }
 
@@ -956,11 +856,6 @@ func (s *S3ObjectDetails) MarshalJSON() ([]byte, error) {
 }
 
 func (s *S3ObjectDetails) String() string {
-	if len(s._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(s); err == nil {
 		return value
 	}
@@ -974,7 +869,6 @@ type S3PublicAccessBlockConfiguration struct {
 	RestrictPublicBuckets bool `json:"restrictPublicBuckets" url:"restrictPublicBuckets"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (s *S3PublicAccessBlockConfiguration) GetExtraProperties() map[string]interface{} {
@@ -995,16 +889,10 @@ func (s *S3PublicAccessBlockConfiguration) UnmarshalJSON(data []byte) error {
 	}
 	s.extraProperties = extraProperties
 
-	s._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (s *S3PublicAccessBlockConfiguration) String() string {
-	if len(s._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(s); err == nil {
 		return value
 	}
@@ -1017,7 +905,6 @@ type S3Report struct {
 	Errors    []string  `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
-	_rawJSON        json.RawMessage
 }
 
 func (s *S3Report) GetExtraProperties() map[string]interface{} {
@@ -1038,16 +925,10 @@ func (s *S3Report) UnmarshalJSON(data []byte) error {
 	}
 	s.extraProperties = extraProperties
 
-	s._rawJSON = json.RawMessage(data)
 	return nil
 }
 
 func (s *S3Report) String() string {
-	if len(s._rawJSON) > 0 {
-		if value, err := core.StringifyJSON(s._rawJSON); err == nil {
-			return value
-		}
-	}
 	if value, err := core.StringifyJSON(s); err == nil {
 		return value
 	}
