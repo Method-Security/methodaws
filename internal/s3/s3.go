@@ -90,36 +90,35 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *methodaws.Bu
 	return bucket, nil
 }
 
-// EnumerateS3ForRegion retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
+// EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
-func EnumerateS3ForRegion(ctx context.Context, cfg aws.Config, region string) methodaws.S3Report {
-	cfg.Region = region
 
-	client := s3.NewFromConfig(cfg)
-
-	s3Buckets := []*methodaws.Bucket{}
-	errorMessages := []string{}
-
+func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaws.S3Report {
 	accountID, err := sts.GetAccountID(ctx, cfg)
 	if err != nil {
-		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
-			S3Buckets: s3Buckets,
-			Errors:    errorMessages,
+			S3Buckets: []*methodaws.Bucket{},
+			Errors:    []string{err.Error()},
 		}
 	}
+
+	// Use a single region to list all buckets (buckets are globally shared)
+	cfg.Region = "us-east-1"
+	client := s3.NewFromConfig(cfg)
 
 	listBucketsOutput, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
-		errorMessages = append(errorMessages, err.Error())
 		return methodaws.S3Report{
 			AccountId: aws.ToString(accountID),
-			S3Buckets: s3Buckets,
-			Errors:    errorMessages,
+			S3Buckets: []*methodaws.Bucket{},
+			Errors:    []string{err.Error()},
 		}
 	}
+
+	s3Buckets := []*methodaws.Bucket{}
+	errorMessages := []string{}
 
 	for _, bucket := range listBucketsOutput.Buckets {
 		s3Bucket := &methodaws.Bucket{
@@ -127,31 +126,46 @@ func EnumerateS3ForRegion(ctx context.Context, cfg aws.Config, region string) me
 			Name:         aws.ToString(bucket.Name),
 			OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
 			OwnerName:    aws.ToString(listBucketsOutput.Owner.DisplayName),
-			Region:       region,
 		}
 
-		s3Bucket, err = bucketPolicy(ctx, client, s3Bucket)
+		// Get the bucket's region
+		regionOutput, err := client.GetBucketLocation(ctx, &s3.GetBucketLocationInput{Bucket: bucket.Name})
+		if err != nil {
+			errorMessages = append(errorMessages, fmt.Sprintf("Error getting location for bucket %s: %v", *bucket.Name, err))
+			continue
+		}
+		s3Bucket.Region = string(regionOutput.LocationConstraint)
+		if s3Bucket.Region == "" {
+			s3Bucket.Region = "us-east-1" // Default region if empty
+		}
+
+		// Create a new client for the bucket's specific region
+		bucketCfg := cfg.Copy()
+		bucketCfg.Region = s3Bucket.Region
+		bucketClient := s3.NewFromConfig(bucketCfg)
+
+		// Fetch additional bucket details
+		s3Bucket, err = bucketPolicy(ctx, bucketClient, s3Bucket)
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 		}
 
-		s3Bucket, err = objectVersioning(ctx, client, s3Bucket)
+		s3Bucket, err = objectVersioning(ctx, bucketClient, s3Bucket)
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 		}
 
-		s3Bucket, err = bucketEncryption(ctx, client, s3Bucket)
+		s3Bucket, err = bucketEncryption(ctx, bucketClient, s3Bucket)
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 		}
 
-		s3Bucket, err = publicAccess(ctx, client, s3Bucket)
+		s3Bucket, err = publicAccess(ctx, bucketClient, s3Bucket)
 		if err != nil {
 			errorMessages = append(errorMessages, err.Error())
 		}
 
-		// Use virtual host style URL; path based is still valid but less common
-		s3Bucket.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", *bucket.Name, cfg.Region)
+		s3Bucket.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", *bucket.Name, s3Bucket.Region)
 
 		bucketARN := arn.ARN{
 			Partition: "aws",
@@ -168,31 +182,4 @@ func EnumerateS3ForRegion(ctx context.Context, cfg aws.Config, region string) me
 		S3Buckets: s3Buckets,
 		Errors:    errorMessages,
 	}
-}
-
-func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaws.S3Report {
-	accountID, err := sts.GetAccountID(ctx, cfg)
-	if err != nil {
-		return methodaws.S3Report{
-			AccountId: aws.ToString(accountID),
-			S3Buckets: []*methodaws.Bucket{},
-			Errors:    []string{err.Error()},
-		}
-	}
-
-	report := methodaws.S3Report{
-		AccountId: aws.ToString(accountID),
-		S3Buckets: []*methodaws.Bucket{},
-		Errors:    []string{},
-	}
-
-	for _, region := range regions {
-		r := EnumerateS3ForRegion(ctx, cfg, region)
-		if r.Errors != nil {
-			report.Errors = append(report.Errors, r.Errors...)
-		}
-		report.S3Buckets = append(report.S3Buckets, r.S3Buckets...)
-	}
-
-	return report
 }
