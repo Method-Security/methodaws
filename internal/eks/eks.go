@@ -4,6 +4,7 @@ package eks
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -148,9 +149,12 @@ func EnumerateEks(ctx context.Context, cfg aws.Config, regions []string) (*AWSRe
 	for _, region := range regions {
 		r, err := EnumerateEksForRegion(ctx, cfg, region)
 		if err != nil {
-			report.Errors = append(report.Errors, err.Error())
+			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
+			continue
 		}
-		report.Resources.EKSClusters = append(report.Resources.EKSClusters, r.Resources.EKSClusters...)
+		if r != nil && r.Resources.EKSClusters != nil {
+			report.Resources.EKSClusters = append(report.Resources.EKSClusters, r.Resources.EKSClusters...)
+		}
 	}
 
 	return &report, nil

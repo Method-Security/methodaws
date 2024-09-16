@@ -101,9 +101,12 @@ func EnumerateEc2(ctx context.Context, cfg aws.Config, regions []string) (*Resou
 	for _, region := range regions {
 		r, err := EnumerateEc2ForRegion(ctx, cfg, region)
 		if err != nil {
-			report.Errors = append(report.Errors, err.Error())
+			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
+			continue
 		}
-		report.Resources.EC2Instances = append(report.Resources.EC2Instances, r.Resources.EC2Instances...)
+		if r != nil && r.Resources.EC2Instances != nil {
+			report.Resources.EC2Instances = append(report.Resources.EC2Instances, r.Resources.EC2Instances...)
+		}
 	}
 
 	return &report, nil
