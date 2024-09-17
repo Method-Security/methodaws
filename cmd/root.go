@@ -87,17 +87,13 @@ func (a *MethodAws) InitRootCommand() {
 			a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
 
 			a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
-			if err != nil {
-				a.OutputSignal.ErrorMessage = aws.String(err.Error())
-			}
-
-			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
-
-			if len(a.RootFlags.Regions) == 0 {
+			if err != nil || len(a.RootFlags.Regions) == 0 {
 				a.OutputSignal.Status = 401
 				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
 				return nil
 			}
+
+			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
 
 			a.AwsConfig.Region = a.RootFlags.Regions[0]
 
