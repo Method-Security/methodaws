@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -94,11 +93,13 @@ func (a *MethodAws) InitRootCommand() {
 
 			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
 
-			if len(a.RootFlags.Regions) > 0 {
-				a.AwsConfig.Region = a.RootFlags.Regions[0]
-			} else {
-				return fmt.Errorf("no valid AWS regions found or specified")
+			if len(a.RootFlags.Regions) == 0 {
+				a.OutputSignal.Status = 401
+				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
+				return nil
 			}
+
+			a.AwsConfig.Region = a.RootFlags.Regions[0]
 
 			return nil
 		},
