@@ -6,13 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/palantir/witchcraft-go-logging/wlog"
-	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
-	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/palantir/witchcraft-go-logging/wlog"
+
+	// Import wlog-zap for its side effects, initializing the zap logger
+	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
+	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 func GetAWSRegions(ctx context.Context, cfg aws.Config, selectedRegions []string) ([]string, error) {
