@@ -3,6 +3,7 @@ package rds
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -84,9 +85,12 @@ func EnumerateRds(ctx context.Context, cfg aws.Config, regions []string) (*AWSRe
 	for _, region := range regions {
 		r, err := EnumerateRdsForRegion(ctx, cfg, region)
 		if err != nil {
-			report.Errors = append(report.Errors, err.Error())
+			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
+			continue
 		}
-		report.Resources.RDSInstances = append(report.Resources.RDSInstances, r.Resources.RDSInstances...)
+		if r != nil && r.Resources.RDSInstances != nil {
+			report.Resources.RDSInstances = append(report.Resources.RDSInstances, r.Resources.RDSInstances...)
+		}
 	}
 
 	return &report, nil

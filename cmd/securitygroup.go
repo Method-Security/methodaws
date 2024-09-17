@@ -35,7 +35,7 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 				vpcID = nil
 			}
 
-			report, err := ec2.EnumerateSecurityGroupsForRegion(cmd.Context(), *a.AwsConfig, vpcID, a.RootFlags.Regions[0])
+			report, err := ec2.EnumerateSecurityGroups(cmd.Context(), *a.AwsConfig, vpcID, a.RootFlags.Regions)
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage
