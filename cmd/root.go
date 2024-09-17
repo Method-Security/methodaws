@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -95,6 +96,8 @@ func (a *MethodAws) InitRootCommand() {
 
 			if len(a.RootFlags.Regions) > 0 {
 				a.AwsConfig.Region = a.RootFlags.Regions[0]
+			} else {
+				return fmt.Errorf("no valid AWS regions found or specified")
 			}
 
 			return nil

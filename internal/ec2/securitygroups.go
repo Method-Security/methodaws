@@ -14,17 +14,23 @@ import (
 // alongside any non-fatal errors that occurred during the execution of the `methodaws securitygroup enumerate` subcommand.
 // If vpcID is not nil, it will only return security groups associated with that VPC.
 func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, vpcID *string, regions []string) (SecurityGroupReport, error) {
+	var accountID string
 	var allSecurityGroups []types.SecurityGroup
 	var allErrors []string
-	var accountID string
 
-	if len(regions) > 0 {
-		id, err := sts.GetAccountID(ctx, cfg)
-		if err != nil {
-			allErrors = append(allErrors, fmt.Sprintf("Error getting account ID: %v", err))
-		} else {
-			accountID = *id
-		}
+	id, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return SecurityGroupReport{
+			Errors: []string{fmt.Sprintf("Error getting account ID: %v", err)},
+		}, nil
+	}
+	accountID = *id
+
+	if len(regions) == 0 {
+		return SecurityGroupReport{
+			AccountID: accountID,
+			Errors:    []string{"No regions specified for security group enumeration"},
+		}, nil
 	}
 
 	for _, region := range regions {

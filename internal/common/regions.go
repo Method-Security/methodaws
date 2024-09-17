@@ -3,110 +3,113 @@ package common
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
-	"log"
+	"github.com/palantir/witchcraft-go-logging/wlog"
+	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
+	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
 
 func GetAWSRegions(ctx context.Context, cfg aws.Config, selectedRegions []string) ([]string, error) {
-	log.Println("Starting GetAWSRegions function")
+	logger := svc1log.New(os.Stdout, wlog.InfoLevel)
+	ctx = svc1log.WithLogger(ctx, logger)
+	log := svc1log.FromContext(ctx)
 
-	var regionsToCheck []string
+	log.Info("Starting GetAWSRegions function")
+
+	regionsToCheck := getRegionsToCheck(selectedRegions, log)
+	return checkRegions(ctx, cfg, regionsToCheck, log)
+}
+
+func getRegionsToCheck(selectedRegions []string, log svc1log.Logger) []string {
 	if len(selectedRegions) > 0 {
-		regionsToCheck = selectedRegions
-		log.Printf("Using selected regions: %v\n", regionsToCheck)
-	} else {
-		log.Println("No regions selected, checking all regions")
-		resolver := endpoints.DefaultResolver()
-		partitions := resolver.(endpoints.EnumPartitions).Partitions()
-
-		for _, p := range partitions {
-			for region := range p.Regions() {
-				regionsToCheck = append(regionsToCheck, region)
-			}
-		}
-		log.Printf("All regions to check: %v\n", regionsToCheck)
+		log.Info(fmt.Sprintf("Using selected regions: %v", selectedRegions))
+		return selectedRegions
 	}
 
-	// Find an enabled region
-	log.Println("Attempting to find an enabled region")
-	var enabledRegion string
-	var expiredToken bool
+	log.Info("No regions selected, checking all regions")
+	var allRegions []string
+	resolver := endpoints.DefaultResolver()
+	partitions := resolver.(endpoints.EnumPartitions).Partitions()
+
+	for _, p := range partitions {
+		for region := range p.Regions() {
+			allRegions = append(allRegions, region)
+		}
+	}
+	log.Info(fmt.Sprintf("All regions to check: %v", allRegions))
+	return allRegions
+}
+
+func checkRegions(ctx context.Context, cfg aws.Config, regionsToCheck []string, log svc1log.Logger) ([]string, error) {
 	invalidTokenErrors := []string{}
+
 	for _, region := range regionsToCheck {
-		log.Printf("Checking region: %s\n", region)
-		testCfg := cfg.Copy()
-		testCfg.Region = region
-		stsClient := sts.NewFromConfig(testCfg)
-		_, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
+		log.Info(fmt.Sprintf("Attempting DescribeRegions for region: %s", region))
+		validRegions, err := describeRegionsForRegion(ctx, cfg, region, regionsToCheck)
 		if err == nil {
-			enabledRegion = region
-			log.Printf("Found enabled region: %s\n", enabledRegion)
-			break
-		} else {
-			errMsg := err.Error()
-			if strings.Contains(errMsg, "ExpiredToken") {
-				expiredToken = true
-				log.Printf("Token is expired: %v\n", err)
-				break
-			} else if strings.Contains(errMsg, "InvalidClientTokenId") {
-				invalidTokenErrors = append(invalidTokenErrors, fmt.Sprintf("Region %s: %s", region, errMsg))
-				log.Printf("Token is invalid for region %s: %v\n", region, err)
-			} else if strings.Contains(errMsg, "no such host") {
-				log.Printf("Region %s is not accessible: %v\n", region, err)
-			} else {
-				log.Printf("Region %s is not enabled: %v\n", region, err)
-			}
+			return validRegions, nil
+		}
+
+		if handleRegionError(err, region, log, &invalidTokenErrors) {
+			return nil, err
 		}
 	}
 
-	if expiredToken {
-		return nil, fmt.Errorf("the AWS token has expired")
-	}
-
-	if len(invalidTokenErrors) > 0 && enabledRegion == "" {
+	if len(invalidTokenErrors) > 0 {
 		return nil, fmt.Errorf("invalid AWS token for one or more regions: %s", strings.Join(invalidTokenErrors, "; "))
 	}
 
-	if enabledRegion == "" {
-		return nil, fmt.Errorf("no accessible regions found among the specified regions")
-	}
+	return nil, fmt.Errorf("no accessible regions found among the specified regions")
+}
 
-	log.Printf("Using enabled region %s to describe all enabled regions\n", enabledRegion)
-	cfg.Region = enabledRegion
-	ec2Client := ec2.NewFromConfig(cfg)
+func describeRegionsForRegion(ctx context.Context, cfg aws.Config, region string, regionsToCheck []string) ([]string, error) {
+	testCfg := cfg.Copy()
+	testCfg.Region = region
+	ec2Client := ec2.NewFromConfig(testCfg)
 	describeRegionsOutput, err := ec2Client.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
 		AllRegions: aws.Bool(false),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to describe regions: %w", err)
+		return nil, err
 	}
-
-	log.Printf("DescribeRegions successful, found %d regions\n", len(describeRegionsOutput.Regions))
 
 	enabledRegions := make(map[string]bool)
-	for _, region := range describeRegionsOutput.Regions {
-		enabledRegions[*region.RegionName] = true
+	for _, r := range describeRegionsOutput.Regions {
+		enabledRegions[*r.RegionName] = true
 	}
 
-	// Find the intersection of regions to check and enabled regions
 	var validRegions []string
-	for _, region := range regionsToCheck {
-		if enabledRegions[region] {
-			validRegions = append(validRegions, region)
+	for _, r := range regionsToCheck {
+		if enabledRegions[r] {
+			validRegions = append(validRegions, r)
 		}
 	}
-
-	log.Printf("Final valid regions: %v\n", validRegions)
 
 	if len(validRegions) == 0 {
 		return nil, fmt.Errorf("no enabled regions found among the specified regions")
 	}
 
 	return validRegions, nil
+}
+
+func handleRegionError(err error, region string, log svc1log.Logger, invalidTokenErrors *[]string) bool {
+	errMsg := err.Error()
+	if strings.Contains(errMsg, "ExpiredToken") || strings.Contains(errMsg, "RequestExpired") {
+		log.Error(fmt.Sprintf("AWS token has expired: %s", errMsg))
+		return true
+	} else if strings.Contains(errMsg, "InvalidClientTokenId") || strings.Contains(errMsg, "AuthFailure") {
+		*invalidTokenErrors = append(*invalidTokenErrors, fmt.Sprintf("Region %s: %s", region, errMsg))
+		log.Warn(fmt.Sprintf("Token is invalid for region %s: %v", region, err))
+	} else if strings.Contains(errMsg, "no such host") {
+		log.Warn(fmt.Sprintf("Region %s is not accessible: %v", region, err))
+	} else {
+		log.Error(fmt.Sprintf("DescribeRegions failed for region %s: %v", region, err))
+	}
+	return false
 }
