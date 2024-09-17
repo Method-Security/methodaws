@@ -105,7 +105,16 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 	}
 
 	// Use a single region to list all buckets (buckets are globally shared)
-	cfg.Region = "us-east-1"
+	if len(regions) > 0 {
+		cfg.Region = regions[0]
+	} else {
+		errorMsg := "No regions provided for S3 enumeration"
+		return methodaws.S3Report{
+			AccountId: aws.ToString(accountID),
+			S3Buckets: []*methodaws.Bucket{},
+			Errors:    []string{errorMsg},
+		}
+	}
 	client := s3.NewFromConfig(cfg)
 
 	listBucketsOutput, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
@@ -136,7 +145,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 		}
 		s3Bucket.Region = string(regionOutput.LocationConstraint)
 		if s3Bucket.Region == "" {
-			s3Bucket.Region = "us-east-1" // Default region if empty
+			s3Bucket.Region = cfg.Region // Use the region we used to query it
 		}
 
 		// Create a new client for the bucket's specific region

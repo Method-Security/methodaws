@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"context"
+	"fmt"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/Method-Security/methodaws/internal/sts"
@@ -93,8 +94,14 @@ func EnumerateV1ELBs(ctx context.Context, cfg aws.Config, regions []string) meth
 
 	for _, region := range regions {
 		r := EnumerateV1ELBsForRegion(ctx, cfg, region)
-		report.Errors = append(report.Errors, r.Errors...)
-		report.V1LoadBalancers = append(report.V1LoadBalancers, r.V1LoadBalancers...)
+		if len(r.Errors) > 0 {
+			for _, err := range r.Errors {
+				report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err))
+			}
+		}
+		if r.V1LoadBalancers != nil {
+			report.V1LoadBalancers = append(report.V1LoadBalancers, r.V1LoadBalancers...)
+		}
 	}
 
 	return report

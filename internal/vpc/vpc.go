@@ -2,6 +2,7 @@ package vpc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -70,9 +71,12 @@ func EnumerateVPC(ctx context.Context, cfg aws.Config, regions []string) (report
 	for _, region := range regions {
 		r, err := EnumerateVPCForRegion(ctx, cfg, region)
 		if err != nil {
-			report.Errors = append(report.Errors, err.Error())
+			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
+			continue
 		}
-		report.VPCs = append(report.VPCs, r.VPCs...)
+		if r.VPCs != nil {
+			report.VPCs = append(report.VPCs, r.VPCs...)
+		}
 	}
 
 	return report, nil

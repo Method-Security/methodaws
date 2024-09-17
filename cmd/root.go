@@ -68,6 +68,12 @@ func (a *MethodAws) InitRootCommand() {
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			var err error
 
+			awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
+			if err != nil {
+				return err
+			}
+			a.AwsConfig = &awsConfig
+
 			format, err := validateOutputFormat(outputFormat)
 			if err != nil {
 				return err
@@ -79,13 +85,16 @@ func (a *MethodAws) InitRootCommand() {
 				outputFilePointer = nil
 			}
 			a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
-			a.RootFlags.Regions = common.GetAWSRegions(a.RootFlags.Regions)
-			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
-			awsconfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
-			if err != nil {
-				return err
+
+			a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+			if err != nil || len(a.RootFlags.Regions) == 0 {
+				a.OutputSignal.Status = 401
+				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
+				return nil
 			}
-			a.AwsConfig = &awsconfig
+
+			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
+
 			a.AwsConfig.Region = a.RootFlags.Regions[0]
 
 			return nil
