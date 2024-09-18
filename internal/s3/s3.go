@@ -105,8 +105,24 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 	}
 
 	// Use a single region to list all buckets (buckets are globally shared)
+	// S3 bucket location constraints explained:
+	//
+	// 1. Empty LocationConstraint:
+	//    - Indicates the bucket is in the US East (N. Virginia) region (us-east-1).
+	//    - Example: &{LocationConstraint: ResultMetadata:{...}}
+	//    - This is due to historical reasons:
+	//      a) When S3 was first launched, it was only available in us-east-1.
+	//      b) To maintain backwards compatibility, buckets in this region have an empty location constraint.
+	//
+	// 2. Non-empty LocationConstraint:
+	//    - Directly corresponds to the region code where the bucket is located.
+	//    - Example: &{LocationConstraint:us-west-1 ResultMetadata:{...}}
+	//
+	// The region field in the final signal output will always explicitly state the correct region,
+	// regardless of whether the LocationConstraint is empty or not.
+
 	if len(regions) > 0 {
-		cfg.Region = regions[0]
+		cfg.Region = "us-east-1"
 	} else {
 		errorMsg := "No regions provided for S3 enumeration"
 		return methodaws.S3Report{
@@ -139,13 +155,14 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 
 		// Get the bucket's region
 		regionOutput, err := client.GetBucketLocation(ctx, &s3.GetBucketLocationInput{Bucket: bucket.Name})
+
 		if err != nil {
 			errorMessages = append(errorMessages, fmt.Sprintf("Error getting location for bucket %s: %v", *bucket.Name, err))
 			continue
 		}
 		s3Bucket.Region = string(regionOutput.LocationConstraint)
 		if s3Bucket.Region == "" {
-			s3Bucket.Region = cfg.Region // Use the region we used to query it
+			s3Bucket.Region = "us-east-1"
 		}
 
 		// Create a new client for the bucket's specific region
