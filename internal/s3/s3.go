@@ -105,6 +105,7 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 	}
 
 	// Use a single region to list all buckets (buckets are globally shared)
+<<<<<<< HEAD
 	// S3 bucket location constraints explained:
 	//
 	// 1. Empty LocationConstraint:
@@ -123,6 +124,10 @@ func EnumerateS3(ctx context.Context, cfg aws.Config, regions []string) methodaw
 
 	if len(regions) > 0 {
 		cfg.Region = "us-east-1"
+=======
+	if len(regions) > 0 {
+		cfg.Region = regions[0]
+>>>>>>> origin/develop
 	} else {
 		errorMsg := "No regions provided for S3 enumeration"
 		return methodaws.S3Report{
