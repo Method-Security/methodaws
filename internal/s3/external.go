@@ -210,7 +210,7 @@ func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials.
 // If the bucket does not exist, it will return an empty report.
-func ExternalEnumerateS3(ctx context.Context, cfg aws.Config, bucketName string, regions []string) methodaws.ExternalS3Report {
+func ExternalEnumerateS3(ctx context.Context, bucketName string, regions []string) methodaws.ExternalS3Report {
 	report := methodaws.ExternalS3Report{
 		ExternalBuckets: []*methodaws.ExternalBucket{},
 		Errors:          []string{},

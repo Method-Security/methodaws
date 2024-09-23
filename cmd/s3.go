@@ -60,8 +60,7 @@ func (a *MethodAws) InitS3Command() {
 				a.OutputSignal.Status = 1
 				return
 			}
-
-			report := s3.ExternalEnumerateS3(cmd.Context(), *a.AwsConfig, bucketName, a.RootFlags.Regions)
+			report := s3.ExternalEnumerateS3(cmd.Context(), bucketName, a.RootFlags.Regions)
 			a.OutputSignal.Content = report
 		},
 	}

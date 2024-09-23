@@ -5,9 +5,13 @@ package cmd
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/palantir/witchcraft-go-logging/wlog"
+
+	// Import wlog-zap for its side effects, initializing the zap logger
 	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/config"
 	"github.com/Method-Security/pkg/signal"
@@ -15,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/palantir/pkg/datetime"
+	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 	"github.com/spf13/cobra"
 )
@@ -67,6 +72,17 @@ func (a *MethodAws) InitRootCommand() {
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			var err error
+
+			logger := svc1log.New(os.Stdout, wlog.InfoLevel)
+			cmd.SetContext(svc1log.WithLogger(cmd.Context(), logger))
+			log := svc1log.FromContext(cmd.Context())
+
+			// Check if the command is "s3 externalenumerate"
+			if cmd.Name() == "externalenumerate" && cmd.Parent().Name() == "s3" {
+				// For s3 externalenumerate, just get the regions without checking
+				a.RootFlags.Regions = common.GetRegionsToCheck(a.RootFlags.Regions, log)
+				return nil
+			}
 
 			awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
 			if err != nil {
