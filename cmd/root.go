@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/palantir/witchcraft-go-logging/wlog"
-
-	// Import wlog-zap for its side effects, initializing the zap logger
 	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/config"
 	"github.com/Method-Security/pkg/signal"
@@ -19,6 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/palantir/pkg/datetime"
+	"github.com/palantir/witchcraft-go-logging/wlog"
+
+	// Import wlog-zap for its side effects, initializing the zap logger
 	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 	"github.com/spf13/cobra"
