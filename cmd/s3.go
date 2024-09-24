@@ -3,8 +3,6 @@ package cmd
 import (
 	"github.com/Method-Security/methodaws/internal/s3"
 
-	// Import wlog-zap for its side effects, initializing the zap logger
-	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
 	"github.com/spf13/cobra"
 )
 

@@ -18,6 +18,9 @@ import (
 	"github.com/palantir/pkg/datetime"
 	"github.com/palantir/witchcraft-go-logging/wlog"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
+
+	// Import wlog-zap for its side effects, initializing the zap logger
+	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
 	"github.com/spf13/cobra"
 )
 
