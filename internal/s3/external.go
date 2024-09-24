@@ -209,17 +209,29 @@ func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 }
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials.
-// If the bucket does not exist, it will return an empty report.
-func ExternalEnumerateS3(ctx context.Context, cfg aws.Config, bucketName string, regions []string) methodaws.ExternalS3Report {
+// It checks regions one by one until it finds the bucket or exhausts all regions.
+func ExternalEnumerateS3(ctx context.Context, bucketName string, regions []string) methodaws.ExternalS3Report {
 	report := methodaws.ExternalS3Report{
 		ExternalBuckets: []*methodaws.ExternalBucket{},
 		Errors:          []string{},
 	}
 
 	for _, region := range regions {
-		r := ExternalEnumerateS3Region(ctx, report, bucketName, region)
-		report.Errors = append(report.Errors, r.Errors...)
-		report.ExternalBuckets = append(report.ExternalBuckets, r.ExternalBuckets...)
+		exists, err := bucketExists(ctx, region, bucketName)
+		if err != nil {
+			report.Errors = append(report.Errors, fmt.Sprintf("Error checking bucket in region %s: %v", region, err))
+			continue
+		}
+		if exists {
+			r := ExternalEnumerateS3Region(ctx, report, bucketName, region)
+			report.Errors = append(report.Errors, r.Errors...)
+			report.ExternalBuckets = append(report.ExternalBuckets, r.ExternalBuckets...)
+			break // Stop checking other regions once we find the bucket
+		}
+	}
+
+	if len(report.ExternalBuckets) == 0 {
+		report.Errors = append(report.Errors, "Bucket not found in any of the specified regions")
 	}
 
 	return report

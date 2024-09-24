@@ -16,6 +16,9 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/palantir/pkg/datetime"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
+
+	// Import wlog-zap for its side effects, initializing the zap logger
+	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
 	"github.com/spf13/cobra"
 )
 
@@ -50,10 +53,47 @@ func NewMethodAws(version string) *MethodAws {
 	return &methodAws
 }
 
+// Helper function to set up common configurations
+func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, outputFile string, authed bool) error {
+	var err error
+
+	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
+	if authed {
+		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
+		if err != nil {
+			return err
+		}
+		a.AwsConfig = &awsConfig
+		a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+		if err != nil || len(a.RootFlags.Regions) == 0 {
+			a.OutputSignal.Status = 401
+			a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
+			return nil
+		}
+		a.AwsConfig.Region = a.RootFlags.Regions[0]
+	} else {
+		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
+	}
+
+	format, err := validateOutputFormat(outputFormat)
+	if err != nil {
+		return err
+	}
+	var outputFilePointer *string
+	if outputFile != "" {
+		outputFilePointer = &outputFile
+	} else {
+		outputFilePointer = nil
+	}
+	a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
+
+	return nil
+}
+
 // InitRootCommand initializes the root command for the methodaws CLI. This command is used to set the global flags
 // that are used by all subcommands, such as the region, output format, and output file. It also initializes the
 // version command that prints the version of the CLI.
-// Critically, this sets the PersistentPreRunE and PersistentPostRunE functions that are inherited by all subcommands.
+// Critically, this sets the PersistentPreRunE and PersistentPostRunE functions that are inherited by most subcommands.
 // The PersistentPreRunE function is used to validate the region flag and set the AWS configuration. The PersistentPostRunE
 // function is used to write the output of the command to the desired output format after the execution of the invoked
 // command's Run function.
@@ -66,38 +106,7 @@ func (a *MethodAws) InitRootCommand() {
 		Long:         "Audit AWS resources",
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			var err error
-
-			awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
-			if err != nil {
-				return err
-			}
-			a.AwsConfig = &awsConfig
-
-			format, err := validateOutputFormat(outputFormat)
-			if err != nil {
-				return err
-			}
-			var outputFilePointer *string
-			if outputFile != "" {
-				outputFilePointer = &outputFile
-			} else {
-				outputFilePointer = nil
-			}
-			a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
-
-			a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
-			if err != nil || len(a.RootFlags.Regions) == 0 {
-				a.OutputSignal.Status = 401
-				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
-				return nil
-			}
-
-			cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
-
-			a.AwsConfig.Region = a.RootFlags.Regions[0]
-
-			return nil
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, true)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
 			completedAt := datetime.DateTime(time.Now())
