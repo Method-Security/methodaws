@@ -1,15 +1,10 @@
 package cmd
 
 import (
-	"os"
-
-	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/s3"
-	"github.com/palantir/witchcraft-go-logging/wlog"
 
 	// Import wlog-zap for its side effects, initializing the zap logger
 	_ "github.com/palantir/witchcraft-go-logging/wlog-zap"
-	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 	"github.com/spf13/cobra"
 )
 
@@ -61,13 +56,10 @@ func (a *MethodAws) InitS3Command() {
 		Short: "Enumerate a single public facing S3 bucket.",
 		Long:  `Enumerate a single public facing S3 bucket with no credentials.`,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			logger := svc1log.New(os.Stdout, wlog.InfoLevel)
-			cmd.SetContext(svc1log.WithLogger(cmd.Context(), logger))
-			log := svc1log.FromContext(cmd.Context())
-
-			// For s3 externalenumerate, just get the regions without checking
-			a.RootFlags.Regions = common.GetRegionsToCheck(a.RootFlags.Regions, log)
-			return nil
+			outputFormat, _ := cmd.Flags().GetString("output")
+			outputFile, _ := cmd.Flags().GetString("output-file")
+			authed := false
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, authed)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			bucketName, err := cmd.Flags().GetString("name")
