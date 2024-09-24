@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/Method-Security/methodaws/internal/s3"
-
 	"github.com/spf13/cobra"
 )
 

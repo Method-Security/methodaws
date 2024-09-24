@@ -70,9 +70,8 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 			a.OutputSignal.Status = 401
 			a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
 			return nil
-		} else {
-			a.AwsConfig.Region = a.RootFlags.Regions[0]
 		}
+		a.AwsConfig.Region = a.RootFlags.Regions[0]
 	} else {
 		logger := svc1log.New(os.Stdout, wlog.InfoLevel)
 		cmd.SetContext(svc1log.WithLogger(cmd.Context(), logger))
