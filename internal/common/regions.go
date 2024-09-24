@@ -23,11 +23,12 @@ func GetAWSRegions(ctx context.Context, cfg aws.Config, selectedRegions []string
 
 	log.Info("Starting GetAWSRegions function")
 
-	regionsToCheck := GetRegionsToCheck(selectedRegions, log)
+	regionsToCheck := GetRegionsToCheck(ctx, selectedRegions)
 	return checkRegions(ctx, cfg, regionsToCheck, log)
 }
 
-func GetRegionsToCheck(selectedRegions []string, log svc1log.Logger) []string {
+func GetRegionsToCheck(ctx context.Context, selectedRegions []string) []string {
+	log := svc1log.FromContext(ctx)
 	if len(selectedRegions) > 0 {
 		log.Info(fmt.Sprintf("Using selected regions: %v", selectedRegions))
 		return selectedRegions

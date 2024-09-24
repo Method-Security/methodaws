@@ -55,8 +55,7 @@ func (a *MethodAws) InitS3Command() {
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			outputFormat, _ := cmd.Flags().GetString("output")
 			outputFile, _ := cmd.Flags().GetString("output-file")
-			authed := false
-			return a.setupCommonConfig(cmd, outputFormat, outputFile, authed)
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, false)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			bucketName, err := cmd.Flags().GetString("name")

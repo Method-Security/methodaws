@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"errors"
-	"os"
 	"strings"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/palantir/pkg/datetime"
-	"github.com/palantir/witchcraft-go-logging/wlog"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 
 	// Import wlog-zap for its side effects, initializing the zap logger
@@ -59,6 +57,7 @@ func NewMethodAws(version string) *MethodAws {
 func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, outputFile string, authed bool) error {
 	var err error
 
+	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
 	if authed {
 		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
 		if err != nil {
@@ -73,10 +72,7 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 		}
 		a.AwsConfig.Region = a.RootFlags.Regions[0]
 	} else {
-		logger := svc1log.New(os.Stdout, wlog.InfoLevel)
-		cmd.SetContext(svc1log.WithLogger(cmd.Context(), logger))
-		log := svc1log.FromContext(cmd.Context())
-		a.RootFlags.Regions = common.GetRegionsToCheck(a.RootFlags.Regions, log)
+		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
 	}
 
 	format, err := validateOutputFormat(outputFormat)
@@ -90,8 +86,6 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 		outputFilePointer = nil
 	}
 	a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
-
-	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
 
 	return nil
 }
@@ -112,8 +106,7 @@ func (a *MethodAws) InitRootCommand() {
 		Long:         "Audit AWS resources",
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			authed := true
-			return a.setupCommonConfig(cmd, outputFormat, outputFile, authed)
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, true)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
 			completedAt := datetime.DateTime(time.Now())
