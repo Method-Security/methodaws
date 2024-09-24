@@ -53,8 +53,14 @@ func (a *MethodAws) InitS3Command() {
 		Short: "Enumerate a single public facing S3 bucket.",
 		Long:  `Enumerate a single public facing S3 bucket with no credentials.`,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			outputFormat, _ := cmd.Flags().GetString("output")
-			outputFile, _ := cmd.Flags().GetString("output-file")
+			outputFormat, err := cmd.Flags().GetString("output")
+			if err != nil {
+				return err
+			}
+			outputFile, err := cmd.Flags().GetString("output-file")
+			if err != nil {
+				return err
+			}
 			return a.setupCommonConfig(cmd, outputFormat, outputFile, false)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
