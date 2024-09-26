@@ -40,11 +40,11 @@ types:
       creationDate: datetime
       ownerID: string
       ownerName: string
-      publicAccessConfig: S3PublicAccessBlockConfiguration
+      publicAccessConfig: optional<S3PublicAccessBlockConfiguration>
       policy: optional<string>
       bucketVersioning: optional<BucketVersioningStatus>
       mfaDelete: optional<S3MFADeleteStatus>
-      encryptionRules: list<EncryptionRule>
+      encryptionRules: optional<list<EncryptionRule>>
   S3Report:
     properties:
       accountId: string
