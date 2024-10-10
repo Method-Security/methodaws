@@ -1032,6 +1032,7 @@ func (r *ResourceInfo) String() string {
 type RuleInfo struct {
 	Name     string `json:"name" url:"name"`
 	Priority int    `json:"priority" url:"priority"`
+	JsonBlob string `json:"jsonBlob" url:"jsonBlob"`
 
 	extraProperties map[string]interface{}
 }
@@ -1067,14 +1068,11 @@ func (r *RuleInfo) String() string {
 type ScopeType string
 
 const (
-	ScopeTypeCloudfront ScopeType = "CLOUDFRONT"
-	ScopeTypeRegional   ScopeType = "REGIONAL"
+	ScopeTypeRegional ScopeType = "REGIONAL"
 )
 
 func NewScopeTypeFromString(s string) (ScopeType, error) {
 	switch s {
-	case "CLOUDFRONT":
-		return ScopeTypeCloudfront, nil
 	case "REGIONAL":
 		return ScopeTypeRegional, nil
 	}

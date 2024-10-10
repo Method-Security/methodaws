@@ -2,6 +2,7 @@ package waf
 
 import (
 	"context"
+	"encoding/json"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,25 +10,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/wafv2/types"
 )
 
-func EnumerateWAF(ctx context.Context, cloudfront bool, cfg aws.Config, regions []string) (*methodaws.WafReport, error) {
+func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*methodaws.WafReport, error) {
 	// Initialize Struct
 	report := methodaws.WafReport{}
 	var regionReports []*methodaws.RegionWafInfo
 	var allErrors []string
-
-	// Set Scope and handle CloudFront WAFs region (must us "us-east-1")
-	scope := types.ScopeRegional
-	if cloudfront {
-		scope = types.ScopeCloudfront
-		regions = []string{"us-east-1"}
-	}
 
 	for _, region := range regions {
 		regionCfg := cfg.Copy()
 		regionCfg.Region = region
 
 		wafClient := wafv2.NewFromConfig(regionCfg)
-		listWebACLsInput := &wafv2.ListWebACLsInput{Scope: scope}
+		listWebACLsInput := &wafv2.ListWebACLsInput{Scope: types.ScopeRegional}
 		webACLsOutput, err := wafClient.ListWebACLs(ctx, listWebACLsInput)
 		if err != nil {
 			allErrors = append(allErrors, err.Error())
@@ -37,14 +31,14 @@ func EnumerateWAF(ctx context.Context, cloudfront bool, cfg aws.Config, regions 
 		var wafs []*methodaws.Waf
 		for _, webACL := range webACLsOutput.WebACLs {
 			// Get Rules
-			rules, err := getRules(ctx, wafClient, scope, webACL.Id, webACL.Name)
-			if err != nil {
-				allErrors = append(allErrors, err.Error())
+			rules, errs := getRules(ctx, wafClient, types.ScopeRegional, webACL.Id, webACL.Name)
+			if len(errs) != 0 {
+				allErrors = append(allErrors, errs...)
 				continue
 			}
 
 			// Get Resources
-			resources, err := getResources(ctx, wafClient, webACL.ARN, scope)
+			resources, err := getResources(ctx, wafClient, webACL.ARN)
 			if err != nil {
 				allErrors = append(allErrors, err.Error())
 				continue
@@ -62,11 +56,8 @@ func EnumerateWAF(ctx context.Context, cloudfront bool, cfg aws.Config, regions 
 			wafs = append(wafs, &waf)
 		}
 
-		// Marshal regional
+		// Marshal Regional Report
 		setRegion := region
-		if cloudfront {
-			setRegion = "all"
-		}
 		regionReport := methodaws.RegionWafInfo{
 			Region: setRegion,
 			Wafs:   wafs,
@@ -74,40 +65,40 @@ func EnumerateWAF(ctx context.Context, cloudfront bool, cfg aws.Config, regions 
 		regionReports = append(regionReports, &regionReport)
 	}
 
-	// Finalize report
+	// Marshal Report
 	report.Scope = methodaws.ScopeTypeRegional
-	if cloudfront {
-		report.Scope = methodaws.ScopeTypeCloudfront
-	}
 	report.Regions = regionReports
 	report.Errors = allErrors
 	return &report, nil
 }
 
-func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, webACLId, webACLName *string) ([]*methodaws.RuleInfo, error) {
+func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, webACLId, webACLName *string) ([]*methodaws.RuleInfo, []string) {
 	getWebACLInput := &wafv2.GetWebACLInput{Id: webACLId, Name: webACLName, Scope: scope}
 	webACLOutput, err := wafClient.GetWebACL(ctx, getWebACLInput)
 	if err != nil {
-		return nil, err
+		return nil, []string{err.Error()}
 	}
 
 	var rules []*methodaws.RuleInfo
+	var errors []string
 	for _, rule := range webACLOutput.WebACL.Rules {
+		ruleJSON, err := json.Marshal(rule)
+		if err != nil {
+			errors = append(errors, err.Error())
+			continue
+		}
+
 		ruleInfo := methodaws.RuleInfo{
 			Name:     aws.ToString(rule.Name),
 			Priority: int(rule.Priority),
+			JsonBlob: string(ruleJSON),
 		}
 		rules = append(rules, &ruleInfo)
 	}
-	return rules, nil
+	return rules, errors
 }
 
-func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string, scope types.Scope) ([]*methodaws.ResourceInfo, error) {
-	// Only list resources for regional WAFs (CloudFront does not support ListResourcesForWebACL)
-	if scope == types.ScopeCloudfront {
-		return []*methodaws.ResourceInfo{}, nil
-	}
-
+func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*methodaws.ResourceInfo, error) {
 	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
 	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
 	if err != nil {

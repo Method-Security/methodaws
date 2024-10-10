@@ -17,13 +17,8 @@ func (a *MethodAws) InitWAFCommand() {
 		Short: "Enumerate WAFs",
 		Long:  `Enumerate WAFs in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cloudfront, err := cmd.Flags().GetBool("cloudfront")
-			if err != nil {
-				a.OutputSignal.AddError(err)
-				return
-			}
 
-			report, err := waf.EnumerateWAF(cmd.Context(), cloudfront, *a.AwsConfig, a.RootFlags.Regions)
+			report, err := waf.EnumerateWAF(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				a.OutputSignal.AddError(err)
 				return
@@ -31,8 +26,6 @@ func (a *MethodAws) InitWAFCommand() {
 			a.OutputSignal.Content = report
 		},
 	}
-
-	enumerateWAF.Flags().Bool("cloudfront", false, "Enumerate cloudfront WAFs")
 
 	wafCmd.AddCommand(enumerateWAF)
 	a.RootCmd.AddCommand(wafCmd)

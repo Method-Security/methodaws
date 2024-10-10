@@ -1,12 +1,12 @@
 types:
   ScopeType:
     enum:
-      - CLOUDFRONT
       - REGIONAL
   RuleInfo:
     properties:
       name: string
       priority: integer
+      jsonBlob: string 
   ResourceInfo:
     properties:
       arn: string
