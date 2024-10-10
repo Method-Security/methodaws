@@ -959,3 +959,203 @@ func NewS3ServerSideEncryptionFromString(s string) (S3ServerSideEncryption, erro
 func (s S3ServerSideEncryption) Ptr() *S3ServerSideEncryption {
 	return &s
 }
+
+type RegionWafInfo struct {
+	Region string `json:"region" url:"region"`
+	Wafs   []*Waf `json:"wafs,omitempty" url:"wafs,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RegionWafInfo) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RegionWafInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler RegionWafInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RegionWafInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RegionWafInfo) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+type ResourceInfo struct {
+	Arn string `json:"arn" url:"arn"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *ResourceInfo) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResourceInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResourceInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResourceInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *ResourceInfo) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+type RuleInfo struct {
+	Name     string `json:"name" url:"name"`
+	Priority int    `json:"priority" url:"priority"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RuleInfo) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RuleInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler RuleInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RuleInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RuleInfo) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+type ScopeType string
+
+const (
+	ScopeTypeCloudfront ScopeType = "CLOUDFRONT"
+	ScopeTypeRegional   ScopeType = "REGIONAL"
+)
+
+func NewScopeTypeFromString(s string) (ScopeType, error) {
+	switch s {
+	case "CLOUDFRONT":
+		return ScopeTypeCloudfront, nil
+	case "REGIONAL":
+		return ScopeTypeRegional, nil
+	}
+	var t ScopeType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s ScopeType) Ptr() *ScopeType {
+	return &s
+}
+
+type Waf struct {
+	Arn         string          `json:"arn" url:"arn"`
+	Name        string          `json:"name" url:"name"`
+	Description *string         `json:"description,omitempty" url:"description,omitempty"`
+	Rules       []*RuleInfo     `json:"rules,omitempty" url:"rules,omitempty"`
+	Resources   []*ResourceInfo `json:"resources,omitempty" url:"resources,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (w *Waf) GetExtraProperties() map[string]interface{} {
+	return w.extraProperties
+}
+
+func (w *Waf) UnmarshalJSON(data []byte) error {
+	type unmarshaler Waf
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*w = Waf(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *w)
+	if err != nil {
+		return err
+	}
+	w.extraProperties = extraProperties
+
+	return nil
+}
+
+func (w *Waf) String() string {
+	if value, err := core.StringifyJSON(w); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", w)
+}
+
+type WafReport struct {
+	Scope   ScopeType        `json:"scope" url:"scope"`
+	Regions []*RegionWafInfo `json:"regions,omitempty" url:"regions,omitempty"`
+	Errors  []string         `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (w *WafReport) GetExtraProperties() map[string]interface{} {
+	return w.extraProperties
+}
+
+func (w *WafReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler WafReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*w = WafReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *w)
+	if err != nil {
+		return err
+	}
+	w.extraProperties = extraProperties
+
+	return nil
+}
+
+func (w *WafReport) String() string {
+	if value, err := core.StringifyJSON(w); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", w)
+}
