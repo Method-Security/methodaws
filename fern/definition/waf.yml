@@ -1,0 +1,28 @@
+types:
+  ScopeType:
+    enum:
+      - REGIONAL
+  RuleInfo:
+    properties:
+      name: string
+      priority: integer
+      jsonBlob: string 
+  ResourceInfo:
+    properties:
+      arn: string
+  Waf:
+    properties:
+      arn: string
+      name: string
+      description: optional<string>
+      rules: optional<list<RuleInfo>>
+      resources: optional<list<ResourceInfo>>
+  RegionWafInfo:
+    properties: 
+      region: string
+      wafs: optional<list<Waf>>
+  WafReport:
+    properties:
+      scope: ScopeType
+      regions: optional<list<RegionWafInfo>>
+      errors: optional<list<string>>

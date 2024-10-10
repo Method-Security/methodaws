@@ -25,6 +25,7 @@ func main() {
 	methodaws.InitSecurityGroupCommand()
 	methodaws.InitVPCCommand()
 	methodaws.InitLoadBalancerCommand()
+	methodaws.InitWAFCommand()
 
 	if err := methodaws.RootCmd.Execute(); err != nil {
 		os.Exit(1)
