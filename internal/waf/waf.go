@@ -11,7 +11,6 @@ import (
 )
 
 func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*methodaws.WafReport, error) {
-	// Initialize Struct
 	report := methodaws.WafReport{}
 	var regionReports []*methodaws.RegionWafInfo
 	var allErrors []string
@@ -30,21 +29,18 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 
 		var wafs []*methodaws.Waf
 		for _, webACL := range webACLsOutput.WebACLs {
-			// Get Rules
 			rules, errs := getRules(ctx, wafClient, types.ScopeRegional, webACL.Id, webACL.Name)
 			if len(errs) != 0 {
 				allErrors = append(allErrors, errs...)
 				continue
 			}
 
-			// Get Resources
 			resources, err := getResources(ctx, wafClient, webACL.ARN)
 			if err != nil {
 				allErrors = append(allErrors, err.Error())
 				continue
 			}
 
-			// Marshal WAF data
 			description := aws.ToString(webACL.Description)
 			waf := methodaws.Waf{
 				Arn:         aws.ToString(webACL.ARN),
@@ -56,7 +52,6 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 			wafs = append(wafs, &waf)
 		}
 
-		// Marshal Regional Report
 		setRegion := region
 		regionReport := methodaws.RegionWafInfo{
 			Region: setRegion,
@@ -65,7 +60,6 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 		regionReports = append(regionReports, &regionReport)
 	}
 
-	// Marshal Report
 	report.Scope = methodaws.ScopeTypeRegional
 	report.Regions = regionReports
 	report.Errors = allErrors
@@ -88,10 +82,43 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 			continue
 		}
 
+		statementJSON, err := json.Marshal(rule.Statement)
+		if err != nil {
+			errors = append(errors, err.Error())
+			continue
+		}
+
+		var actionJSONString *string
+		var actionInfo *methodaws.ActionInfo
+
+		if rule.Action != nil {
+			actionJSON, err := json.Marshal(rule.Action)
+			if err != nil {
+				errors = append(errors, err.Error())
+				continue
+			}
+			actionJSONStr := string(actionJSON)
+			actionJSONString = &actionJSONStr
+			actionInfo = &methodaws.ActionInfo{
+				Type:       getActionType(rule.Action),
+				JsonString: actionJSONString,
+			}
+		}
+
+		// Process nested statements if the rule statement is an AND, OR, or NOT statement
+		nestedStatements := getNestedStatements(rule.Statement)
+
+		statementJSONString := string(statementJSON)
 		ruleInfo := methodaws.RuleInfo{
 			Name:     aws.ToString(rule.Name),
 			Priority: int(rule.Priority),
-			JsonBlob: string(ruleJSON),
+			Statement: &methodaws.StatementInfo{
+				Type:             getStatementType(rule.Statement),
+				NestedStatements: nestedStatements,
+				JsonString:       &statementJSONString,
+			},
+			Action:     actionInfo,
+			JsonString: string(ruleJSON),
 		}
 		rules = append(rules, &ruleInfo)
 	}
@@ -113,4 +140,77 @@ func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *strin
 		resourceInfos = append(resourceInfos, &resourceInfo)
 	}
 	return resourceInfos, nil
+}
+
+func getActionType(action *types.RuleAction) methodaws.ActionType {
+	switch {
+	case action.Allow != nil:
+		return methodaws.ActionTypeAllow
+	case action.Block != nil:
+		return methodaws.ActionTypeBlock
+	case action.Captcha != nil:
+		return methodaws.ActionTypeCaptcha
+	case action.Challenge != nil:
+		return methodaws.ActionTypeChallenge
+	case action.Count != nil:
+		return methodaws.ActionTypeCount
+	default:
+		return methodaws.ActionTypeOther
+	}
+}
+
+func getNestedStatements(statement *types.Statement) []methodaws.StatementType {
+	var nestedStatements []methodaws.StatementType
+
+	switch {
+	case statement.AndStatement != nil:
+		for _, nestedStatement := range statement.AndStatement.Statements {
+			nestedStatements = append(nestedStatements, getStatementType(&nestedStatement))
+		}
+	case statement.OrStatement != nil:
+		for _, nestedStatement := range statement.OrStatement.Statements {
+			nestedStatements = append(nestedStatements, getStatementType(&nestedStatement))
+		}
+	case statement.NotStatement != nil:
+		nestedStatements = append(nestedStatements, getStatementType(statement.NotStatement.Statement))
+	}
+
+	return nestedStatements
+}
+
+func getStatementType(statement *types.Statement) methodaws.StatementType {
+	switch {
+	case statement.AndStatement != nil:
+		return methodaws.StatementTypeAnd
+	case statement.ByteMatchStatement != nil:
+		return methodaws.StatementTypeByteMatch
+	case statement.GeoMatchStatement != nil:
+		return methodaws.StatementTypeGeoMatch
+	case statement.IPSetReferenceStatement != nil:
+		return methodaws.StatementTypeIpSetReference
+	case statement.LabelMatchStatement != nil:
+		return methodaws.StatementTypeLabelMatch
+	case statement.ManagedRuleGroupStatement != nil:
+		return methodaws.StatementTypeManagedRuleGroup
+	case statement.NotStatement != nil:
+		return methodaws.StatementTypeNot
+	case statement.OrStatement != nil:
+		return methodaws.StatementTypeOr
+	case statement.RateBasedStatement != nil:
+		return methodaws.StatementTypeRateBased
+	case statement.RegexMatchStatement != nil:
+		return methodaws.StatementTypeRegexMatch
+	case statement.RegexPatternSetReferenceStatement != nil:
+		return methodaws.StatementTypeRegexPatternsetRefence
+	case statement.RuleGroupReferenceStatement != nil:
+		return methodaws.StatementTypeRuleGroupReference
+	case statement.SizeConstraintStatement != nil:
+		return methodaws.StatementTypeSizeConstraint
+	case statement.SqliMatchStatement != nil:
+		return methodaws.StatementTypeSqliMatch
+	case statement.XssMatchStatement != nil:
+		return methodaws.StatementTypeXssMatch
+	default:
+		return methodaws.StatementTypeOther
+	}
 }

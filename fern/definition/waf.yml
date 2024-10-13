@@ -2,11 +2,49 @@ types:
   ScopeType:
     enum:
       - REGIONAL
+  ActionType:
+    enum:
+      - ALLOW
+      - BLOCK
+      - CAPTCHA
+      - CHALLENGE
+      - COUNT
+      - OTHER
+  ActionInfo:
+    properties:
+      type: ActionType
+      jsonString: optional<string>
+  StatementType:
+    enum:
+      - AND
+      - BYTE_MATCH
+      - GEO_MATCH
+      - IP_SET_REFERENCE
+      - LABEL_MATCH
+      - MANAGED_RULE_GROUP
+      - NOT
+      - OR
+      - RATE_BASED
+      - REGEX_MATCH
+      - REGEX_PATTERNSET_REFENCE
+      - RULE_GROUP_REFERENCE
+      - SIZE_CONSTRAINT
+      - SQLI_MATCH
+      - XSS_MATCH
+      - OTHER
+  StatementInfo:
+    properties:
+      type: StatementType
+      nestedStatements: optional<list<StatementType>>
+      jsonString: optional<string>   
   RuleInfo:
     properties:
       name: string
       priority: integer
-      jsonBlob: string 
+      action: optional<ActionInfo>
+      statement: optional<StatementInfo>
+      labels: optional<list<string>>
+      jsonString: string 
   ResourceInfo:
     properties:
       arn: string

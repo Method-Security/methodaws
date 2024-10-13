@@ -960,6 +960,75 @@ func (s S3ServerSideEncryption) Ptr() *S3ServerSideEncryption {
 	return &s
 }
 
+type ActionInfo struct {
+	Type       ActionType `json:"type" url:"type"`
+	JsonString *string    `json:"jsonString,omitempty" url:"jsonString,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *ActionInfo) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *ActionInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler ActionInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = ActionInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *ActionInfo) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type ActionType string
+
+const (
+	ActionTypeAllow     ActionType = "ALLOW"
+	ActionTypeBlock     ActionType = "BLOCK"
+	ActionTypeCaptcha   ActionType = "CAPTCHA"
+	ActionTypeChallenge ActionType = "CHALLENGE"
+	ActionTypeCount     ActionType = "COUNT"
+	ActionTypeOther     ActionType = "OTHER"
+)
+
+func NewActionTypeFromString(s string) (ActionType, error) {
+	switch s {
+	case "ALLOW":
+		return ActionTypeAllow, nil
+	case "BLOCK":
+		return ActionTypeBlock, nil
+	case "CAPTCHA":
+		return ActionTypeCaptcha, nil
+	case "CHALLENGE":
+		return ActionTypeChallenge, nil
+	case "COUNT":
+		return ActionTypeCount, nil
+	case "OTHER":
+		return ActionTypeOther, nil
+	}
+	var t ActionType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (a ActionType) Ptr() *ActionType {
+	return &a
+}
+
 type RegionWafInfo struct {
 	Region string `json:"region" url:"region"`
 	Wafs   []*Waf `json:"wafs,omitempty" url:"wafs,omitempty"`
@@ -1030,9 +1099,12 @@ func (r *ResourceInfo) String() string {
 }
 
 type RuleInfo struct {
-	Name     string `json:"name" url:"name"`
-	Priority int    `json:"priority" url:"priority"`
-	JsonBlob string `json:"jsonBlob" url:"jsonBlob"`
+	Name       string         `json:"name" url:"name"`
+	Priority   int            `json:"priority" url:"priority"`
+	Action     *ActionInfo    `json:"action,omitempty" url:"action,omitempty"`
+	Statement  *StatementInfo `json:"statement,omitempty" url:"statement,omitempty"`
+	Labels     []string       `json:"labels,omitempty" url:"labels,omitempty"`
+	JsonString string         `json:"jsonString" url:"jsonString"`
 
 	extraProperties map[string]interface{}
 }
@@ -1081,6 +1153,106 @@ func NewScopeTypeFromString(s string) (ScopeType, error) {
 }
 
 func (s ScopeType) Ptr() *ScopeType {
+	return &s
+}
+
+type StatementInfo struct {
+	Type             StatementType   `json:"type" url:"type"`
+	NestedStatements []StatementType `json:"nestedStatements,omitempty" url:"nestedStatements,omitempty"`
+	JsonString       *string         `json:"jsonString,omitempty" url:"jsonString,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (s *StatementInfo) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *StatementInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler StatementInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = StatementInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	return nil
+}
+
+func (s *StatementInfo) String() string {
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+type StatementType string
+
+const (
+	StatementTypeAnd                    StatementType = "AND"
+	StatementTypeByteMatch              StatementType = "BYTE_MATCH"
+	StatementTypeGeoMatch               StatementType = "GEO_MATCH"
+	StatementTypeIpSetReference         StatementType = "IP_SET_REFERENCE"
+	StatementTypeLabelMatch             StatementType = "LABEL_MATCH"
+	StatementTypeManagedRuleGroup       StatementType = "MANAGED_RULE_GROUP"
+	StatementTypeNot                    StatementType = "NOT"
+	StatementTypeOr                     StatementType = "OR"
+	StatementTypeRateBased              StatementType = "RATE_BASED"
+	StatementTypeRegexMatch             StatementType = "REGEX_MATCH"
+	StatementTypeRegexPatternsetRefence StatementType = "REGEX_PATTERNSET_REFENCE"
+	StatementTypeRuleGroupReference     StatementType = "RULE_GROUP_REFERENCE"
+	StatementTypeSizeConstraint         StatementType = "SIZE_CONSTRAINT"
+	StatementTypeSqliMatch              StatementType = "SQLI_MATCH"
+	StatementTypeXssMatch               StatementType = "XSS_MATCH"
+	StatementTypeOther                  StatementType = "OTHER"
+)
+
+func NewStatementTypeFromString(s string) (StatementType, error) {
+	switch s {
+	case "AND":
+		return StatementTypeAnd, nil
+	case "BYTE_MATCH":
+		return StatementTypeByteMatch, nil
+	case "GEO_MATCH":
+		return StatementTypeGeoMatch, nil
+	case "IP_SET_REFERENCE":
+		return StatementTypeIpSetReference, nil
+	case "LABEL_MATCH":
+		return StatementTypeLabelMatch, nil
+	case "MANAGED_RULE_GROUP":
+		return StatementTypeManagedRuleGroup, nil
+	case "NOT":
+		return StatementTypeNot, nil
+	case "OR":
+		return StatementTypeOr, nil
+	case "RATE_BASED":
+		return StatementTypeRateBased, nil
+	case "REGEX_MATCH":
+		return StatementTypeRegexMatch, nil
+	case "REGEX_PATTERNSET_REFENCE":
+		return StatementTypeRegexPatternsetRefence, nil
+	case "RULE_GROUP_REFERENCE":
+		return StatementTypeRuleGroupReference, nil
+	case "SIZE_CONSTRAINT":
+		return StatementTypeSizeConstraint, nil
+	case "SQLI_MATCH":
+		return StatementTypeSqliMatch, nil
+	case "XSS_MATCH":
+		return StatementTypeXssMatch, nil
+	case "OTHER":
+		return StatementTypeOther, nil
+	}
+	var t StatementType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s StatementType) Ptr() *StatementType {
 	return &s
 }
 
