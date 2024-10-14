@@ -35,7 +35,6 @@ types:
   StatementInfo:
     properties:
       type: StatementType
-      nestedStatements: optional<list<StatementType>>
       jsonString: optional<string>   
   RuleInfo:
     properties:

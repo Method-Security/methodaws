@@ -1157,9 +1157,8 @@ func (s ScopeType) Ptr() *ScopeType {
 }
 
 type StatementInfo struct {
-	Type             StatementType   `json:"type" url:"type"`
-	NestedStatements []StatementType `json:"nestedStatements,omitempty" url:"nestedStatements,omitempty"`
-	JsonString       *string         `json:"jsonString,omitempty" url:"jsonString,omitempty"`
+	Type       StatementType `json:"type" url:"type"`
+	JsonString *string       `json:"jsonString,omitempty" url:"jsonString,omitempty"`
 
 	extraProperties map[string]interface{}
 }

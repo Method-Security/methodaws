@@ -105,17 +105,13 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 			}
 		}
 
-		// Process nested statements if the rule statement is an AND, OR, or NOT statement
-		nestedStatements := getNestedStatements(rule.Statement)
-
 		statementJSONString := string(statementJSON)
 		ruleInfo := methodaws.RuleInfo{
 			Name:     aws.ToString(rule.Name),
 			Priority: int(rule.Priority),
 			Statement: &methodaws.StatementInfo{
-				Type:             getStatementType(rule.Statement),
-				NestedStatements: nestedStatements,
-				JsonString:       &statementJSONString,
+				Type:       getStatementType(rule.Statement),
+				JsonString: &statementJSONString,
 			},
 			Action:     actionInfo,
 			JsonString: string(ruleJSON),
@@ -157,25 +153,6 @@ func getActionType(action *types.RuleAction) methodaws.ActionType {
 	default:
 		return methodaws.ActionTypeOther
 	}
-}
-
-func getNestedStatements(statement *types.Statement) []methodaws.StatementType {
-	var nestedStatements []methodaws.StatementType
-
-	switch {
-	case statement.AndStatement != nil:
-		for _, nestedStatement := range statement.AndStatement.Statements {
-			nestedStatements = append(nestedStatements, getStatementType(&nestedStatement))
-		}
-	case statement.OrStatement != nil:
-		for _, nestedStatement := range statement.OrStatement.Statements {
-			nestedStatements = append(nestedStatements, getStatementType(&nestedStatement))
-		}
-	case statement.NotStatement != nil:
-		nestedStatements = append(nestedStatements, getStatementType(statement.NotStatement.Statement))
-	}
-
-	return nestedStatements
 }
 
 func getStatementType(statement *types.Statement) methodaws.StatementType {
