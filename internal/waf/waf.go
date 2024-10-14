@@ -3,6 +3,7 @@ package waf
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/Method-Security/methodaws/internal/sts"
@@ -138,7 +139,8 @@ func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *strin
 	var resourceInfos []*methodaws.ResourceInfo
 	for _, arn := range listResourcesOutput.ResourceArns {
 		resourceInfo := methodaws.ResourceInfo{
-			Arn: arn,
+			Arn:  arn,
+			Type: getResourceTypeFromArn(arn),
 		}
 		resourceInfos = append(resourceInfos, &resourceInfo)
 	}
@@ -159,6 +161,25 @@ func getActionType(action *types.RuleAction) methodaws.ActionType {
 		return methodaws.ActionTypeCount
 	default:
 		return methodaws.ActionTypeOther
+	}
+}
+
+func getResourceTypeFromArn(arn string) methodaws.WafResourceType {
+	switch {
+	case strings.Contains(arn, "elasticloadbalancing") && strings.Contains(arn, "loadbalancer/app"):
+		return methodaws.WafResourceTypeApplicationLoadBalancer
+	case strings.Contains(arn, "apigateway") && strings.Contains(arn, "/restapis/"):
+		return methodaws.WafResourceTypeApiGatewayRestApi
+	case strings.Contains(arn, "appsync") && strings.Contains(arn, "apis"):
+		return methodaws.WafResourceTypeAppsyncGraphqlApi
+	case strings.Contains(arn, "cognito-idp") && strings.Contains(arn, "userpool"):
+		return methodaws.WafResourceTypeCognitoUserPool
+	case strings.Contains(arn, "apprunner") && strings.Contains(arn, "service"):
+		return methodaws.WafResourceTypeAppRunnerService
+	case strings.Contains(arn, "verifiedaccess") && strings.Contains(arn, "instance"):
+		return methodaws.WafResourceTypeVerifiedAccessInstance
+	default:
+		return methodaws.WafResourceTypeOther
 	}
 }
 

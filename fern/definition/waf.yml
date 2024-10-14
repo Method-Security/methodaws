@@ -1,7 +1,4 @@
 types:
-  ScopeType:
-    enum:
-      - REGIONAL
   ActionType:
     enum:
       - ALLOW
@@ -10,10 +7,9 @@ types:
       - CHALLENGE
       - COUNT
       - OTHER
-  ActionInfo:
-    properties:
-      type: ActionType
-      jsonString: optional<string>
+  ScopeType:
+    enum:
+      - REGIONAL
   StatementType:
     enum:
       - AND
@@ -32,6 +28,19 @@ types:
       - SQLI_MATCH
       - XSS_MATCH
       - OTHER
+  WafResourceType:
+    enum:
+      - APPLICATION_LOAD_BALANCER
+      - API_GATEWAY_REST_API
+      - APPSYNC_GRAPHQL_API
+      - COGNITO_USER_POOL
+      - APP_RUNNER_SERVICE
+      - VERIFIED_ACCESS_INSTANCE
+      - OTHER
+  ActionInfo:
+    properties:
+      type: ActionType
+      jsonString: optional<string>
   StatementInfo:
     properties:
       type: StatementType
@@ -40,13 +49,14 @@ types:
     properties:
       name: string
       priority: integer
+      statement: StatementInfo
       action: optional<ActionInfo>
-      statement: optional<StatementInfo>
       labels: optional<list<string>>
       jsonString: string 
   ResourceInfo:
     properties:
       arn: string
+      type: WafResourceType
   Waf:
     properties:
       arn: string

@@ -1065,7 +1065,8 @@ func (r *RegionWafInfo) String() string {
 }
 
 type ResourceInfo struct {
-	Arn string `json:"arn" url:"arn"`
+	Arn  string          `json:"arn" url:"arn"`
+	Type WafResourceType `json:"type" url:"type"`
 
 	extraProperties map[string]interface{}
 }
@@ -1101,8 +1102,8 @@ func (r *ResourceInfo) String() string {
 type RuleInfo struct {
 	Name       string         `json:"name" url:"name"`
 	Priority   int            `json:"priority" url:"priority"`
-	Action     *ActionInfo    `json:"action,omitempty" url:"action,omitempty"`
 	Statement  *StatementInfo `json:"statement,omitempty" url:"statement,omitempty"`
+	Action     *ActionInfo    `json:"action,omitempty" url:"action,omitempty"`
 	Labels     []string       `json:"labels,omitempty" url:"labels,omitempty"`
 	JsonString string         `json:"jsonString" url:"jsonString"`
 
@@ -1328,4 +1329,41 @@ func (w *WafReport) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", w)
+}
+
+type WafResourceType string
+
+const (
+	WafResourceTypeApplicationLoadBalancer WafResourceType = "APPLICATION_LOAD_BALANCER"
+	WafResourceTypeApiGatewayRestApi       WafResourceType = "API_GATEWAY_REST_API"
+	WafResourceTypeAppsyncGraphqlApi       WafResourceType = "APPSYNC_GRAPHQL_API"
+	WafResourceTypeCognitoUserPool         WafResourceType = "COGNITO_USER_POOL"
+	WafResourceTypeAppRunnerService        WafResourceType = "APP_RUNNER_SERVICE"
+	WafResourceTypeVerifiedAccessInstance  WafResourceType = "VERIFIED_ACCESS_INSTANCE"
+	WafResourceTypeOther                   WafResourceType = "OTHER"
+)
+
+func NewWafResourceTypeFromString(s string) (WafResourceType, error) {
+	switch s {
+	case "APPLICATION_LOAD_BALANCER":
+		return WafResourceTypeApplicationLoadBalancer, nil
+	case "API_GATEWAY_REST_API":
+		return WafResourceTypeApiGatewayRestApi, nil
+	case "APPSYNC_GRAPHQL_API":
+		return WafResourceTypeAppsyncGraphqlApi, nil
+	case "COGNITO_USER_POOL":
+		return WafResourceTypeCognitoUserPool, nil
+	case "APP_RUNNER_SERVICE":
+		return WafResourceTypeAppRunnerService, nil
+	case "VERIFIED_ACCESS_INSTANCE":
+		return WafResourceTypeVerifiedAccessInstance, nil
+	case "OTHER":
+		return WafResourceTypeOther, nil
+	}
+	var t WafResourceType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (w WafResourceType) Ptr() *WafResourceType {
+	return &w
 }
