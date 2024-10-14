@@ -1,15 +1,62 @@
 types:
+  ActionType:
+    enum:
+      - ALLOW
+      - BLOCK
+      - CAPTCHA
+      - CHALLENGE
+      - COUNT
+      - OTHER
   ScopeType:
     enum:
       - REGIONAL
+  StatementType:
+    enum:
+      - AND
+      - BYTE_MATCH
+      - GEO_MATCH
+      - IP_SET_REFERENCE
+      - LABEL_MATCH
+      - MANAGED_RULE_GROUP
+      - NOT
+      - OR
+      - RATE_BASED
+      - REGEX_MATCH
+      - REGEX_PATTERNSET_REFENCE
+      - RULE_GROUP_REFERENCE
+      - SIZE_CONSTRAINT
+      - SQLI_MATCH
+      - XSS_MATCH
+      - OTHER
+  WafResourceType:
+    enum:
+      - APPLICATION_LOAD_BALANCER
+      - API_GATEWAY_REST_API
+      - APPSYNC_GRAPHQL_API
+      - COGNITO_USER_POOL
+      - APP_RUNNER_SERVICE
+      - VERIFIED_ACCESS_INSTANCE
+      - OTHER
+  ActionInfo:
+    properties:
+      type: ActionType
+      jsonString: optional<string>
+  StatementInfo:
+    properties:
+      type: StatementType
+      jsonString: optional<string>   
   RuleInfo:
     properties:
       name: string
       priority: integer
-      jsonBlob: string 
+      statement: StatementInfo
+      action: optional<ActionInfo>
+      labels: optional<list<string>>
+      jsonString: string 
   ResourceInfo:
     properties:
       arn: string
+      type: WafResourceType
   Waf:
     properties:
       arn: string
@@ -23,6 +70,7 @@ types:
       wafs: optional<list<Waf>>
   WafReport:
     properties:
+      accountId: string
       scope: ScopeType
       regions: optional<list<RegionWafInfo>>
       errors: optional<list<string>>

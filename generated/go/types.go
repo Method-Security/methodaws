@@ -960,6 +960,75 @@ func (s S3ServerSideEncryption) Ptr() *S3ServerSideEncryption {
 	return &s
 }
 
+type ActionInfo struct {
+	Type       ActionType `json:"type" url:"type"`
+	JsonString *string    `json:"jsonString,omitempty" url:"jsonString,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *ActionInfo) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *ActionInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler ActionInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = ActionInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *ActionInfo) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type ActionType string
+
+const (
+	ActionTypeAllow     ActionType = "ALLOW"
+	ActionTypeBlock     ActionType = "BLOCK"
+	ActionTypeCaptcha   ActionType = "CAPTCHA"
+	ActionTypeChallenge ActionType = "CHALLENGE"
+	ActionTypeCount     ActionType = "COUNT"
+	ActionTypeOther     ActionType = "OTHER"
+)
+
+func NewActionTypeFromString(s string) (ActionType, error) {
+	switch s {
+	case "ALLOW":
+		return ActionTypeAllow, nil
+	case "BLOCK":
+		return ActionTypeBlock, nil
+	case "CAPTCHA":
+		return ActionTypeCaptcha, nil
+	case "CHALLENGE":
+		return ActionTypeChallenge, nil
+	case "COUNT":
+		return ActionTypeCount, nil
+	case "OTHER":
+		return ActionTypeOther, nil
+	}
+	var t ActionType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (a ActionType) Ptr() *ActionType {
+	return &a
+}
+
 type RegionWafInfo struct {
 	Region string `json:"region" url:"region"`
 	Wafs   []*Waf `json:"wafs,omitempty" url:"wafs,omitempty"`
@@ -996,7 +1065,8 @@ func (r *RegionWafInfo) String() string {
 }
 
 type ResourceInfo struct {
-	Arn string `json:"arn" url:"arn"`
+	Arn  string          `json:"arn" url:"arn"`
+	Type WafResourceType `json:"type" url:"type"`
 
 	extraProperties map[string]interface{}
 }
@@ -1030,9 +1100,12 @@ func (r *ResourceInfo) String() string {
 }
 
 type RuleInfo struct {
-	Name     string `json:"name" url:"name"`
-	Priority int    `json:"priority" url:"priority"`
-	JsonBlob string `json:"jsonBlob" url:"jsonBlob"`
+	Name       string         `json:"name" url:"name"`
+	Priority   int            `json:"priority" url:"priority"`
+	Statement  *StatementInfo `json:"statement,omitempty" url:"statement,omitempty"`
+	Action     *ActionInfo    `json:"action,omitempty" url:"action,omitempty"`
+	Labels     []string       `json:"labels,omitempty" url:"labels,omitempty"`
+	JsonString string         `json:"jsonString" url:"jsonString"`
 
 	extraProperties map[string]interface{}
 }
@@ -1084,6 +1157,105 @@ func (s ScopeType) Ptr() *ScopeType {
 	return &s
 }
 
+type StatementInfo struct {
+	Type       StatementType `json:"type" url:"type"`
+	JsonString *string       `json:"jsonString,omitempty" url:"jsonString,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (s *StatementInfo) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *StatementInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler StatementInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = StatementInfo(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+
+	return nil
+}
+
+func (s *StatementInfo) String() string {
+	if value, err := core.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+type StatementType string
+
+const (
+	StatementTypeAnd                    StatementType = "AND"
+	StatementTypeByteMatch              StatementType = "BYTE_MATCH"
+	StatementTypeGeoMatch               StatementType = "GEO_MATCH"
+	StatementTypeIpSetReference         StatementType = "IP_SET_REFERENCE"
+	StatementTypeLabelMatch             StatementType = "LABEL_MATCH"
+	StatementTypeManagedRuleGroup       StatementType = "MANAGED_RULE_GROUP"
+	StatementTypeNot                    StatementType = "NOT"
+	StatementTypeOr                     StatementType = "OR"
+	StatementTypeRateBased              StatementType = "RATE_BASED"
+	StatementTypeRegexMatch             StatementType = "REGEX_MATCH"
+	StatementTypeRegexPatternsetRefence StatementType = "REGEX_PATTERNSET_REFENCE"
+	StatementTypeRuleGroupReference     StatementType = "RULE_GROUP_REFERENCE"
+	StatementTypeSizeConstraint         StatementType = "SIZE_CONSTRAINT"
+	StatementTypeSqliMatch              StatementType = "SQLI_MATCH"
+	StatementTypeXssMatch               StatementType = "XSS_MATCH"
+	StatementTypeOther                  StatementType = "OTHER"
+)
+
+func NewStatementTypeFromString(s string) (StatementType, error) {
+	switch s {
+	case "AND":
+		return StatementTypeAnd, nil
+	case "BYTE_MATCH":
+		return StatementTypeByteMatch, nil
+	case "GEO_MATCH":
+		return StatementTypeGeoMatch, nil
+	case "IP_SET_REFERENCE":
+		return StatementTypeIpSetReference, nil
+	case "LABEL_MATCH":
+		return StatementTypeLabelMatch, nil
+	case "MANAGED_RULE_GROUP":
+		return StatementTypeManagedRuleGroup, nil
+	case "NOT":
+		return StatementTypeNot, nil
+	case "OR":
+		return StatementTypeOr, nil
+	case "RATE_BASED":
+		return StatementTypeRateBased, nil
+	case "REGEX_MATCH":
+		return StatementTypeRegexMatch, nil
+	case "REGEX_PATTERNSET_REFENCE":
+		return StatementTypeRegexPatternsetRefence, nil
+	case "RULE_GROUP_REFERENCE":
+		return StatementTypeRuleGroupReference, nil
+	case "SIZE_CONSTRAINT":
+		return StatementTypeSizeConstraint, nil
+	case "SQLI_MATCH":
+		return StatementTypeSqliMatch, nil
+	case "XSS_MATCH":
+		return StatementTypeXssMatch, nil
+	case "OTHER":
+		return StatementTypeOther, nil
+	}
+	var t StatementType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s StatementType) Ptr() *StatementType {
+	return &s
+}
+
 type Waf struct {
 	Arn         string          `json:"arn" url:"arn"`
 	Name        string          `json:"name" url:"name"`
@@ -1123,9 +1295,10 @@ func (w *Waf) String() string {
 }
 
 type WafReport struct {
-	Scope   ScopeType        `json:"scope" url:"scope"`
-	Regions []*RegionWafInfo `json:"regions,omitempty" url:"regions,omitempty"`
-	Errors  []string         `json:"errors,omitempty" url:"errors,omitempty"`
+	AccountId string           `json:"accountId" url:"accountId"`
+	Scope     ScopeType        `json:"scope" url:"scope"`
+	Regions   []*RegionWafInfo `json:"regions,omitempty" url:"regions,omitempty"`
+	Errors    []string         `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
 }
@@ -1156,4 +1329,41 @@ func (w *WafReport) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", w)
+}
+
+type WafResourceType string
+
+const (
+	WafResourceTypeApplicationLoadBalancer WafResourceType = "APPLICATION_LOAD_BALANCER"
+	WafResourceTypeApiGatewayRestApi       WafResourceType = "API_GATEWAY_REST_API"
+	WafResourceTypeAppsyncGraphqlApi       WafResourceType = "APPSYNC_GRAPHQL_API"
+	WafResourceTypeCognitoUserPool         WafResourceType = "COGNITO_USER_POOL"
+	WafResourceTypeAppRunnerService        WafResourceType = "APP_RUNNER_SERVICE"
+	WafResourceTypeVerifiedAccessInstance  WafResourceType = "VERIFIED_ACCESS_INSTANCE"
+	WafResourceTypeOther                   WafResourceType = "OTHER"
+)
+
+func NewWafResourceTypeFromString(s string) (WafResourceType, error) {
+	switch s {
+	case "APPLICATION_LOAD_BALANCER":
+		return WafResourceTypeApplicationLoadBalancer, nil
+	case "API_GATEWAY_REST_API":
+		return WafResourceTypeApiGatewayRestApi, nil
+	case "APPSYNC_GRAPHQL_API":
+		return WafResourceTypeAppsyncGraphqlApi, nil
+	case "COGNITO_USER_POOL":
+		return WafResourceTypeCognitoUserPool, nil
+	case "APP_RUNNER_SERVICE":
+		return WafResourceTypeAppRunnerService, nil
+	case "VERIFIED_ACCESS_INSTANCE":
+		return WafResourceTypeVerifiedAccessInstance, nil
+	case "OTHER":
+		return WafResourceTypeOther, nil
+	}
+	var t WafResourceType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (w WafResourceType) Ptr() *WafResourceType {
+	return &w
 }
