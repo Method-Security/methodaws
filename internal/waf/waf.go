@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	methodaws "github.com/Method-Security/methodaws/generated/go"
+	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/wafv2"
 	"github.com/aws/aws-sdk-go-v2/service/wafv2/types"
@@ -14,6 +15,11 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 	report := methodaws.WafReport{}
 	var regionReports []*methodaws.RegionWafInfo
 	var allErrors []string
+
+	accountID, err := sts.GetAccountID(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, region := range regions {
 		regionCfg := cfg.Copy()
@@ -60,6 +66,7 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 		regionReports = append(regionReports, &regionReport)
 	}
 
+	report.AccountId = aws.ToString(accountID)
 	report.Scope = methodaws.ScopeTypeRegional
 	report.Regions = regionReports
 	report.Errors = allErrors

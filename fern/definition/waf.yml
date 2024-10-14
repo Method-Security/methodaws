@@ -60,6 +60,7 @@ types:
       wafs: optional<list<Waf>>
   WafReport:
     properties:
+      accountId: string
       scope: ScopeType
       regions: optional<list<RegionWafInfo>>
       errors: optional<list<string>>

@@ -1294,9 +1294,10 @@ func (w *Waf) String() string {
 }
 
 type WafReport struct {
-	Scope   ScopeType        `json:"scope" url:"scope"`
-	Regions []*RegionWafInfo `json:"regions,omitempty" url:"regions,omitempty"`
-	Errors  []string         `json:"errors,omitempty" url:"errors,omitempty"`
+	AccountId string           `json:"accountId" url:"accountId"`
+	Scope     ScopeType        `json:"scope" url:"scope"`
+	Regions   []*RegionWafInfo `json:"regions,omitempty" url:"regions,omitempty"`
+	Errors    []string         `json:"errors,omitempty" url:"errors,omitempty"`
 
 	extraProperties map[string]interface{}
 }
