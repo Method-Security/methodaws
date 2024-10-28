@@ -1257,11 +1257,12 @@ func (s StatementType) Ptr() *StatementType {
 }
 
 type Waf struct {
-	Arn         string          `json:"arn" url:"arn"`
-	Name        string          `json:"name" url:"name"`
-	Description *string         `json:"description,omitempty" url:"description,omitempty"`
-	Rules       []*RuleInfo     `json:"rules,omitempty" url:"rules,omitempty"`
-	Resources   []*ResourceInfo `json:"resources,omitempty" url:"resources,omitempty"`
+	Arn           string          `json:"arn" url:"arn"`
+	Name          string          `json:"name" url:"name"`
+	Description   *string         `json:"description,omitempty" url:"description,omitempty"`
+	DefaultAction ActionType      `json:"defaultAction" url:"defaultAction"`
+	Rules         []*RuleInfo     `json:"rules,omitempty" url:"rules,omitempty"`
+	Resources     []*ResourceInfo `json:"resources,omitempty" url:"resources,omitempty"`
 
 	extraProperties map[string]interface{}
 }
