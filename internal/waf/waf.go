@@ -36,7 +36,7 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 
 		var wafs []*methodaws.Waf
 		for _, webACL := range webACLsOutput.WebACLs {
-			rules, errs := getRules(ctx, wafClient, types.ScopeRegional, webACL.Id, webACL.Name)
+			rules, defaultAction, errs := getRules(ctx, wafClient, types.ScopeRegional, webACL.Id, webACL.Name)
 			if len(errs) != 0 {
 				allErrors = append(allErrors, errs...)
 				continue
@@ -50,11 +50,12 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 
 			description := aws.ToString(webACL.Description)
 			waf := methodaws.Waf{
-				Arn:         aws.ToString(webACL.ARN),
-				Name:        aws.ToString(webACL.Name),
-				Description: &description,
-				Rules:       rules,
-				Resources:   resources,
+				Arn:           aws.ToString(webACL.ARN),
+				Name:          aws.ToString(webACL.Name),
+				Description:   &description,
+				DefaultAction: *defaultAction,
+				Rules:         rules,
+				Resources:     resources,
 			}
 			wafs = append(wafs, &waf)
 		}
@@ -74,12 +75,19 @@ func EnumerateWAF(ctx context.Context, cfg aws.Config, regions []string) (*metho
 	return &report, nil
 }
 
-func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, webACLId, webACLName *string) ([]*methodaws.RuleInfo, []string) {
+func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, webACLId, webACLName *string) ([]*methodaws.RuleInfo, *methodaws.ActionType, []string) {
 	getWebACLInput := &wafv2.GetWebACLInput{Id: webACLId, Name: webACLName, Scope: scope}
 	webACLOutput, err := wafClient.GetWebACL(ctx, getWebACLInput)
 	if err != nil {
-		return nil, []string{err.Error()}
+		return nil, nil, []string{err.Error()}
 	}
+
+	// Default Action
+	defaultAction := webACLOutput.WebACL.DefaultAction
+	if defaultAction == nil {
+		return nil, nil, []string{"no default action specified"}
+	}
+	defaultActionType := getDefaultActionType(defaultAction)
 
 	var rules []*methodaws.RuleInfo
 	var errors []string
@@ -126,7 +134,8 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 		}
 		rules = append(rules, &ruleInfo)
 	}
-	return rules, errors
+
+	return rules, &defaultActionType, errors
 }
 
 func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*methodaws.ResourceInfo, error) {
@@ -159,6 +168,17 @@ func getActionType(action *types.RuleAction) methodaws.ActionType {
 		return methodaws.ActionTypeChallenge
 	case action.Count != nil:
 		return methodaws.ActionTypeCount
+	default:
+		return methodaws.ActionTypeOther
+	}
+}
+
+func getDefaultActionType(action *types.DefaultAction) methodaws.ActionType {
+	switch {
+	case action.Allow != nil:
+		return methodaws.ActionTypeAllow
+	case action.Block != nil:
+		return methodaws.ActionTypeBlock
 	default:
 		return methodaws.ActionTypeOther
 	}

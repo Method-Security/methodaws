@@ -62,6 +62,7 @@ types:
       arn: string
       name: string
       description: optional<string>
+      defaultAction: ActionType
       rules: optional<list<RuleInfo>>
       resources: optional<list<ResourceInfo>>
   RegionWafInfo:
