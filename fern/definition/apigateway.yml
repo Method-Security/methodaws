@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+types:
+  RestApi:
+    properties:
+      baseUrl: string
+      name: string
+      region: string
+      createdTime: datetime
+      stage: string
+      paths: list<RestApiPath>
+      decription: optional<string>
+  RestApiPath:
+    properties:
+      path: string
+      method: string
+  ApiGatewayApi:
+    union:
+      rest: RestApi
+  ApiGatewayReport:
+    properties:
+      accountId: string
+      apis: list<ApiGatewayApi>
+      errors: list<string>

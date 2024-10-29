@@ -26,6 +26,7 @@ func main() {
 	methodaws.InitVPCCommand()
 	methodaws.InitLoadBalancerCommand()
 	methodaws.InitWAFCommand()
+	methodaws.InitApiGatewayCommand()
 
 	if err := methodaws.RootCmd.Execute(); err != nil {
 		os.Exit(1)

@@ -5,9 +5,192 @@ package methodaws
 import (
 	json "encoding/json"
 	fmt "fmt"
-	core "github.com/Method-Security/methodaws/generated/go/core"
 	time "time"
+
+	core "github.com/Method-Security/methodaws/generated/go/core"
 )
+
+type ApiGatewayApi struct {
+	Type string
+	Rest *RestApi
+}
+
+func NewApiGatewayApiFromRest(value *RestApi) *ApiGatewayApi {
+	return &ApiGatewayApi{Type: "rest", Rest: value}
+}
+
+func (a *ApiGatewayApi) UnmarshalJSON(data []byte) error {
+	var unmarshaler struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	a.Type = unmarshaler.Type
+	if unmarshaler.Type == "" {
+		return fmt.Errorf("%T did not include discriminant type", a)
+	}
+	switch unmarshaler.Type {
+	case "rest":
+		value := new(RestApi)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		a.Rest = value
+	}
+	return nil
+}
+
+func (a ApiGatewayApi) MarshalJSON() ([]byte, error) {
+	switch a.Type {
+	default:
+		return nil, fmt.Errorf("invalid type %s in %T", a.Type, a)
+	case "rest":
+		return core.MarshalJSONWithExtraProperty(a.Rest, "type", "rest")
+	}
+}
+
+type ApiGatewayApiVisitor interface {
+	VisitRest(*RestApi) error
+}
+
+func (a *ApiGatewayApi) Accept(visitor ApiGatewayApiVisitor) error {
+	switch a.Type {
+	default:
+		return fmt.Errorf("invalid type %s in %T", a.Type, a)
+	case "rest":
+		return visitor.VisitRest(a.Rest)
+	}
+}
+
+type ApiGatewayReport struct {
+	AccountId string           `json:"accountId" url:"accountId"`
+	Apis      []*ApiGatewayApi `json:"apis,omitempty" url:"apis,omitempty"`
+	Errors    []string         `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *ApiGatewayReport) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *ApiGatewayReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler ApiGatewayReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = ApiGatewayReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *ApiGatewayReport) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type RestApi struct {
+	BaseUrl     string         `json:"baseUrl" url:"baseUrl"`
+	Name        string         `json:"name" url:"name"`
+	Region      string         `json:"region" url:"region"`
+	CreatedTime time.Time      `json:"createdTime" url:"createdTime"`
+	Stage       string         `json:"stage" url:"stage"`
+	Paths       []*RestApiPath `json:"paths,omitempty" url:"paths,omitempty"`
+	Decription  *string        `json:"decription,omitempty" url:"decription,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RestApi) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RestApi) UnmarshalJSON(data []byte) error {
+	type embed RestApi
+	var unmarshaler = struct {
+		embed
+		CreatedTime *core.DateTime `json:"createdTime"`
+	}{
+		embed: embed(*r),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*r = RestApi(unmarshaler.embed)
+	r.CreatedTime = unmarshaler.CreatedTime.Time()
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RestApi) MarshalJSON() ([]byte, error) {
+	type embed RestApi
+	var marshaler = struct {
+		embed
+		CreatedTime *core.DateTime `json:"createdTime"`
+	}{
+		embed:       embed(*r),
+		CreatedTime: core.NewDateTime(r.CreatedTime),
+	}
+	return json.Marshal(marshaler)
+}
+
+func (r *RestApi) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+type RestApiPath struct {
+	Path   string `json:"path" url:"path"`
+	Method string `json:"method" url:"method"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RestApiPath) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RestApiPath) UnmarshalJSON(data []byte) error {
+	type unmarshaler RestApiPath
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RestApiPath(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RestApiPath) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
 
 type CredentialInfo struct {
 	Url        string     `json:"url" url:"url"`
