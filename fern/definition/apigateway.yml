@@ -7,7 +7,7 @@ types:
       region: string
       createdTime: datetime
       stage: string
-      paths: list<RestApiPath>
+      paths: optional<list<RestApiPath>>
       decription: optional<string>
   AwsProxyIntegration:
     properties:
@@ -41,5 +41,5 @@ types:
   ApiGatewayReport:
     properties:
       accountId: string
-      apis: list<ApiGatewayApi>
-      errors: list<string>
+      apis: optional<list<ApiGatewayApi>>
+      errors: optional<list<string>>

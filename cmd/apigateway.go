@@ -21,7 +21,6 @@ func (a *MethodAws) InitAPIGatewayCommand() {
 			report, err := apigateway.EnumerateAPIGateway(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				a.OutputSignal.AddError(err)
-				a.OutputSignal.Status = 1
 			}
 			a.OutputSignal.Content = report
 		},

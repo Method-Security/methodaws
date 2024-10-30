@@ -74,19 +74,19 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 							report.Errors = append(report.Errors, err.Error())
 						}
 
-						var typeInegration methodaws.Integration
+						var typeIntegration methodaws.Integration
 
 						switch details.MethodIntegration.Type {
 						case types.IntegrationTypeHttp:
-							typeInegration = *methodaws.NewIntegrationFromHttp(&methodaws.HttpIntegration{Uri: *details.MethodIntegration.Uri})
+							typeIntegration = *methodaws.NewIntegrationFromHttp(&methodaws.HttpIntegration{Uri: *details.MethodIntegration.Uri})
 						case types.IntegrationTypeAws:
-							typeInegration = *methodaws.NewIntegrationFromAws(&methodaws.AwsIntegration{Arn: *details.MethodIntegration.Uri})
+							typeIntegration = *methodaws.NewIntegrationFromAws(&methodaws.AwsIntegration{Arn: *details.MethodIntegration.Uri})
 						case types.IntegrationTypeHttpProxy:
-							typeInegration = *methodaws.NewIntegrationFromHttpProxy(&methodaws.HttpProxyIntegration{Uri: *details.MethodIntegration.Uri})
+							typeIntegration = *methodaws.NewIntegrationFromHttpProxy(&methodaws.HttpProxyIntegration{Uri: *details.MethodIntegration.Uri})
 						case types.IntegrationTypeAwsProxy:
-							typeInegration = *methodaws.NewIntegrationFromAwsProxy(&methodaws.AwsProxyIntegration{Arn: *details.MethodIntegration.Uri})
+							typeIntegration = *methodaws.NewIntegrationFromAwsProxy(&methodaws.AwsProxyIntegration{Arn: *details.MethodIntegration.Uri})
 						case types.IntegrationTypeMock:
-							typeInegration = *methodaws.NewIntegrationFromMock(&methodaws.MockIntegration{})
+							typeIntegration = *methodaws.NewIntegrationFromMock(&methodaws.MockIntegration{})
 						default:
 							continue
 						}
@@ -94,7 +94,7 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 						restAPIPath := methodaws.RestApiPath{
 							Path:        *resource.Path,
 							Method:      name,
-							Integration: &typeInegration,
+							Integration: &typeIntegration,
 						}
 						apis = append(apis, &restAPIPath)
 					}
