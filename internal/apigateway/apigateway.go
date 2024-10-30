@@ -60,7 +60,7 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 			// base url is in the following format
 			// https://<apiId>.execute-api.<region>.amazonaws.com/<stageName>
 			for _, stage := range stages.Item {
-				baseUrl := fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%s", *api.Id, region, *stage.StageName)
+				baseURL := fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%s", *api.Id, region, *stage.StageName)
 				apis := []*methodaws.RestApiPath{}
 				resources, err := client.GetResources(ctx, &apigateway.GetResourcesInput{RestApiId: api.Id})
 				if err != nil {
@@ -68,7 +68,7 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 				}
 
 				for _, resource := range resources.Items {
-					for name, _ := range resource.ResourceMethods {
+					for name := range resource.ResourceMethods {
 						details, err := client.GetMethod(ctx, &apigateway.GetMethodInput{RestApiId: api.Id, ResourceId: resource.Id, HttpMethod: &name})
 						if err != nil {
 							report.Errors = append(report.Errors, err.Error())
@@ -91,17 +91,17 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 							continue
 						}
 
-						restApiPath := methodaws.RestApiPath{
+						restAPIPath := methodaws.RestApiPath{
 							Path:        *resource.Path,
 							Method:      name,
 							Integration: &typeInegration,
 						}
-						apis = append(apis, &restApiPath)
+						apis = append(apis, &restAPIPath)
 					}
 				}
 
-				restApi := methodaws.RestApi{
-					BaseUrl:     baseUrl,
+				restAPI := methodaws.RestApi{
+					BaseUrl:     baseURL,
 					Region:      region,
 					CreatedTime: *api.CreatedDate,
 					Name:        *api.Name,
@@ -109,8 +109,8 @@ func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 					Stage:       *stage.StageName,
 					Paths:       apis,
 				}
-				gatewayApi := methodaws.NewApiGatewayApiFromRest(&restApi)
-				report.Apis = append(report.Apis, gatewayApi)
+				gatewayAPI := methodaws.NewApiGatewayApiFromRest(&restAPI)
+				report.Apis = append(report.Apis, gatewayAPI)
 			}
 		}
 	}
