@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/apigateway/types"
 )
 
-func EnumerateApiGateway(ctx context.Context, cfg aws.Config, regions []string) (report methodaws.ApiGatewayReport, err error) {
+func EnumerateAPIGateway(ctx context.Context, cfg aws.Config, regions []string) (report methodaws.ApiGatewayReport, err error) {
 	accountID, err := sts.GetAccountID(ctx, cfg)
 	if err != nil {
 		return methodaws.ApiGatewayReport{
@@ -28,7 +28,7 @@ func EnumerateApiGateway(ctx context.Context, cfg aws.Config, regions []string) 
 	}
 
 	for _, region := range regions {
-		err := EnumerateApiGatewayForRegion(ctx, cfg, &apiGatewayReport, region)
+		err := EnumerateAPIGatewayForRegion(ctx, cfg, &apiGatewayReport, region)
 		if err != nil {
 			return report, err
 		}
@@ -37,7 +37,7 @@ func EnumerateApiGateway(ctx context.Context, cfg aws.Config, regions []string) 
 	return apiGatewayReport, nil
 }
 
-func EnumerateApiGatewayForRegion(ctx context.Context, cfg aws.Config, report *methodaws.ApiGatewayReport, region string) (err error) {
+func EnumerateAPIGatewayForRegion(ctx context.Context, cfg aws.Config, report *methodaws.ApiGatewayReport, region string) (err error) {
 	cfg.Region = region
 	client := apigateway.NewFromConfig(cfg)
 	paginator := apigateway.NewGetRestApisPaginator(client, &apigateway.GetRestApisInput{})
