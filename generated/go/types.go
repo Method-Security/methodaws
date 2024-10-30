@@ -351,37 +351,6 @@ func (i *Integration) Accept(visitor IntegrationVisitor) error {
 	}
 }
 
-type IntegrationType string
-
-const (
-	IntegrationTypeHttp      IntegrationType = "HTTP"
-	IntegrationTypeAws       IntegrationType = "AWS"
-	IntegrationTypeMock      IntegrationType = "MOCK"
-	IntegrationTypeHttpProxy IntegrationType = "HTTP_PROXY"
-	IntegrationTypeAwsProxy  IntegrationType = "AWS_PROXY"
-)
-
-func NewIntegrationTypeFromString(s string) (IntegrationType, error) {
-	switch s {
-	case "HTTP":
-		return IntegrationTypeHttp, nil
-	case "AWS":
-		return IntegrationTypeAws, nil
-	case "MOCK":
-		return IntegrationTypeMock, nil
-	case "HTTP_PROXY":
-		return IntegrationTypeHttpProxy, nil
-	case "AWS_PROXY":
-		return IntegrationTypeAwsProxy, nil
-	}
-	var t IntegrationType
-	return "", fmt.Errorf("%s is not a valid %T", s, t)
-}
-
-func (i IntegrationType) Ptr() *IntegrationType {
-	return &i
-}
-
 type MockIntegration struct {
 	extraProperties map[string]interface{}
 }

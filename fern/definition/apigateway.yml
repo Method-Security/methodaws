@@ -30,13 +30,6 @@ types:
       mock: MockIntegration
       http: HttpIntegration
       http_proxy: HttpProxyIntegration
-  IntegrationType:
-    enum:
-      - HTTP
-      - AWS
-      - MOCK
-      - HTTP_PROXY
-      - AWS_PROXY
   RestApiPath:
     properties:
       path: string
