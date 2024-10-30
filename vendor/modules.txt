@@ -109,6 +109,12 @@ github.com/aws/aws-sdk-go-v2/internal/ini
 github.com/aws/aws-sdk-go-v2/internal/v4a
 github.com/aws/aws-sdk-go-v2/internal/v4a/internal/crypto
 github.com/aws/aws-sdk-go-v2/internal/v4a/internal/v4
+# github.com/aws/aws-sdk-go-v2/service/apigateway v1.27.2
+## explicit; go 1.21
+github.com/aws/aws-sdk-go-v2/service/apigateway
+github.com/aws/aws-sdk-go-v2/service/apigateway/internal/customizations
+github.com/aws/aws-sdk-go-v2/service/apigateway/internal/endpoints
+github.com/aws/aws-sdk-go-v2/service/apigateway/types
 # github.com/aws/aws-sdk-go-v2/service/autoscaling v1.40.5
 ## explicit; go 1.20
 github.com/aws/aws-sdk-go-v2/service/autoscaling

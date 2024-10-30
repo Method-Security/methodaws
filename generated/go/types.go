@@ -9,6 +9,474 @@ import (
 	time "time"
 )
 
+type ApiGatewayApi struct {
+	Type string
+	Rest *RestApi
+}
+
+func NewApiGatewayApiFromRest(value *RestApi) *ApiGatewayApi {
+	return &ApiGatewayApi{Type: "rest", Rest: value}
+}
+
+func (a *ApiGatewayApi) UnmarshalJSON(data []byte) error {
+	var unmarshaler struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	a.Type = unmarshaler.Type
+	if unmarshaler.Type == "" {
+		return fmt.Errorf("%T did not include discriminant type", a)
+	}
+	switch unmarshaler.Type {
+	case "rest":
+		value := new(RestApi)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		a.Rest = value
+	}
+	return nil
+}
+
+func (a ApiGatewayApi) MarshalJSON() ([]byte, error) {
+	switch a.Type {
+	default:
+		return nil, fmt.Errorf("invalid type %s in %T", a.Type, a)
+	case "rest":
+		return core.MarshalJSONWithExtraProperty(a.Rest, "type", "rest")
+	}
+}
+
+type ApiGatewayApiVisitor interface {
+	VisitRest(*RestApi) error
+}
+
+func (a *ApiGatewayApi) Accept(visitor ApiGatewayApiVisitor) error {
+	switch a.Type {
+	default:
+		return fmt.Errorf("invalid type %s in %T", a.Type, a)
+	case "rest":
+		return visitor.VisitRest(a.Rest)
+	}
+}
+
+type ApiGatewayReport struct {
+	AccountId string           `json:"accountId" url:"accountId"`
+	Apis      []*ApiGatewayApi `json:"apis,omitempty" url:"apis,omitempty"`
+	Errors    []string         `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *ApiGatewayReport) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *ApiGatewayReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler ApiGatewayReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = ApiGatewayReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *ApiGatewayReport) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type AwsIntegration struct {
+	Arn string `json:"arn" url:"arn"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *AwsIntegration) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *AwsIntegration) UnmarshalJSON(data []byte) error {
+	type unmarshaler AwsIntegration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = AwsIntegration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *AwsIntegration) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type AwsProxyIntegration struct {
+	Arn string `json:"arn" url:"arn"`
+
+	extraProperties map[string]interface{}
+}
+
+func (a *AwsProxyIntegration) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *AwsProxyIntegration) UnmarshalJSON(data []byte) error {
+	type unmarshaler AwsProxyIntegration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = AwsProxyIntegration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+
+	return nil
+}
+
+func (a *AwsProxyIntegration) String() string {
+	if value, err := core.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+type HttpIntegration struct {
+	Uri string `json:"uri" url:"uri"`
+
+	extraProperties map[string]interface{}
+}
+
+func (h *HttpIntegration) GetExtraProperties() map[string]interface{} {
+	return h.extraProperties
+}
+
+func (h *HttpIntegration) UnmarshalJSON(data []byte) error {
+	type unmarshaler HttpIntegration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*h = HttpIntegration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *h)
+	if err != nil {
+		return err
+	}
+	h.extraProperties = extraProperties
+
+	return nil
+}
+
+func (h *HttpIntegration) String() string {
+	if value, err := core.StringifyJSON(h); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", h)
+}
+
+type HttpProxyIntegration struct {
+	Uri string `json:"uri" url:"uri"`
+
+	extraProperties map[string]interface{}
+}
+
+func (h *HttpProxyIntegration) GetExtraProperties() map[string]interface{} {
+	return h.extraProperties
+}
+
+func (h *HttpProxyIntegration) UnmarshalJSON(data []byte) error {
+	type unmarshaler HttpProxyIntegration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*h = HttpProxyIntegration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *h)
+	if err != nil {
+		return err
+	}
+	h.extraProperties = extraProperties
+
+	return nil
+}
+
+func (h *HttpProxyIntegration) String() string {
+	if value, err := core.StringifyJSON(h); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", h)
+}
+
+type Integration struct {
+	Type      string
+	AwsProxy  *AwsProxyIntegration
+	Aws       *AwsIntegration
+	Mock      *MockIntegration
+	Http      *HttpIntegration
+	HttpProxy *HttpProxyIntegration
+}
+
+func NewIntegrationFromAwsProxy(value *AwsProxyIntegration) *Integration {
+	return &Integration{Type: "aws_proxy", AwsProxy: value}
+}
+
+func NewIntegrationFromAws(value *AwsIntegration) *Integration {
+	return &Integration{Type: "aws", Aws: value}
+}
+
+func NewIntegrationFromMock(value *MockIntegration) *Integration {
+	return &Integration{Type: "mock", Mock: value}
+}
+
+func NewIntegrationFromHttp(value *HttpIntegration) *Integration {
+	return &Integration{Type: "http", Http: value}
+}
+
+func NewIntegrationFromHttpProxy(value *HttpProxyIntegration) *Integration {
+	return &Integration{Type: "http_proxy", HttpProxy: value}
+}
+
+func (i *Integration) UnmarshalJSON(data []byte) error {
+	var unmarshaler struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	i.Type = unmarshaler.Type
+	if unmarshaler.Type == "" {
+		return fmt.Errorf("%T did not include discriminant type", i)
+	}
+	switch unmarshaler.Type {
+	case "aws_proxy":
+		value := new(AwsProxyIntegration)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		i.AwsProxy = value
+	case "aws":
+		value := new(AwsIntegration)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		i.Aws = value
+	case "mock":
+		value := new(MockIntegration)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		i.Mock = value
+	case "http":
+		value := new(HttpIntegration)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		i.Http = value
+	case "http_proxy":
+		value := new(HttpProxyIntegration)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		i.HttpProxy = value
+	}
+	return nil
+}
+
+func (i Integration) MarshalJSON() ([]byte, error) {
+	switch i.Type {
+	default:
+		return nil, fmt.Errorf("invalid type %s in %T", i.Type, i)
+	case "aws_proxy":
+		return core.MarshalJSONWithExtraProperty(i.AwsProxy, "type", "aws_proxy")
+	case "aws":
+		return core.MarshalJSONWithExtraProperty(i.Aws, "type", "aws")
+	case "mock":
+		return core.MarshalJSONWithExtraProperty(i.Mock, "type", "mock")
+	case "http":
+		return core.MarshalJSONWithExtraProperty(i.Http, "type", "http")
+	case "http_proxy":
+		return core.MarshalJSONWithExtraProperty(i.HttpProxy, "type", "http_proxy")
+	}
+}
+
+type IntegrationVisitor interface {
+	VisitAwsProxy(*AwsProxyIntegration) error
+	VisitAws(*AwsIntegration) error
+	VisitMock(*MockIntegration) error
+	VisitHttp(*HttpIntegration) error
+	VisitHttpProxy(*HttpProxyIntegration) error
+}
+
+func (i *Integration) Accept(visitor IntegrationVisitor) error {
+	switch i.Type {
+	default:
+		return fmt.Errorf("invalid type %s in %T", i.Type, i)
+	case "aws_proxy":
+		return visitor.VisitAwsProxy(i.AwsProxy)
+	case "aws":
+		return visitor.VisitAws(i.Aws)
+	case "mock":
+		return visitor.VisitMock(i.Mock)
+	case "http":
+		return visitor.VisitHttp(i.Http)
+	case "http_proxy":
+		return visitor.VisitHttpProxy(i.HttpProxy)
+	}
+}
+
+type MockIntegration struct {
+	extraProperties map[string]interface{}
+}
+
+func (m *MockIntegration) GetExtraProperties() map[string]interface{} {
+	return m.extraProperties
+}
+
+func (m *MockIntegration) UnmarshalJSON(data []byte) error {
+	type unmarshaler MockIntegration
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*m = MockIntegration(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *m)
+	if err != nil {
+		return err
+	}
+	m.extraProperties = extraProperties
+
+	return nil
+}
+
+func (m *MockIntegration) String() string {
+	if value, err := core.StringifyJSON(m); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", m)
+}
+
+type RestApi struct {
+	BaseUrl     string         `json:"baseUrl" url:"baseUrl"`
+	Name        string         `json:"name" url:"name"`
+	Region      string         `json:"region" url:"region"`
+	CreatedTime time.Time      `json:"createdTime" url:"createdTime"`
+	Stage       string         `json:"stage" url:"stage"`
+	Paths       []*RestApiPath `json:"paths,omitempty" url:"paths,omitempty"`
+	Decription  *string        `json:"decription,omitempty" url:"decription,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RestApi) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RestApi) UnmarshalJSON(data []byte) error {
+	type embed RestApi
+	var unmarshaler = struct {
+		embed
+		CreatedTime *core.DateTime `json:"createdTime"`
+	}{
+		embed: embed(*r),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*r = RestApi(unmarshaler.embed)
+	r.CreatedTime = unmarshaler.CreatedTime.Time()
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RestApi) MarshalJSON() ([]byte, error) {
+	type embed RestApi
+	var marshaler = struct {
+		embed
+		CreatedTime *core.DateTime `json:"createdTime"`
+	}{
+		embed:       embed(*r),
+		CreatedTime: core.NewDateTime(r.CreatedTime),
+	}
+	return json.Marshal(marshaler)
+}
+
+func (r *RestApi) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+type RestApiPath struct {
+	Path        string       `json:"path" url:"path"`
+	Method      string       `json:"method" url:"method"`
+	Integration *Integration `json:"integration,omitempty" url:"integration,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (r *RestApiPath) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RestApiPath) UnmarshalJSON(data []byte) error {
+	type unmarshaler RestApiPath
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RestApiPath(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+
+	return nil
+}
+
+func (r *RestApiPath) String() string {
+	if value, err := core.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
 type CredentialInfo struct {
 	Url        string     `json:"url" url:"url"`
 	Token      string     `json:"token" url:"token"`
