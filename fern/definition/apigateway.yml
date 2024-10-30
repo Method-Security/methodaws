@@ -9,10 +9,39 @@ types:
       stage: string
       paths: list<RestApiPath>
       decription: optional<string>
+  AwsProxyIntegration:
+    properties:
+      arn: string
+  AwsIntegration:
+    properties:
+      arn: string
+  MockIntegration:
+    properties: {}
+  HttpIntegration:
+    properties: 
+      uri: string
+  HttpProxyIntegration:
+    properties: 
+      uri: string
+  Integration:
+    union:
+      aws_proxy: AwsProxyIntegration
+      aws: AwsIntegration
+      mock: MockIntegration
+      http: HttpIntegration
+      http_proxy: HttpProxyIntegration
+  IntegrationType:
+    enum:
+      - HTTP
+      - AWS
+      - MOCK
+      - HTTP_PROXY
+      - AWS_PROXY
   RestApiPath:
     properties:
       path: string
       method: string
+      integration: Integration
   ApiGatewayApi:
     union:
       rest: RestApi

@@ -8,6 +8,7 @@ import (
 	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/apigateway"
+	"github.com/aws/aws-sdk-go-v2/service/apigateway/types"
 )
 
 func EnumerateApiGateway(ctx context.Context, cfg aws.Config, regions []string) (report methodaws.ApiGatewayReport, err error) {
@@ -68,11 +69,33 @@ func EnumerateApiGatewayForRegion(ctx context.Context, cfg aws.Config, report *m
 
 				for _, resource := range resources.Items {
 					for name, _ := range resource.ResourceMethods {
-						restApiPath := methodaws.RestApiPath{
-							Path:   *resource.Path,
-							Method: name,
+						details, err := client.GetMethod(ctx, &apigateway.GetMethodInput{RestApiId: api.Id, ResourceId: resource.Id, HttpMethod: &name})
+						if err != nil {
+							report.Errors = append(report.Errors, err.Error())
 						}
 
+						var typeInegration methodaws.Integration
+
+						switch details.MethodIntegration.Type {
+						case types.IntegrationTypeHttp:
+							typeInegration = *methodaws.NewIntegrationFromHttp(&methodaws.HttpIntegration{Uri: *details.MethodIntegration.Uri})
+						case types.IntegrationTypeAws:
+							typeInegration = *methodaws.NewIntegrationFromAws(&methodaws.AwsIntegration{Arn: *details.MethodIntegration.Uri})
+						case types.IntegrationTypeHttpProxy:
+							typeInegration = *methodaws.NewIntegrationFromHttpProxy(&methodaws.HttpProxyIntegration{Uri: *details.MethodIntegration.Uri})
+						case types.IntegrationTypeAwsProxy:
+							typeInegration = *methodaws.NewIntegrationFromAwsProxy(&methodaws.AwsProxyIntegration{Arn: *details.MethodIntegration.Uri})
+						case types.IntegrationTypeMock:
+							typeInegration = *methodaws.NewIntegrationFromMock(&methodaws.MockIntegration{})
+						default:
+							continue
+						}
+
+						restApiPath := methodaws.RestApiPath{
+							Path:        *resource.Path,
+							Method:      name,
+							Integration: &typeInegration,
+						}
 						apis = append(apis, &restApiPath)
 					}
 				}
