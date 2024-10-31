@@ -13,6 +13,8 @@ func main() {
 	flag.Parse()
 
 	methodaws := cmd.NewMethodAws(Version)
+	methodaws.InitRootCommand()
+
 	methodaws.InitAPIGatewayCommand()
 	methodaws.InitCurrentInstanceCommand()
 	methodaws.InitEc2Command()
@@ -20,7 +22,6 @@ func main() {
 	methodaws.InitIamCommand()
 	methodaws.InitLoadBalancerCommand()
 	methodaws.InitRdsCommand()
-	methodaws.InitRootCommand()
 	methodaws.InitRoute53Command()
 	methodaws.InitS3Command()
 	methodaws.InitSecurityGroupCommand()
