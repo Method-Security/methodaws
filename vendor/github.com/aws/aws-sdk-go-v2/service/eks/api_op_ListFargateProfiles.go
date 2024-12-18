@@ -45,9 +45,10 @@ type ListFargateProfilesInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -61,9 +62,10 @@ type ListFargateProfilesOutput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -115,6 +117,9 @@ func (c *Client) addOperationListFargateProfilesMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +130,12 @@ func (c *Client) addOperationListFargateProfilesMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListFargateProfilesValidationMiddleware(stack); err != nil {
@@ -148,16 +159,20 @@ func (c *Client) addOperationListFargateProfilesMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListFargateProfilesAPIClient is a client that implements the
-// ListFargateProfiles operation.
-type ListFargateProfilesAPIClient interface {
-	ListFargateProfiles(context.Context, *ListFargateProfilesInput, ...func(*Options)) (*ListFargateProfilesOutput, error)
-}
-
-var _ ListFargateProfilesAPIClient = (*Client)(nil)
 
 // ListFargateProfilesPaginatorOptions is the paginator options for
 // ListFargateProfiles
@@ -228,6 +243,9 @@ func (p *ListFargateProfilesPaginator) NextPage(ctx context.Context, optFns ...f
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListFargateProfiles(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -246,6 +264,14 @@ func (p *ListFargateProfilesPaginator) NextPage(ctx context.Context, optFns ...f
 
 	return result, nil
 }
+
+// ListFargateProfilesAPIClient is a client that implements the
+// ListFargateProfiles operation.
+type ListFargateProfilesAPIClient interface {
+	ListFargateProfiles(context.Context, *ListFargateProfilesInput, ...func(*Options)) (*ListFargateProfilesOutput, error)
+}
+
+var _ ListFargateProfilesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListFargateProfiles(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

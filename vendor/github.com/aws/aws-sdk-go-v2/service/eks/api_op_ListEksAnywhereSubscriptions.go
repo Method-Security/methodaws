@@ -112,6 +112,9 @@ func (c *Client) addOperationListEksAnywhereSubscriptionsMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -122,6 +125,12 @@ func (c *Client) addOperationListEksAnywhereSubscriptionsMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListEksAnywhereSubscriptions(options.Region), middleware.Before); err != nil {
@@ -142,16 +151,20 @@ func (c *Client) addOperationListEksAnywhereSubscriptionsMiddlewares(stack *midd
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListEksAnywhereSubscriptionsAPIClient is a client that implements the
-// ListEksAnywhereSubscriptions operation.
-type ListEksAnywhereSubscriptionsAPIClient interface {
-	ListEksAnywhereSubscriptions(context.Context, *ListEksAnywhereSubscriptionsInput, ...func(*Options)) (*ListEksAnywhereSubscriptionsOutput, error)
-}
-
-var _ ListEksAnywhereSubscriptionsAPIClient = (*Client)(nil)
 
 // ListEksAnywhereSubscriptionsPaginatorOptions is the paginator options for
 // ListEksAnywhereSubscriptions
@@ -226,6 +239,9 @@ func (p *ListEksAnywhereSubscriptionsPaginator) NextPage(ctx context.Context, op
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListEksAnywhereSubscriptions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +260,14 @@ func (p *ListEksAnywhereSubscriptionsPaginator) NextPage(ctx context.Context, op
 
 	return result, nil
 }
+
+// ListEksAnywhereSubscriptionsAPIClient is a client that implements the
+// ListEksAnywhereSubscriptions operation.
+type ListEksAnywhereSubscriptionsAPIClient interface {
+	ListEksAnywhereSubscriptions(context.Context, *ListEksAnywhereSubscriptionsInput, ...func(*Options)) (*ListEksAnywhereSubscriptionsOutput, error)
+}
+
+var _ ListEksAnywhereSubscriptionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListEksAnywhereSubscriptions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

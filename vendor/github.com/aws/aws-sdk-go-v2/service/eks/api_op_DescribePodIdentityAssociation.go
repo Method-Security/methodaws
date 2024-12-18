@@ -11,11 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns descriptive information about an EKS Pod Identity association. This
-// action requires the ID of the association. You can get the ID from the response
-// to the CreatePodIdentityAssocation for newly created associations. Or, you can
-// list the IDs for associations with ListPodIdentityAssociations and filter the
-// list by namespace or service account.
+// Returns descriptive information about an EKS Pod Identity association.
+//
+// This action requires the ID of the association. You can get the ID from the
+// response to the CreatePodIdentityAssocation for newly created associations. Or,
+// you can list the IDs for associations with ListPodIdentityAssociations and
+// filter the list by namespace or service account.
 func (c *Client) DescribePodIdentityAssociation(ctx context.Context, params *DescribePodIdentityAssociationInput, optFns ...func(*Options)) (*DescribePodIdentityAssociationOutput, error) {
 	if params == nil {
 		params = &DescribePodIdentityAssociationInput{}
@@ -100,6 +101,9 @@ func (c *Client) addOperationDescribePodIdentityAssociationMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,6 +114,12 @@ func (c *Client) addOperationDescribePodIdentityAssociationMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribePodIdentityAssociationValidationMiddleware(stack); err != nil {
@@ -131,6 +141,18 @@ func (c *Client) addOperationDescribePodIdentityAssociationMiddlewares(stack *mi
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

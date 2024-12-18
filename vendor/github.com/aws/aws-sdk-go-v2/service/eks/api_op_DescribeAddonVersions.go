@@ -11,9 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the versions for an add-on. Information such as the Kubernetes
-// versions that you can use the add-on with, the owner , publisher , and the type
-// of the add-on are returned.
+// Describes the versions for an add-on.
+//
+// Information such as the Kubernetes versions that you can use the add-on with,
+// the owner , publisher , and the type of the add-on are returned.
 func (c *Client) DescribeAddonVersions(ctx context.Context, params *DescribeAddonVersionsInput, optFns ...func(*Options)) (*DescribeAddonVersionsOutput, error) {
 	if params == nil {
 		params = &DescribeAddonVersionsInput{}
@@ -31,9 +32,10 @@ func (c *Client) DescribeAddonVersions(ctx context.Context, params *DescribeAddo
 
 type DescribeAddonVersionsInput struct {
 
-	// The name of the add-on. The name must match one of the names returned by
-	// ListAddons (https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html)
-	// .
+	// The name of the add-on. The name must match one of the names returned by [ListAddons]
+	// ListAddons .
+	//
+	// [ListAddons]: https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html
 	AddonName *string
 
 	// The Kubernetes versions that you can use the add-on with.
@@ -50,9 +52,10 @@ type DescribeAddonVersionsInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// The owner of the add-on. For valid owners , don't specify a value for this
@@ -79,9 +82,10 @@ type DescribeAddonVersionsOutput struct {
 	// The nextToken value to include in a future DescribeAddonVersions request. When
 	// the results of a DescribeAddonVersions request exceed maxResults , you can use
 	// this value to retrieve the next page of results. This value is null when there
-	// are no more results to return. This token should be treated as an opaque
-	// identifier that is used only to retrieve the next items in a list and not for
-	// other programmatic purposes.
+	// are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -133,6 +137,9 @@ func (c *Client) addOperationDescribeAddonVersionsMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -143,6 +150,12 @@ func (c *Client) addOperationDescribeAddonVersionsMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAddonVersions(options.Region), middleware.Before); err != nil {
@@ -163,16 +176,20 @@ func (c *Client) addOperationDescribeAddonVersionsMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeAddonVersionsAPIClient is a client that implements the
-// DescribeAddonVersions operation.
-type DescribeAddonVersionsAPIClient interface {
-	DescribeAddonVersions(context.Context, *DescribeAddonVersionsInput, ...func(*Options)) (*DescribeAddonVersionsOutput, error)
-}
-
-var _ DescribeAddonVersionsAPIClient = (*Client)(nil)
 
 // DescribeAddonVersionsPaginatorOptions is the paginator options for
 // DescribeAddonVersions
@@ -243,6 +260,9 @@ func (p *DescribeAddonVersionsPaginator) NextPage(ctx context.Context, optFns ..
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeAddonVersions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -261,6 +281,14 @@ func (p *DescribeAddonVersionsPaginator) NextPage(ctx context.Context, optFns ..
 
 	return result, nil
 }
+
+// DescribeAddonVersionsAPIClient is a client that implements the
+// DescribeAddonVersions operation.
+type DescribeAddonVersionsAPIClient interface {
+	DescribeAddonVersions(context.Context, *DescribeAddonVersionsInput, ...func(*Options)) (*DescribeAddonVersionsOutput, error)
+}
+
+var _ DescribeAddonVersionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeAddonVersions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
