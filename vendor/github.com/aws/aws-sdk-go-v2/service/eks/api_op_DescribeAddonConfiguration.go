@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/eks/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
@@ -35,8 +36,9 @@ type DescribeAddonConfigurationInput struct {
 	AddonName *string
 
 	// The version of the add-on. The version must match one of the versions returned
-	// by DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
-	// .
+	// by [DescribeAddonVersions]DescribeAddonVersions .
+	//
+	// [DescribeAddonVersions]: https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html
 	//
 	// This member is required.
 	AddonVersion *string
@@ -50,13 +52,18 @@ type DescribeAddonConfigurationOutput struct {
 	AddonName *string
 
 	// The version of the add-on. The version must match one of the versions returned
-	// by DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
-	// .
+	// by [DescribeAddonVersions]DescribeAddonVersions .
+	//
+	// [DescribeAddonVersions]: https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html
 	AddonVersion *string
 
 	// A JSON schema that's used to validate the configuration values you provide when
 	// an add-on is created or updated.
 	ConfigurationSchema *string
+
+	// The Kubernetes service account name used by the addon, and any suggested IAM
+	// policies. Use this information to create an IAM Role for the Addon.
+	PodIdentityConfiguration []types.AddonPodIdentityConfiguration
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -107,6 +114,9 @@ func (c *Client) addOperationDescribeAddonConfigurationMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -117,6 +127,12 @@ func (c *Client) addOperationDescribeAddonConfigurationMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeAddonConfigurationValidationMiddleware(stack); err != nil {
@@ -138,6 +154,18 @@ func (c *Client) addOperationDescribeAddonConfigurationMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

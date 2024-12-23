@@ -12,7 +12,7 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
+	jmespath "github.com/jmespath/go-jmespath"
 	"time"
 )
 
@@ -34,9 +34,10 @@ func (c *Client) DescribeAddon(ctx context.Context, params *DescribeAddonInput, 
 
 type DescribeAddonInput struct {
 
-	// The name of the add-on. The name must match one of the names returned by
-	// ListAddons (https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html)
-	// .
+	// The name of the add-on. The name must match one of the names returned by [ListAddons]
+	// ListAddons .
+	//
+	// [ListAddons]: https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html
 	//
 	// This member is required.
 	AddonName *string
@@ -51,8 +52,9 @@ type DescribeAddonInput struct {
 
 type DescribeAddonOutput struct {
 
-	// An Amazon EKS add-on. For more information, see Amazon EKS add-ons (https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
-	// in the Amazon EKS User Guide.
+	// An Amazon EKS add-on. For more information, see [Amazon EKS add-ons] in the Amazon EKS User Guide.
+	//
+	// [Amazon EKS add-ons]: https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html
 	Addon *types.Addon
 
 	// Metadata pertaining to the operation's result.
@@ -104,6 +106,9 @@ func (c *Client) addOperationDescribeAddonMiddlewares(stack *middleware.Stack, o
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +119,12 @@ func (c *Client) addOperationDescribeAddonMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeAddonValidationMiddleware(stack); err != nil {
@@ -137,15 +148,20 @@ func (c *Client) addOperationDescribeAddonMiddlewares(stack *middleware.Stack, o
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeAddonAPIClient is a client that implements the DescribeAddon operation.
-type DescribeAddonAPIClient interface {
-	DescribeAddon(context.Context, *DescribeAddonInput, ...func(*Options)) (*DescribeAddonOutput, error)
-}
-
-var _ DescribeAddonAPIClient = (*Client)(nil)
 
 // AddonActiveWaiterOptions are waiter options for AddonActiveWaiter
 type AddonActiveWaiterOptions struct {
@@ -179,12 +195,13 @@ type AddonActiveWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeAddonInput, *DescribeAddonOutput, error) (bool, error)
 }
 
@@ -260,7 +277,13 @@ func (w *AddonActiveWaiter) WaitForOutput(ctx context.Context, params *DescribeA
 		}
 
 		out, err := w.client.DescribeAddon(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -384,12 +407,13 @@ type AddonDeletedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeAddonInput, *DescribeAddonOutput, error) (bool, error)
 }
 
@@ -465,7 +489,13 @@ func (w *AddonDeletedWaiter) WaitForOutput(ctx context.Context, params *Describe
 		}
 
 		out, err := w.client.DescribeAddon(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -529,6 +559,13 @@ func addonDeletedStateRetryable(ctx context.Context, input *DescribeAddonInput, 
 
 	return true, nil
 }
+
+// DescribeAddonAPIClient is a client that implements the DescribeAddon operation.
+type DescribeAddonAPIClient interface {
+	DescribeAddon(context.Context, *DescribeAddonInput, ...func(*Options)) (*DescribeAddonOutput, error)
+}
+
+var _ DescribeAddonAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeAddon(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

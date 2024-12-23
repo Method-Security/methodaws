@@ -11,9 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes an update to an Amazon EKS resource. When the status of the update is
-// Succeeded , the update is complete. If an update fails, the status is Failed ,
-// and an error detail explains the reason for the failure.
+// Describes an update to an Amazon EKS resource.
+//
+// When the status of the update is Succeeded , the update is complete. If an
+// update fails, the status is Failed , and an error detail explains the reason for
+// the failure.
 func (c *Client) DescribeUpdate(ctx context.Context, params *DescribeUpdateInput, optFns ...func(*Options)) (*DescribeUpdateOutput, error) {
 	if params == nil {
 		params = &DescribeUpdateInput{}
@@ -42,9 +44,10 @@ type DescribeUpdateInput struct {
 	// This member is required.
 	UpdateId *string
 
-	// The name of the add-on. The name must match one of the names returned by
-	// ListAddons (https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html)
-	// . This parameter is required if the update is an add-on update.
+	// The name of the add-on. The name must match one of the names returned by [ListAddons]
+	// ListAddons . This parameter is required if the update is an add-on update.
+	//
+	// [ListAddons]: https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html
 	AddonName *string
 
 	// The name of the Amazon EKS node group associated with the update. This
@@ -108,6 +111,9 @@ func (c *Client) addOperationDescribeUpdateMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +124,12 @@ func (c *Client) addOperationDescribeUpdateMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeUpdateValidationMiddleware(stack); err != nil {
@@ -139,6 +151,18 @@ func (c *Client) addOperationDescribeUpdateMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

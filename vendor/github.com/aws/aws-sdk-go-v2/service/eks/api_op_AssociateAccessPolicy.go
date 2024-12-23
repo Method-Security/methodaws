@@ -12,9 +12,9 @@ import (
 )
 
 // Associates an access policy and its scope to an access entry. For more
-// information about associating access policies, see Associating and
-// disassociating access policies to and from access entries (https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
-// in the Amazon EKS User Guide.
+// information about associating access policies, see [Associating and disassociating access policies to and from access entries]in the Amazon EKS User Guide.
+//
+// [Associating and disassociating access policies to and from access entries]: https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html
 func (c *Client) AssociateAccessPolicy(ctx context.Context, params *AssociateAccessPolicyInput, optFns ...func(*Options)) (*AssociateAccessPolicyOutput, error) {
 	if params == nil {
 		params = &AssociateAccessPolicyInput{}
@@ -118,6 +118,9 @@ func (c *Client) addOperationAssociateAccessPolicyMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +131,12 @@ func (c *Client) addOperationAssociateAccessPolicyMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssociateAccessPolicyValidationMiddleware(stack); err != nil {
@@ -149,6 +158,18 @@ func (c *Client) addOperationAssociateAccessPolicyMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

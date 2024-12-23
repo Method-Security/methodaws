@@ -30,9 +30,10 @@ func (c *Client) ListClusters(ctx context.Context, params *ListClustersInput, op
 type ListClustersInput struct {
 
 	// Indicates whether external clusters are included in the returned list. Use ' all
-	// ' to return https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html (https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html)
-	// connected clusters, or blank to return only Amazon EKS clusters. ' all ' must be
-	// in lowercase otherwise an error occurs.
+	// ' to return [https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html]connected clusters, or blank to return only Amazon EKS clusters. '
+	// all ' must be in lowercase otherwise an error occurs.
+	//
+	// [https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html]: https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html
 	Include []string
 
 	// The maximum number of results, returned in paginated output. You receive
@@ -46,9 +47,10 @@ type ListClustersInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -63,9 +65,10 @@ type ListClustersOutput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -117,6 +120,9 @@ func (c *Client) addOperationListClustersMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +133,12 @@ func (c *Client) addOperationListClustersMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListClusters(options.Region), middleware.Before); err != nil {
@@ -147,15 +159,20 @@ func (c *Client) addOperationListClustersMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListClustersAPIClient is a client that implements the ListClusters operation.
-type ListClustersAPIClient interface {
-	ListClusters(context.Context, *ListClustersInput, ...func(*Options)) (*ListClustersOutput, error)
-}
-
-var _ ListClustersAPIClient = (*Client)(nil)
 
 // ListClustersPaginatorOptions is the paginator options for ListClusters
 type ListClustersPaginatorOptions struct {
@@ -225,6 +242,9 @@ func (p *ListClustersPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListClusters(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -243,6 +263,13 @@ func (p *ListClustersPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 
 	return result, nil
 }
+
+// ListClustersAPIClient is a client that implements the ListClusters operation.
+type ListClustersAPIClient interface {
+	ListClusters(context.Context, *ListClustersInput, ...func(*Options)) (*ListClustersOutput, error)
+}
+
+var _ ListClustersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListClusters(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
