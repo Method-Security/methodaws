@@ -29,9 +29,10 @@ func (c *Client) UpdateAddon(ctx context.Context, params *UpdateAddonInput, optF
 
 type UpdateAddonInput struct {
 
-	// The name of the add-on. The name must match one of the names returned by
-	// ListAddons (https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html)
-	// .
+	// The name of the add-on. The name must match one of the names returned by [ListAddons]
+	// ListAddons .
+	//
+	// [ListAddons]: https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html
 	//
 	// This member is required.
 	AddonName *string
@@ -42,8 +43,9 @@ type UpdateAddonInput struct {
 	ClusterName *string
 
 	// The version of the add-on. The version must match one of the versions returned
-	// by DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
-	// .
+	// by [DescribeAddonVersions]DescribeAddonVersions .
+	//
+	// [DescribeAddonVersions]: https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html
 	AddonVersion *string
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
@@ -55,12 +57,25 @@ type UpdateAddonInput struct {
 	// DescribeAddonConfiguration .
 	ConfigurationValues *string
 
+	// An array of Pod Identity Assocations to be updated. Each EKS Pod Identity
+	// association maps a Kubernetes service account to an IAM Role. If this value is
+	// left blank, no change. If an empty array is provided, existing Pod Identity
+	// Assocations owned by the Addon are deleted.
+	//
+	// For more information, see [Attach an IAM Role to an Amazon EKS add-on using Pod Identity] in the EKS User Guide.
+	//
+	// [Attach an IAM Role to an Amazon EKS add-on using Pod Identity]: https://docs.aws.amazon.com/eks/latest/userguide/add-ons-iam.html
+	PodIdentityAssociations []types.AddonPodIdentityAssociations
+
 	// How to resolve field value conflicts for an Amazon EKS add-on if you've changed
 	// a value from the Amazon EKS default value. Conflicts are handled based on the
 	// option you choose:
+	//
 	//   - None – Amazon EKS doesn't change the value. The update might fail.
+	//
 	//   - Overwrite – Amazon EKS overwrites the changed value back to the Amazon EKS
 	//   default value.
+	//
 	//   - Preserve – Amazon EKS preserves the value. If you choose this option, we
 	//   recommend that you test any field and value changes on a non-production cluster
 	//   before updating the add-on on your production cluster.
@@ -69,12 +84,15 @@ type UpdateAddonInput struct {
 	// The Amazon Resource Name (ARN) of an existing IAM role to bind to the add-on's
 	// service account. The role must be assigned the IAM permissions required by the
 	// add-on. If you don't specify an existing IAM role, then the add-on uses the
-	// permissions assigned to the node IAM role. For more information, see Amazon EKS
-	// node IAM role (https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)
-	// in the Amazon EKS User Guide. To specify an existing IAM role, you must have an
-	// IAM OpenID Connect (OIDC) provider created for your cluster. For more
-	// information, see Enabling IAM roles for service accounts on your cluster (https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html)
-	// in the Amazon EKS User Guide.
+	// permissions assigned to the node IAM role. For more information, see [Amazon EKS node IAM role]in the
+	// Amazon EKS User Guide.
+	//
+	// To specify an existing IAM role, you must have an IAM OpenID Connect (OIDC)
+	// provider created for your cluster. For more information, see [Enabling IAM roles for service accounts on your cluster]in the Amazon EKS
+	// User Guide.
+	//
+	// [Enabling IAM roles for service accounts on your cluster]: https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html
+	// [Amazon EKS node IAM role]: https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html
 	ServiceAccountRoleArn *string
 
 	noSmithyDocumentSerde
@@ -134,6 +152,9 @@ func (c *Client) addOperationUpdateAddonMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -144,6 +165,12 @@ func (c *Client) addOperationUpdateAddonMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opUpdateAddonMiddleware(stack, options); err != nil {
@@ -168,6 +195,18 @@ func (c *Client) addOperationUpdateAddonMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

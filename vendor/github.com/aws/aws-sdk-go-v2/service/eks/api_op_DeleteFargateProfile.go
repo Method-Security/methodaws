@@ -11,13 +11,17 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes an Fargate profile. When you delete a Fargate profile, any Pod running
-// on Fargate that was created with the profile is deleted. If the Pod matches
-// another Fargate profile, then it is scheduled on Fargate with that profile. If
-// it no longer matches any Fargate profiles, then it's not scheduled on Fargate
-// and may remain in a pending state. Only one Fargate profile in a cluster can be
-// in the DELETING status at a time. You must wait for a Fargate profile to finish
-// deleting before you can delete any other profiles in that cluster.
+// Deletes an Fargate profile.
+//
+// When you delete a Fargate profile, any Pod running on Fargate that was created
+// with the profile is deleted. If the Pod matches another Fargate profile, then
+// it is scheduled on Fargate with that profile. If it no longer matches any
+// Fargate profiles, then it's not scheduled on Fargate and may remain in a pending
+// state.
+//
+// Only one Fargate profile in a cluster can be in the DELETING status at a time.
+// You must wait for a Fargate profile to finish deleting before you can delete any
+// other profiles in that cluster.
 func (c *Client) DeleteFargateProfile(ctx context.Context, params *DeleteFargateProfileInput, optFns ...func(*Options)) (*DeleteFargateProfileOutput, error) {
 	if params == nil {
 		params = &DeleteFargateProfileInput{}
@@ -102,6 +106,9 @@ func (c *Client) addOperationDeleteFargateProfileMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +119,12 @@ func (c *Client) addOperationDeleteFargateProfileMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteFargateProfileValidationMiddleware(stack); err != nil {
@@ -133,6 +146,18 @@ func (c *Client) addOperationDeleteFargateProfileMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

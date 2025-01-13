@@ -11,10 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes a EKS Pod Identity association. The temporary Amazon Web Services
-// credentials from the previous IAM role session might still be valid until the
-// session expiry. If you need to immediately revoke the temporary session
-// credentials, then go to the role in the IAM console.
+// Deletes a EKS Pod Identity association.
+//
+// The temporary Amazon Web Services credentials from the previous IAM role
+// session might still be valid until the session expiry. If you need to
+// immediately revoke the temporary session credentials, then go to the role in the
+// IAM console.
 func (c *Client) DeletePodIdentityAssociation(ctx context.Context, params *DeletePodIdentityAssociationInput, optFns ...func(*Options)) (*DeletePodIdentityAssociationOutput, error) {
 	if params == nil {
 		params = &DeletePodIdentityAssociationInput{}
@@ -99,6 +101,9 @@ func (c *Client) addOperationDeletePodIdentityAssociationMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +114,12 @@ func (c *Client) addOperationDeletePodIdentityAssociationMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeletePodIdentityAssociationValidationMiddleware(stack); err != nil {
@@ -130,6 +141,18 @@ func (c *Client) addOperationDeletePodIdentityAssociationMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

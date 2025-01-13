@@ -11,9 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disassociates an identity provider configuration from a cluster. If you
-// disassociate an identity provider from your cluster, users included in the
-// provider can no longer access the cluster. However, you can still access the
+// Disassociates an identity provider configuration from a cluster.
+//
+// If you disassociate an identity provider from your cluster, users included in
+// the provider can no longer access the cluster. However, you can still access the
 // cluster with IAM principals.
 func (c *Client) DisassociateIdentityProviderConfig(ctx context.Context, params *DisassociateIdentityProviderConfigInput, optFns ...func(*Options)) (*DisassociateIdentityProviderConfigOutput, error) {
 	if params == nil {
@@ -103,6 +104,9 @@ func (c *Client) addOperationDisassociateIdentityProviderConfigMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +117,12 @@ func (c *Client) addOperationDisassociateIdentityProviderConfigMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opDisassociateIdentityProviderConfigMiddleware(stack, options); err != nil {
@@ -137,6 +147,18 @@ func (c *Client) addOperationDisassociateIdentityProviderConfigMiddlewares(stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

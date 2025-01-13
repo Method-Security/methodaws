@@ -119,6 +119,9 @@ func (c *Client) addOperationListInsightsMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -129,6 +132,12 @@ func (c *Client) addOperationListInsightsMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListInsightsValidationMiddleware(stack); err != nil {
@@ -152,15 +161,20 @@ func (c *Client) addOperationListInsightsMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListInsightsAPIClient is a client that implements the ListInsights operation.
-type ListInsightsAPIClient interface {
-	ListInsights(context.Context, *ListInsightsInput, ...func(*Options)) (*ListInsightsOutput, error)
-}
-
-var _ ListInsightsAPIClient = (*Client)(nil)
 
 // ListInsightsPaginatorOptions is the paginator options for ListInsights
 type ListInsightsPaginatorOptions struct {
@@ -231,6 +245,9 @@ func (p *ListInsightsPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListInsights(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -249,6 +266,13 @@ func (p *ListInsightsPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 
 	return result, nil
 }
+
+// ListInsightsAPIClient is a client that implements the ListInsights operation.
+type ListInsightsAPIClient interface {
+	ListInsights(context.Context, *ListInsightsInput, ...func(*Options)) (*ListInsightsOutput, error)
+}
+
+var _ ListInsightsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListInsights(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

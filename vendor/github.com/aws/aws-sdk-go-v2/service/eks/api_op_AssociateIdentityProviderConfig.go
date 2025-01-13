@@ -11,14 +11,16 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Associates an identity provider configuration to a cluster. If you want to
-// authenticate identities using an identity provider, you can create an identity
-// provider configuration and associate it to your cluster. After configuring
-// authentication to your cluster you can create Kubernetes Role and ClusterRole
-// objects, assign permissions to them, and then bind them to the identities using
-// Kubernetes RoleBinding and ClusterRoleBinding objects. For more information see
-// Using RBAC Authorization (https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-// in the Kubernetes documentation.
+// Associates an identity provider configuration to a cluster.
+//
+// If you want to authenticate identities using an identity provider, you can
+// create an identity provider configuration and associate it to your cluster.
+// After configuring authentication to your cluster you can create Kubernetes Role
+// and ClusterRole objects, assign permissions to them, and then bind them to the
+// identities using Kubernetes RoleBinding and ClusterRoleBinding objects. For
+// more information see [Using RBAC Authorization]in the Kubernetes documentation.
+//
+// [Using RBAC Authorization]: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 func (c *Client) AssociateIdentityProviderConfig(ctx context.Context, params *AssociateIdentityProviderConfigInput, optFns ...func(*Options)) (*AssociateIdentityProviderConfigOutput, error) {
 	if params == nil {
 		params = &AssociateIdentityProviderConfigInput{}
@@ -115,6 +117,9 @@ func (c *Client) addOperationAssociateIdentityProviderConfigMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +130,12 @@ func (c *Client) addOperationAssociateIdentityProviderConfigMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opAssociateIdentityProviderConfigMiddleware(stack, options); err != nil {
@@ -149,6 +160,18 @@ func (c *Client) addOperationAssociateIdentityProviderConfigMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

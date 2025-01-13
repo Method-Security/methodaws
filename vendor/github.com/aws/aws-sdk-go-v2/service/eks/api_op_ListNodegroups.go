@@ -46,9 +46,10 @@ type ListNodegroupsInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -59,9 +60,10 @@ type ListNodegroupsOutput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// A list of all of the node groups associated with the specified cluster.
@@ -116,6 +118,9 @@ func (c *Client) addOperationListNodegroupsMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +131,12 @@ func (c *Client) addOperationListNodegroupsMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListNodegroupsValidationMiddleware(stack); err != nil {
@@ -149,16 +160,20 @@ func (c *Client) addOperationListNodegroupsMiddlewares(stack *middleware.Stack, 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListNodegroupsAPIClient is a client that implements the ListNodegroups
-// operation.
-type ListNodegroupsAPIClient interface {
-	ListNodegroups(context.Context, *ListNodegroupsInput, ...func(*Options)) (*ListNodegroupsOutput, error)
-}
-
-var _ ListNodegroupsAPIClient = (*Client)(nil)
 
 // ListNodegroupsPaginatorOptions is the paginator options for ListNodegroups
 type ListNodegroupsPaginatorOptions struct {
@@ -228,6 +243,9 @@ func (p *ListNodegroupsPaginator) NextPage(ctx context.Context, optFns ...func(*
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListNodegroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -246,6 +264,14 @@ func (p *ListNodegroupsPaginator) NextPage(ctx context.Context, optFns ...func(*
 
 	return result, nil
 }
+
+// ListNodegroupsAPIClient is a client that implements the ListNodegroups
+// operation.
+type ListNodegroupsAPIClient interface {
+	ListNodegroups(context.Context, *ListNodegroupsInput, ...func(*Options)) (*ListNodegroupsOutput, error)
+}
+
+var _ ListNodegroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListNodegroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -49,9 +49,10 @@ type ListAccessEntriesInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -65,9 +66,10 @@ type ListAccessEntriesOutput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -119,6 +121,9 @@ func (c *Client) addOperationListAccessEntriesMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -129,6 +134,12 @@ func (c *Client) addOperationListAccessEntriesMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListAccessEntriesValidationMiddleware(stack); err != nil {
@@ -152,16 +163,20 @@ func (c *Client) addOperationListAccessEntriesMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListAccessEntriesAPIClient is a client that implements the ListAccessEntries
-// operation.
-type ListAccessEntriesAPIClient interface {
-	ListAccessEntries(context.Context, *ListAccessEntriesInput, ...func(*Options)) (*ListAccessEntriesOutput, error)
-}
-
-var _ ListAccessEntriesAPIClient = (*Client)(nil)
 
 // ListAccessEntriesPaginatorOptions is the paginator options for ListAccessEntries
 type ListAccessEntriesPaginatorOptions struct {
@@ -231,6 +246,9 @@ func (p *ListAccessEntriesPaginator) NextPage(ctx context.Context, optFns ...fun
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListAccessEntries(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -249,6 +267,14 @@ func (p *ListAccessEntriesPaginator) NextPage(ctx context.Context, optFns ...fun
 
 	return result, nil
 }
+
+// ListAccessEntriesAPIClient is a client that implements the ListAccessEntries
+// operation.
+type ListAccessEntriesAPIClient interface {
+	ListAccessEntries(context.Context, *ListAccessEntriesInput, ...func(*Options)) (*ListAccessEntriesOutput, error)
+}
+
+var _ ListAccessEntriesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListAccessEntries(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

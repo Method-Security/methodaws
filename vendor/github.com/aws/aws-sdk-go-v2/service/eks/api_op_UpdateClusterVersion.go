@@ -13,14 +13,17 @@ import (
 
 // Updates an Amazon EKS cluster to the specified Kubernetes version. Your cluster
 // continues to function during the update. The response output includes an update
-// ID that you can use to track the status of your cluster update with the
-// DescribeUpdate API operation. Cluster updates are asynchronous, and they should
-// finish within a few minutes. During an update, the cluster status moves to
-// UPDATING (this status transition is eventually consistent). When the update is
-// complete (either Failed or Successful ), the cluster status moves to Active . If
-// your cluster has managed node groups attached to it, all of your node groups’
-// Kubernetes versions must match the cluster’s Kubernetes version in order to
-// update the cluster to a new Kubernetes version.
+// ID that you can use to track the status of your cluster update with the DescribeUpdateAPI
+// operation.
+//
+// Cluster updates are asynchronous, and they should finish within a few minutes.
+// During an update, the cluster status moves to UPDATING (this status transition
+// is eventually consistent). When the update is complete (either Failed or
+// Successful ), the cluster status moves to Active .
+//
+// If your cluster has managed node groups attached to it, all of your node
+// groups’ Kubernetes versions must match the cluster’s Kubernetes version in order
+// to update the cluster to a new Kubernetes version.
 func (c *Client) UpdateClusterVersion(ctx context.Context, params *UpdateClusterVersionInput, optFns ...func(*Options)) (*UpdateClusterVersionOutput, error) {
 	if params == nil {
 		params = &UpdateClusterVersionInput{}
@@ -109,6 +112,9 @@ func (c *Client) addOperationUpdateClusterVersionMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +125,12 @@ func (c *Client) addOperationUpdateClusterVersionMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opUpdateClusterVersionMiddleware(stack, options); err != nil {
@@ -143,6 +155,18 @@ func (c *Client) addOperationUpdateClusterVersionMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
