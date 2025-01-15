@@ -45,9 +45,10 @@ type ListIdentityProviderConfigsInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -61,9 +62,10 @@ type ListIdentityProviderConfigsOutput struct {
 	// The nextToken value to include in a future ListIdentityProviderConfigsResponse
 	// request. When the results of a ListIdentityProviderConfigsResponse request
 	// exceed maxResults , you can use this value to retrieve the next page of results.
-	// This value is null when there are no more results to return. This token should
-	// be treated as an opaque identifier that is used only to retrieve the next items
-	// in a list and not for other programmatic purposes.
+	// This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -115,6 +117,9 @@ func (c *Client) addOperationListIdentityProviderConfigsMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +130,12 @@ func (c *Client) addOperationListIdentityProviderConfigsMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListIdentityProviderConfigsValidationMiddleware(stack); err != nil {
@@ -148,16 +159,20 @@ func (c *Client) addOperationListIdentityProviderConfigsMiddlewares(stack *middl
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListIdentityProviderConfigsAPIClient is a client that implements the
-// ListIdentityProviderConfigs operation.
-type ListIdentityProviderConfigsAPIClient interface {
-	ListIdentityProviderConfigs(context.Context, *ListIdentityProviderConfigsInput, ...func(*Options)) (*ListIdentityProviderConfigsOutput, error)
-}
-
-var _ ListIdentityProviderConfigsAPIClient = (*Client)(nil)
 
 // ListIdentityProviderConfigsPaginatorOptions is the paginator options for
 // ListIdentityProviderConfigs
@@ -230,6 +245,9 @@ func (p *ListIdentityProviderConfigsPaginator) NextPage(ctx context.Context, opt
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListIdentityProviderConfigs(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -248,6 +266,14 @@ func (p *ListIdentityProviderConfigsPaginator) NextPage(ctx context.Context, opt
 
 	return result, nil
 }
+
+// ListIdentityProviderConfigsAPIClient is a client that implements the
+// ListIdentityProviderConfigs operation.
+type ListIdentityProviderConfigsAPIClient interface {
+	ListIdentityProviderConfigs(context.Context, *ListIdentityProviderConfigsInput, ...func(*Options)) (*ListIdentityProviderConfigsOutput, error)
+}
+
+var _ ListIdentityProviderConfigsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListIdentityProviderConfigs(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

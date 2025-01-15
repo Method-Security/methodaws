@@ -44,9 +44,10 @@ type ListAddonsInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -60,8 +61,10 @@ type ListAddonsOutput struct {
 	// The nextToken value to include in a future ListAddons request. When the results
 	// of a ListAddons request exceed maxResults , you can use this value to retrieve
 	// the next page of results. This value is null when there are no more results to
-	// return. This token should be treated as an opaque identifier that is used only
-	// to retrieve the next items in a list and not for other programmatic purposes.
+	// return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -113,6 +116,9 @@ func (c *Client) addOperationListAddonsMiddlewares(stack *middleware.Stack, opti
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +129,12 @@ func (c *Client) addOperationListAddonsMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListAddonsValidationMiddleware(stack); err != nil {
@@ -146,15 +158,20 @@ func (c *Client) addOperationListAddonsMiddlewares(stack *middleware.Stack, opti
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListAddonsAPIClient is a client that implements the ListAddons operation.
-type ListAddonsAPIClient interface {
-	ListAddons(context.Context, *ListAddonsInput, ...func(*Options)) (*ListAddonsOutput, error)
-}
-
-var _ ListAddonsAPIClient = (*Client)(nil)
 
 // ListAddonsPaginatorOptions is the paginator options for ListAddons
 type ListAddonsPaginatorOptions struct {
@@ -224,6 +241,9 @@ func (p *ListAddonsPaginator) NextPage(ctx context.Context, optFns ...func(*Opti
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListAddons(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -242,6 +262,13 @@ func (p *ListAddonsPaginator) NextPage(ctx context.Context, optFns ...func(*Opti
 
 	return result, nil
 }
+
+// ListAddonsAPIClient is a client that implements the ListAddons operation.
+type ListAddonsAPIClient interface {
+	ListAddons(context.Context, *ListAddonsInput, ...func(*Options)) (*ListAddonsOutput, error)
+}
+
+var _ ListAddonsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListAddons(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
