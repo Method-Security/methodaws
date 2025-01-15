@@ -48,9 +48,10 @@ type ListUpdatesInput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// The name of the Amazon EKS managed node group to list updates for.
@@ -64,9 +65,10 @@ type ListUpdatesOutput struct {
 	// The nextToken value returned from a previous paginated request, where maxResults
 	// was used and the results exceeded the value of that parameter. Pagination
 	// continues from the end of the previous results that returned the nextToken
-	// value. This value is null when there are no more results to return. This token
-	// should be treated as an opaque identifier that is used only to retrieve the next
-	// items in a list and not for other programmatic purposes.
+	// value. This value is null when there are no more results to return.
+	//
+	// This token should be treated as an opaque identifier that is used only to
+	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string
 
 	// A list of all the updates for the specified cluster and Region.
@@ -121,6 +123,9 @@ func (c *Client) addOperationListUpdatesMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,6 +136,12 @@ func (c *Client) addOperationListUpdatesMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListUpdatesValidationMiddleware(stack); err != nil {
@@ -154,15 +165,20 @@ func (c *Client) addOperationListUpdatesMiddlewares(stack *middleware.Stack, opt
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// ListUpdatesAPIClient is a client that implements the ListUpdates operation.
-type ListUpdatesAPIClient interface {
-	ListUpdates(context.Context, *ListUpdatesInput, ...func(*Options)) (*ListUpdatesOutput, error)
-}
-
-var _ ListUpdatesAPIClient = (*Client)(nil)
 
 // ListUpdatesPaginatorOptions is the paginator options for ListUpdates
 type ListUpdatesPaginatorOptions struct {
@@ -232,6 +248,9 @@ func (p *ListUpdatesPaginator) NextPage(ctx context.Context, optFns ...func(*Opt
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.ListUpdates(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -250,6 +269,13 @@ func (p *ListUpdatesPaginator) NextPage(ctx context.Context, optFns ...func(*Opt
 
 	return result, nil
 }
+
+// ListUpdatesAPIClient is a client that implements the ListUpdates operation.
+type ListUpdatesAPIClient interface {
+	ListUpdates(context.Context, *ListUpdatesInput, ...func(*Options)) (*ListUpdatesOutput, error)
+}
+
+var _ ListUpdatesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opListUpdates(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

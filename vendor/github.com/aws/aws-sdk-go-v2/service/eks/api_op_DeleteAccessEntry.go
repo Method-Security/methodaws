@@ -10,9 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes an access entry. Deleting an access entry of a type other than Standard
-// can cause your cluster to function improperly. If you delete an access entry in
-// error, you can recreate it.
+// Deletes an access entry.
+//
+// Deleting an access entry of a type other than Standard can cause your cluster
+// to function improperly. If you delete an access entry in error, you can recreate
+// it.
 func (c *Client) DeleteAccessEntry(ctx context.Context, params *DeleteAccessEntryInput, optFns ...func(*Options)) (*DeleteAccessEntryOutput, error) {
 	if params == nil {
 		params = &DeleteAccessEntryInput{}
@@ -93,6 +95,9 @@ func (c *Client) addOperationDeleteAccessEntryMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -103,6 +108,12 @@ func (c *Client) addOperationDeleteAccessEntryMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteAccessEntryValidationMiddleware(stack); err != nil {
@@ -124,6 +135,18 @@ func (c *Client) addOperationDeleteAccessEntryMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

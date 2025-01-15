@@ -13,9 +13,9 @@ import (
 
 // Updates an Amazon EKS managed node group configuration. Your node group
 // continues to function during the update. The response output includes an update
-// ID that you can use to track the status of your node group update with the
-// DescribeUpdate API operation. Currently you can update the Kubernetes labels for
-// a node group or the scaling configuration.
+// ID that you can use to track the status of your node group update with the DescribeUpdateAPI
+// operation. Currently you can update the Kubernetes labels for a node group or
+// the scaling configuration.
 func (c *Client) UpdateNodegroupConfig(ctx context.Context, params *UpdateNodegroupConfigInput, optFns ...func(*Options)) (*UpdateNodegroupConfigOutput, error) {
 	if params == nil {
 		params = &UpdateNodegroupConfigInput{}
@@ -50,12 +50,16 @@ type UpdateNodegroupConfigInput struct {
 	// The Kubernetes labels to apply to the nodes in the node group after the update.
 	Labels *types.UpdateLabelsPayload
 
+	// The node auto repair configuration for the node group.
+	NodeRepairConfig *types.NodeRepairConfig
+
 	// The scaling configuration details for the Auto Scaling group after the update.
 	ScalingConfig *types.NodegroupScalingConfig
 
 	// The Kubernetes taints to be applied to the nodes in the node group after the
-	// update. For more information, see Node taints on managed node groups (https://docs.aws.amazon.com/eks/latest/userguide/node-taints-managed-node-groups.html)
-	// .
+	// update. For more information, see [Node taints on managed node groups].
+	//
+	// [Node taints on managed node groups]: https://docs.aws.amazon.com/eks/latest/userguide/node-taints-managed-node-groups.html
 	Taints *types.UpdateTaintsPayload
 
 	// The node group update configuration.
@@ -118,6 +122,9 @@ func (c *Client) addOperationUpdateNodegroupConfigMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +135,12 @@ func (c *Client) addOperationUpdateNodegroupConfigMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opUpdateNodegroupConfigMiddleware(stack, options); err != nil {
@@ -152,6 +165,18 @@ func (c *Client) addOperationUpdateNodegroupConfigMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

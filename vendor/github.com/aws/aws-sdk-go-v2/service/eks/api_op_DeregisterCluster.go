@@ -12,9 +12,11 @@ import (
 )
 
 // Deregisters a connected cluster to remove it from the Amazon EKS control plane.
+//
 // A connected cluster is a Kubernetes cluster that you've connected to your
-// control plane using the Amazon EKS Connector (https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html)
-// .
+// control plane using the [Amazon EKS Connector].
+//
+// [Amazon EKS Connector]: https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html
 func (c *Client) DeregisterCluster(ctx context.Context, params *DeregisterClusterInput, optFns ...func(*Options)) (*DeregisterClusterOutput, error) {
 	if params == nil {
 		params = &DeregisterClusterInput{}
@@ -94,6 +96,9 @@ func (c *Client) addOperationDeregisterClusterMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -104,6 +109,12 @@ func (c *Client) addOperationDeregisterClusterMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeregisterClusterValidationMiddleware(stack); err != nil {
@@ -125,6 +136,18 @@ func (c *Client) addOperationDeregisterClusterMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

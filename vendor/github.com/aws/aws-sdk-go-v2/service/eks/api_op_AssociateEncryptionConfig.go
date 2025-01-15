@@ -11,10 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Associates an encryption configuration to an existing cluster. Use this API to
-// enable encryption on existing clusters that don't already have encryption
-// enabled. This allows you to implement a defense-in-depth security strategy
-// without migrating applications to new Amazon EKS clusters.
+// Associates an encryption configuration to an existing cluster.
+//
+// Use this API to enable encryption on existing clusters that don't already have
+// encryption enabled. This allows you to implement a defense-in-depth security
+// strategy without migrating applications to new Amazon EKS clusters.
 func (c *Client) AssociateEncryptionConfig(ctx context.Context, params *AssociateEncryptionConfigInput, optFns ...func(*Options)) (*AssociateEncryptionConfigOutput, error) {
 	if params == nil {
 		params = &AssociateEncryptionConfigInput{}
@@ -103,6 +104,9 @@ func (c *Client) addOperationAssociateEncryptionConfigMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +117,12 @@ func (c *Client) addOperationAssociateEncryptionConfigMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opAssociateEncryptionConfigMiddleware(stack, options); err != nil {
@@ -137,6 +147,18 @@ func (c *Client) addOperationAssociateEncryptionConfigMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
