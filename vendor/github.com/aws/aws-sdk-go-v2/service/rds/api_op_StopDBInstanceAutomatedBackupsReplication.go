@@ -11,10 +11,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Stops automated backup replication for a DB instance. This command doesn't
-// apply to RDS Custom, Aurora MySQL, and Aurora PostgreSQL. For more information,
-// see Replicating Automated Backups to Another Amazon Web Services Region (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReplicateBackups.html)
-// in the Amazon RDS User Guide.
+// Stops automated backup replication for a DB instance.
+//
+// This command doesn't apply to RDS Custom, Aurora MySQL, and Aurora PostgreSQL.
+//
+// For more information, see [Replicating Automated Backups to Another Amazon Web Services Region] in the Amazon RDS User Guide.
+//
+// [Replicating Automated Backups to Another Amazon Web Services Region]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReplicateBackups.html
 func (c *Client) StopDBInstanceAutomatedBackupsReplication(ctx context.Context, params *StopDBInstanceAutomatedBackupsReplicationInput, optFns ...func(*Options)) (*StopDBInstanceAutomatedBackupsReplicationOutput, error) {
 	if params == nil {
 		params = &StopDBInstanceAutomatedBackupsReplicationInput{}
@@ -98,6 +101,9 @@ func (c *Client) addOperationStopDBInstanceAutomatedBackupsReplicationMiddleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -108,6 +114,12 @@ func (c *Client) addOperationStopDBInstanceAutomatedBackupsReplicationMiddleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStopDBInstanceAutomatedBackupsReplicationValidationMiddleware(stack); err != nil {
@@ -129,6 +141,18 @@ func (c *Client) addOperationStopDBInstanceAutomatedBackupsReplicationMiddleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

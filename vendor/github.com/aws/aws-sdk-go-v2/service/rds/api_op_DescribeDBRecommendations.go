@@ -31,36 +31,58 @@ func (c *Client) DescribeDBRecommendations(ctx context.Context, params *Describe
 
 type DescribeDBRecommendationsInput struct {
 
-	// A filter that specifies one or more recommendations to describe. Supported
-	// Filters:
+	// A filter that specifies one or more recommendations to describe.
+	//
+	// Supported Filters:
+	//
 	//   - recommendation-id - Accepts a list of recommendation identifiers. The
 	//   results list only includes the recommendations whose identifier is one of the
 	//   specified filter values.
-	//   - status - Accepts a list of recommendation statuses. Valid values:
+	//
+	//   - status - Accepts a list of recommendation statuses.
+	//
+	// Valid values:
+	//
 	//   - active - The recommendations which are ready for you to apply.
+	//
 	//   - pending - The applied or scheduled recommendations which are in progress.
+	//
 	//   - resolved - The recommendations which are completed.
-	//   - dismissed - The recommendations that you dismissed. The results list only
-	//   includes the recommendations whose status is one of the specified filter values.
+	//
+	//   - dismissed - The recommendations that you dismissed.
+	//
+	// The results list only includes the recommendations whose status is one of the
+	//   specified filter values.
 	//
 	//   - severity - Accepts a list of recommendation severities. The results list
 	//   only includes the recommendations whose severity is one of the specified filter
-	//   values. Valid values:
+	//   values.
+	//
+	// Valid values:
+	//
 	//   - high
+	//
 	//   - medium
+	//
 	//   - low
+	//
 	//   - informational
+	//
 	//   - type-id - Accepts a list of recommendation type identifiers. The results
 	//   list only includes the recommendations whose type is one of the specified filter
 	//   values.
+	//
 	//   - dbi-resource-id - Accepts a list of database resource identifiers. The
 	//   results list only includes the recommendations that generated for the specified
 	//   databases.
+	//
 	//   - cluster-resource-id - Accepts a list of cluster resource identifiers. The
 	//   results list only includes the recommendations that generated for the specified
 	//   clusters.
+	//
 	//   - pg-arn - Accepts a list of parameter group ARNs. The results list only
 	//   includes the recommendations that generated for the specified parameter groups.
+	//
 	//   - cluster-pg-arn - Accepts a list of cluster parameter group ARNs. The results
 	//   list only includes the recommendations that generated for the specified cluster
 	//   parameter groups.
@@ -74,19 +96,32 @@ type DescribeDBRecommendationsInput struct {
 	// specified time.
 	LastUpdatedBefore *time.Time
 
-	// The language that you choose to return the list of recommendations. Valid
-	// values:
+	// The language that you choose to return the list of recommendations.
+	//
+	// Valid values:
+	//
 	//   - en
+	//
 	//   - en_UK
+	//
 	//   - de
+	//
 	//   - es
+	//
 	//   - fr
+	//
 	//   - id
+	//
 	//   - it
+	//
 	//   - ja
+	//
 	//   - ko
+	//
 	//   - pt_BR
+	//
 	//   - zh_TW
+	//
 	//   - zh_CN
 	Locale *string
 
@@ -163,6 +198,9 @@ func (c *Client) addOperationDescribeDBRecommendationsMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -173,6 +211,12 @@ func (c *Client) addOperationDescribeDBRecommendationsMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBRecommendationsValidationMiddleware(stack); err != nil {
@@ -196,16 +240,20 @@ func (c *Client) addOperationDescribeDBRecommendationsMiddlewares(stack *middlew
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBRecommendationsAPIClient is a client that implements the
-// DescribeDBRecommendations operation.
-type DescribeDBRecommendationsAPIClient interface {
-	DescribeDBRecommendations(context.Context, *DescribeDBRecommendationsInput, ...func(*Options)) (*DescribeDBRecommendationsOutput, error)
-}
-
-var _ DescribeDBRecommendationsAPIClient = (*Client)(nil)
 
 // DescribeDBRecommendationsPaginatorOptions is the paginator options for
 // DescribeDBRecommendations
@@ -275,6 +323,9 @@ func (p *DescribeDBRecommendationsPaginator) NextPage(ctx context.Context, optFn
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBRecommendations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -293,6 +344,14 @@ func (p *DescribeDBRecommendationsPaginator) NextPage(ctx context.Context, optFn
 
 	return result, nil
 }
+
+// DescribeDBRecommendationsAPIClient is a client that implements the
+// DescribeDBRecommendations operation.
+type DescribeDBRecommendationsAPIClient interface {
+	DescribeDBRecommendations(context.Context, *DescribeDBRecommendationsInput, ...func(*Options)) (*DescribeDBRecommendationsOutput, error)
+}
+
+var _ DescribeDBRecommendationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBRecommendations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

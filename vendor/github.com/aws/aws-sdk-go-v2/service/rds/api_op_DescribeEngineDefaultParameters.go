@@ -30,61 +30,115 @@ func (c *Client) DescribeEngineDefaultParameters(ctx context.Context, params *De
 
 type DescribeEngineDefaultParametersInput struct {
 
-	// The name of the DB parameter group family. Valid Values:
+	// The name of the DB parameter group family.
+	//
+	// Valid Values:
+	//
 	//   - aurora-mysql5.7
+	//
 	//   - aurora-mysql8.0
+	//
 	//   - aurora-postgresql10
+	//
 	//   - aurora-postgresql11
+	//
 	//   - aurora-postgresql12
+	//
 	//   - aurora-postgresql13
+	//
 	//   - aurora-postgresql14
+	//
 	//   - custom-oracle-ee-19
+	//
 	//   - custom-oracle-ee-cdb-19
+	//
 	//   - db2-ae
+	//
 	//   - db2-se
+	//
 	//   - mariadb10.2
+	//
 	//   - mariadb10.3
+	//
 	//   - mariadb10.4
+	//
 	//   - mariadb10.5
+	//
 	//   - mariadb10.6
+	//
 	//   - mysql5.7
+	//
 	//   - mysql8.0
+	//
 	//   - oracle-ee-19
+	//
 	//   - oracle-ee-cdb-19
+	//
 	//   - oracle-ee-cdb-21
+	//
 	//   - oracle-se2-19
+	//
 	//   - oracle-se2-cdb-19
+	//
 	//   - oracle-se2-cdb-21
+	//
 	//   - postgres10
+	//
 	//   - postgres11
+	//
 	//   - postgres12
+	//
 	//   - postgres13
+	//
 	//   - postgres14
+	//
 	//   - sqlserver-ee-11.0
+	//
 	//   - sqlserver-ee-12.0
+	//
 	//   - sqlserver-ee-13.0
+	//
 	//   - sqlserver-ee-14.0
+	//
 	//   - sqlserver-ee-15.0
+	//
 	//   - sqlserver-ex-11.0
+	//
 	//   - sqlserver-ex-12.0
+	//
 	//   - sqlserver-ex-13.0
+	//
 	//   - sqlserver-ex-14.0
+	//
 	//   - sqlserver-ex-15.0
+	//
 	//   - sqlserver-se-11.0
+	//
 	//   - sqlserver-se-12.0
+	//
 	//   - sqlserver-se-13.0
+	//
 	//   - sqlserver-se-14.0
+	//
 	//   - sqlserver-se-15.0
+	//
 	//   - sqlserver-web-11.0
+	//
 	//   - sqlserver-web-12.0
+	//
 	//   - sqlserver-web-13.0
+	//
 	//   - sqlserver-web-14.0
+	//
 	//   - sqlserver-web-15.0
 	//
 	// This member is required.
 	DBParameterGroupFamily *string
 
-	// This parameter isn't currently supported.
+	// A filter that specifies one or more parameters to describe.
+	//
+	// The only supported filter is parameter-name . The results list only includes
+	// information about the parameters with these names.
 	Filters []types.Filter
 
 	// An optional pagination token provided by a previous
@@ -95,7 +149,10 @@ type DescribeEngineDefaultParametersInput struct {
 
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
@@ -157,6 +214,9 @@ func (c *Client) addOperationDescribeEngineDefaultParametersMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -167,6 +227,12 @@ func (c *Client) addOperationDescribeEngineDefaultParametersMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeEngineDefaultParametersValidationMiddleware(stack); err != nil {
@@ -190,23 +256,30 @@ func (c *Client) addOperationDescribeEngineDefaultParametersMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeEngineDefaultParametersAPIClient is a client that implements the
-// DescribeEngineDefaultParameters operation.
-type DescribeEngineDefaultParametersAPIClient interface {
-	DescribeEngineDefaultParameters(context.Context, *DescribeEngineDefaultParametersInput, ...func(*Options)) (*DescribeEngineDefaultParametersOutput, error)
-}
-
-var _ DescribeEngineDefaultParametersAPIClient = (*Client)(nil)
 
 // DescribeEngineDefaultParametersPaginatorOptions is the paginator options for
 // DescribeEngineDefaultParameters
 type DescribeEngineDefaultParametersPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
@@ -270,6 +343,9 @@ func (p *DescribeEngineDefaultParametersPaginator) NextPage(ctx context.Context,
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeEngineDefaultParameters(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -291,6 +367,14 @@ func (p *DescribeEngineDefaultParametersPaginator) NextPage(ctx context.Context,
 
 	return result, nil
 }
+
+// DescribeEngineDefaultParametersAPIClient is a client that implements the
+// DescribeEngineDefaultParameters operation.
+type DescribeEngineDefaultParametersAPIClient interface {
+	DescribeEngineDefaultParameters(context.Context, *DescribeEngineDefaultParametersInput, ...func(*Options)) (*DescribeEngineDefaultParametersOutput, error)
+}
+
+var _ DescribeEngineDefaultParametersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeEngineDefaultParameters(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

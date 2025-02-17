@@ -30,19 +30,33 @@ func (c *Client) DescribeOptionGroups(ctx context.Context, params *DescribeOptio
 type DescribeOptionGroupsInput struct {
 
 	// A filter to only include option groups associated with this database engine.
+	//
 	// Valid Values:
+	//
 	//   - db2-ae
+	//
 	//   - db2-se
+	//
 	//   - mariadb
+	//
 	//   - mysql
+	//
 	//   - oracle-ee
+	//
 	//   - oracle-ee-cdb
+	//
 	//   - oracle-se2
+	//
 	//   - oracle-se2-cdb
+	//
 	//   - postgres
+	//
 	//   - sqlserver-ee
+	//
 	//   - sqlserver-se
+	//
 	//   - sqlserver-ex
+	//
 	//   - sqlserver-web
 	EngineName *string
 
@@ -62,7 +76,10 @@ type DescribeOptionGroupsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	// The name of the option group to describe. Can't be supplied together with
@@ -132,6 +149,9 @@ func (c *Client) addOperationDescribeOptionGroupsMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +162,12 @@ func (c *Client) addOperationDescribeOptionGroupsMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeOptionGroupsValidationMiddleware(stack); err != nil {
@@ -165,16 +191,20 @@ func (c *Client) addOperationDescribeOptionGroupsMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeOptionGroupsAPIClient is a client that implements the
-// DescribeOptionGroups operation.
-type DescribeOptionGroupsAPIClient interface {
-	DescribeOptionGroups(context.Context, *DescribeOptionGroupsInput, ...func(*Options)) (*DescribeOptionGroupsOutput, error)
-}
-
-var _ DescribeOptionGroupsAPIClient = (*Client)(nil)
 
 // DescribeOptionGroupsPaginatorOptions is the paginator options for
 // DescribeOptionGroups
@@ -182,7 +212,10 @@ type DescribeOptionGroupsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -243,6 +276,9 @@ func (p *DescribeOptionGroupsPaginator) NextPage(ctx context.Context, optFns ...
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeOptionGroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -261,6 +297,14 @@ func (p *DescribeOptionGroupsPaginator) NextPage(ctx context.Context, optFns ...
 
 	return result, nil
 }
+
+// DescribeOptionGroupsAPIClient is a client that implements the
+// DescribeOptionGroups operation.
+type DescribeOptionGroupsAPIClient interface {
+	DescribeOptionGroups(context.Context, *DescribeOptionGroupsInput, ...func(*Options)) (*DescribeOptionGroupsOutput, error)
+}
+
+var _ DescribeOptionGroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeOptionGroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

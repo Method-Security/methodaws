@@ -10,8 +10,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes a DB subnet group. The specified database subnet group must not be
-// associated with any DB instances.
+// Deletes a DB subnet group.
+//
+// The specified database subnet group must not be associated with any DB
+// instances.
 func (c *Client) DeleteDBSubnetGroup(ctx context.Context, params *DeleteDBSubnetGroupInput, optFns ...func(*Options)) (*DeleteDBSubnetGroupOutput, error) {
 	if params == nil {
 		params = &DeleteDBSubnetGroupInput{}
@@ -29,9 +31,14 @@ func (c *Client) DeleteDBSubnetGroup(ctx context.Context, params *DeleteDBSubnet
 
 type DeleteDBSubnetGroupInput struct {
 
-	// The name of the database subnet group to delete. You can't delete the default
-	// subnet group. Constraints: Must match the name of an existing DBSubnetGroup.
-	// Must not be default. Example: mydbsubnetgroup
+	// The name of the database subnet group to delete.
+	//
+	// You can't delete the default subnet group.
+	//
+	// Constraints: Must match the name of an existing DBSubnetGroup. Must not be
+	// default.
+	//
+	// Example: mydbsubnetgroup
 	//
 	// This member is required.
 	DBSubnetGroupName *string
@@ -89,6 +96,9 @@ func (c *Client) addOperationDeleteDBSubnetGroupMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -99,6 +109,12 @@ func (c *Client) addOperationDeleteDBSubnetGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteDBSubnetGroupValidationMiddleware(stack); err != nil {
@@ -120,6 +136,18 @@ func (c *Client) addOperationDeleteDBSubnetGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

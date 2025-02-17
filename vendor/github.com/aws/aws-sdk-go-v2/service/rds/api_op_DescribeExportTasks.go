@@ -35,20 +35,31 @@ type DescribeExportTasksInput struct {
 
 	// Filters specify one or more snapshot or cluster exports to describe. The
 	// filters are specified as name-value pairs that define what to include in the
-	// output. Filter names and values are case-sensitive. Supported filters include
-	// the following:
+	// output. Filter names and values are case-sensitive.
+	//
+	// Supported filters include the following:
+	//
 	//   - export-task-identifier - An identifier for the snapshot or cluster export
 	//   task.
+	//
 	//   - s3-bucket - The Amazon S3 bucket the data is exported to.
+	//
 	//   - source-arn - The Amazon Resource Name (ARN) of the snapshot or cluster
 	//   exported to Amazon S3.
+	//
 	//   - status - The status of the export task. Must be lowercase. Valid statuses
 	//   are the following:
+	//
 	//   - canceled
+	//
 	//   - canceling
+	//
 	//   - complete
+	//
 	//   - failed
+	//
 	//   - in_progress
+	//
 	//   - starting
 	Filters []types.Filter
 
@@ -60,8 +71,11 @@ type DescribeExportTasksInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified value, a pagination token called a marker is included in the
 	// response. You can use the marker in a later DescribeExportTasks request to
-	// retrieve the remaining results. Default: 100 Constraints: Minimum 20, maximum
-	// 100.
+	// retrieve the remaining results.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	// The Amazon Resource Name (ARN) of the snapshot or cluster exported to Amazon S3.
@@ -132,6 +146,9 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +159,12 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeExportTasksValidationMiddleware(stack); err != nil {
@@ -165,16 +188,20 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeExportTasksAPIClient is a client that implements the
-// DescribeExportTasks operation.
-type DescribeExportTasksAPIClient interface {
-	DescribeExportTasks(context.Context, *DescribeExportTasksInput, ...func(*Options)) (*DescribeExportTasksOutput, error)
-}
-
-var _ DescribeExportTasksAPIClient = (*Client)(nil)
 
 // DescribeExportTasksPaginatorOptions is the paginator options for
 // DescribeExportTasks
@@ -182,8 +209,11 @@ type DescribeExportTasksPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified value, a pagination token called a marker is included in the
 	// response. You can use the marker in a later DescribeExportTasks request to
-	// retrieve the remaining results. Default: 100 Constraints: Minimum 20, maximum
-	// 100.
+	// retrieve the remaining results.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -244,6 +274,9 @@ func (p *DescribeExportTasksPaginator) NextPage(ctx context.Context, optFns ...f
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeExportTasks(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -262,6 +295,14 @@ func (p *DescribeExportTasksPaginator) NextPage(ctx context.Context, optFns ...f
 
 	return result, nil
 }
+
+// DescribeExportTasksAPIClient is a client that implements the
+// DescribeExportTasks operation.
+type DescribeExportTasksAPIClient interface {
+	DescribeExportTasks(context.Context, *DescribeExportTasksInput, ...func(*Options)) (*DescribeExportTasksOutput, error)
+}
+
+var _ DescribeExportTasksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeExportTasks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

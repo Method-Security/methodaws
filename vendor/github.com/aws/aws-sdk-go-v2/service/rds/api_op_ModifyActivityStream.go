@@ -15,10 +15,12 @@ import (
 // (default) or unlocked. A locked policy is read-only, whereas an unlocked policy
 // is read/write. If your activity stream is started and locked, you can unlock it,
 // customize your audit policy, and then lock your activity stream. Restarting the
-// activity stream isn't required. For more information, see Modifying a database
-// activity stream (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/DBActivityStreams.Modifying.html)
-// in the Amazon RDS User Guide. This operation is supported for RDS for Oracle and
-// Microsoft SQL Server.
+// activity stream isn't required. For more information, see [Modifying a database activity stream]in the Amazon RDS
+// User Guide.
+//
+// This operation is supported for RDS for Oracle and Microsoft SQL Server.
+//
+// [Modifying a database activity stream]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/DBActivityStreams.Modifying.html
 func (c *Client) ModifyActivityStream(ctx context.Context, params *ModifyActivityStreamInput, optFns ...func(*Options)) (*ModifyActivityStreamOutput, error) {
 	if params == nil {
 		params = &ModifyActivityStreamInput{}
@@ -121,6 +123,9 @@ func (c *Client) addOperationModifyActivityStreamMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,6 +136,12 @@ func (c *Client) addOperationModifyActivityStreamMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyActivityStream(options.Region), middleware.Before); err != nil {
@@ -149,6 +160,18 @@ func (c *Client) addOperationModifyActivityStreamMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

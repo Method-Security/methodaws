@@ -13,9 +13,12 @@ import (
 
 // Adds metadata tags to an Amazon RDS resource. These tags can also be used with
 // cost allocation reporting to track cost associated with Amazon RDS resources, or
-// used in a Condition statement in an IAM policy for Amazon RDS. For an overview
-// on tagging Amazon RDS resources, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Tagging.html)
-// .
+// used in a Condition statement in an IAM policy for Amazon RDS.
+//
+// For an overview on tagging your relational database resources, see [Tagging Amazon RDS Resources] or [Tagging Amazon Aurora and Amazon RDS Resources].
+//
+// [Tagging Amazon RDS Resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+// [Tagging Amazon Aurora and Amazon RDS Resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 func (c *Client) AddTagsToResource(ctx context.Context, params *AddTagsToResourceInput, optFns ...func(*Options)) (*AddTagsToResourceOutput, error) {
 	if params == nil {
 		params = &AddTagsToResourceInput{}
@@ -34,9 +37,9 @@ func (c *Client) AddTagsToResource(ctx context.Context, params *AddTagsToResourc
 type AddTagsToResourceInput struct {
 
 	// The Amazon RDS resource that the tags are added to. This value is an Amazon
-	// Resource Name (ARN). For information about creating an ARN, see Constructing an
-	// RDS Amazon Resource Name (ARN) (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.ARN.html#USER_Tagging.ARN.Constructing)
-	// .
+	// Resource Name (ARN). For information about creating an ARN, see [Constructing an RDS Amazon Resource Name (ARN)].
+	//
+	// [Constructing an RDS Amazon Resource Name (ARN)]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.ARN.html#USER_Tagging.ARN.Constructing
 	//
 	// This member is required.
 	ResourceName *string
@@ -99,6 +102,9 @@ func (c *Client) addOperationAddTagsToResourceMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +115,12 @@ func (c *Client) addOperationAddTagsToResourceMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAddTagsToResourceValidationMiddleware(stack); err != nil {
@@ -130,6 +142,18 @@ func (c *Client) addOperationAddTagsToResourceMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -13,7 +13,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
@@ -37,13 +36,20 @@ func (c *Client) DescribeDBSnapshots(ctx context.Context, params *DescribeDBSnap
 type DescribeDBSnapshotsInput struct {
 
 	// The ID of the DB instance to retrieve the list of DB snapshots for. This
-	// parameter isn't case-sensitive. Constraints:
+	// parameter isn't case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - If supplied, must match the identifier of an existing DBInstance.
 	DBInstanceIdentifier *string
 
 	// A specific DB snapshot identifier to describe. This value is stored as a
-	// lowercase string. Constraints:
+	// lowercase string.
+	//
+	// Constraints:
+	//
 	//   - If supplied, must match the identifier of an existing DBSnapshot.
+	//
 	//   - If this identifier is for an automated snapshot, the SnapshotType parameter
 	//   must also be specified.
 	DBSnapshotIdentifier *string
@@ -51,29 +57,41 @@ type DescribeDBSnapshotsInput struct {
 	// A specific DB resource ID to describe.
 	DbiResourceId *string
 
-	// A filter that specifies one or more DB snapshots to describe. Supported
-	// filters:
+	// A filter that specifies one or more DB snapshots to describe.
+	//
+	// Supported filters:
+	//
 	//   - db-instance-id - Accepts DB instance identifiers and DB instance Amazon
 	//   Resource Names (ARNs).
+	//
 	//   - db-snapshot-id - Accepts DB snapshot identifiers.
+	//
 	//   - dbi-resource-id - Accepts identifiers of source DB instances.
+	//
 	//   - snapshot-type - Accepts types of DB snapshots.
+	//
 	//   - engine - Accepts names of database engines.
 	Filters []types.Filter
 
 	// Specifies whether to include manual DB cluster snapshots that are public and
 	// can be copied or restored by any Amazon Web Services account. By default, the
-	// public snapshots are not included. You can share a manual DB snapshot as public
-	// by using the ModifyDBSnapshotAttribute API. This setting doesn't apply to RDS
-	// Custom.
+	// public snapshots are not included.
+	//
+	// You can share a manual DB snapshot as public by using the ModifyDBSnapshotAttribute API.
+	//
+	// This setting doesn't apply to RDS Custom.
 	IncludePublic *bool
 
 	// Specifies whether to include shared manual DB cluster snapshots from other
 	// Amazon Web Services accounts that this Amazon Web Services account has been
 	// given permission to copy or restore. By default, these snapshots are not
-	// included. You can give an Amazon Web Services account permission to restore a
-	// manual DB snapshot from another Amazon Web Services account by using the
-	// ModifyDBSnapshotAttribute API action. This setting doesn't apply to RDS Custom.
+	// included.
+	//
+	// You can give an Amazon Web Services account permission to restore a manual DB
+	// snapshot from another Amazon Web Services account by using the
+	// ModifyDBSnapshotAttribute API action.
+	//
+	// This setting doesn't apply to RDS Custom.
 	IncludeShared *bool
 
 	// An optional pagination token provided by a previous DescribeDBSnapshots
@@ -84,31 +102,45 @@ type DescribeDBSnapshotsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	// The type of snapshots to be returned. You can specify one of the following
 	// values:
+	//
 	//   - automated - Return all DB snapshots that have been automatically taken by
 	//   Amazon RDS for my Amazon Web Services account.
+	//
 	//   - manual - Return all DB snapshots that have been taken by my Amazon Web
 	//   Services account.
+	//
 	//   - shared - Return all manual DB snapshots that have been shared to my Amazon
 	//   Web Services account.
+	//
 	//   - public - Return all DB snapshots that have been marked as public.
+	//
 	//   - awsbackup - Return the DB snapshots managed by the Amazon Web Services
-	//   Backup service. For information about Amazon Web Services Backup, see the
-	//   Amazon Web Services Backup Developer Guide.  (https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html)
-	//   The awsbackup type does not apply to Aurora.
+	//   Backup service.
+	//
+	// For information about Amazon Web Services Backup, see the [Amazon Web Services Backup Developer Guide.]
+	//
+	// The awsbackup type does not apply to Aurora.
+	//
 	// If you don't specify a SnapshotType value, then both automated and manual
 	// snapshots are returned. Shared and public DB snapshots are not included in the
 	// returned results by default. You can include shared snapshots with these results
 	// by enabling the IncludeShared parameter. You can include public snapshots with
-	// these results by enabling the IncludePublic parameter. The IncludeShared and
-	// IncludePublic parameters don't apply for SnapshotType values of manual or
-	// automated . The IncludePublic parameter doesn't apply when SnapshotType is set
-	// to shared . The IncludeShared parameter doesn't apply when SnapshotType is set
-	// to public .
+	// these results by enabling the IncludePublic parameter.
+	//
+	// The IncludeShared and IncludePublic parameters don't apply for SnapshotType
+	// values of manual or automated . The IncludePublic parameter doesn't apply when
+	// SnapshotType is set to shared . The IncludeShared parameter doesn't apply when
+	// SnapshotType is set to public .
+	//
+	// [Amazon Web Services Backup Developer Guide.]: https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html
 	SnapshotType *string
 
 	noSmithyDocumentSerde
@@ -175,6 +207,9 @@ func (c *Client) addOperationDescribeDBSnapshotsMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -185,6 +220,12 @@ func (c *Client) addOperationDescribeDBSnapshotsMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBSnapshotsValidationMiddleware(stack); err != nil {
@@ -208,101 +249,19 @@ func (c *Client) addOperationDescribeDBSnapshotsMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
-}
-
-// DescribeDBSnapshotsAPIClient is a client that implements the
-// DescribeDBSnapshots operation.
-type DescribeDBSnapshotsAPIClient interface {
-	DescribeDBSnapshots(context.Context, *DescribeDBSnapshotsInput, ...func(*Options)) (*DescribeDBSnapshotsOutput, error)
-}
-
-var _ DescribeDBSnapshotsAPIClient = (*Client)(nil)
-
-// DescribeDBSnapshotsPaginatorOptions is the paginator options for
-// DescribeDBSnapshots
-type DescribeDBSnapshotsPaginatorOptions struct {
-	// The maximum number of records to include in the response. If more records exist
-	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
-	Limit int32
-
-	// Set to true if pagination should stop if the service returns a pagination token
-	// that matches the most recent token provided to the service.
-	StopOnDuplicateToken bool
-}
-
-// DescribeDBSnapshotsPaginator is a paginator for DescribeDBSnapshots
-type DescribeDBSnapshotsPaginator struct {
-	options   DescribeDBSnapshotsPaginatorOptions
-	client    DescribeDBSnapshotsAPIClient
-	params    *DescribeDBSnapshotsInput
-	nextToken *string
-	firstPage bool
-}
-
-// NewDescribeDBSnapshotsPaginator returns a new DescribeDBSnapshotsPaginator
-func NewDescribeDBSnapshotsPaginator(client DescribeDBSnapshotsAPIClient, params *DescribeDBSnapshotsInput, optFns ...func(*DescribeDBSnapshotsPaginatorOptions)) *DescribeDBSnapshotsPaginator {
-	if params == nil {
-		params = &DescribeDBSnapshotsInput{}
-	}
-
-	options := DescribeDBSnapshotsPaginatorOptions{}
-	if params.MaxRecords != nil {
-		options.Limit = *params.MaxRecords
-	}
-
-	for _, fn := range optFns {
-		fn(&options)
-	}
-
-	return &DescribeDBSnapshotsPaginator{
-		options:   options,
-		client:    client,
-		params:    params,
-		firstPage: true,
-		nextToken: params.Marker,
-	}
-}
-
-// HasMorePages returns a boolean indicating whether more pages are available
-func (p *DescribeDBSnapshotsPaginator) HasMorePages() bool {
-	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
-}
-
-// NextPage retrieves the next DescribeDBSnapshots page.
-func (p *DescribeDBSnapshotsPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeDBSnapshotsOutput, error) {
-	if !p.HasMorePages() {
-		return nil, fmt.Errorf("no more pages available")
-	}
-
-	params := *p.params
-	params.Marker = p.nextToken
-
-	var limit *int32
-	if p.options.Limit > 0 {
-		limit = &p.options.Limit
-	}
-	params.MaxRecords = limit
-
-	result, err := p.client.DescribeDBSnapshots(ctx, &params, optFns...)
-	if err != nil {
-		return nil, err
-	}
-	p.firstPage = false
-
-	prevToken := p.nextToken
-	p.nextToken = result.Marker
-
-	if p.options.StopOnDuplicateToken &&
-		prevToken != nil &&
-		p.nextToken != nil &&
-		*prevToken == *p.nextToken {
-		p.nextToken = nil
-	}
-
-	return result, nil
 }
 
 // DBSnapshotAvailableWaiterOptions are waiter options for
@@ -339,12 +298,13 @@ type DBSnapshotAvailableWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeDBSnapshotsInput, *DescribeDBSnapshotsOutput, error) (bool, error)
 }
 
@@ -421,7 +381,13 @@ func (w *DBSnapshotAvailableWaiter) WaitForOutput(ctx context.Context, params *D
 		}
 
 		out, err := w.client.DescribeDBSnapshots(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -460,29 +426,20 @@ func (w *DBSnapshotAvailableWaiter) WaitForOutput(ctx context.Context, params *D
 func dBSnapshotAvailableStateRetryable(ctx context.Context, input *DescribeDBSnapshotsInput, output *DescribeDBSnapshotsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
-		expectedValue := "available"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
 			}
-
-			if string(*value) != expectedValue {
+		}
+		expectedValue := "available"
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -492,125 +449,123 @@ func dBSnapshotAvailableStateRetryable(ctx context.Context, input *DescribeDBSna
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "deleted"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "deleting"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "failed"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "incompatible-restore"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "incompatible-parameters"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -646,12 +601,13 @@ type DBSnapshotDeletedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeDBSnapshotsInput, *DescribeDBSnapshotsOutput, error) (bool, error)
 }
 
@@ -728,7 +684,13 @@ func (w *DBSnapshotDeletedWaiter) WaitForOutput(ctx context.Context, params *Des
 		}
 
 		out, err := w.client.DescribeDBSnapshots(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -767,22 +729,16 @@ func (w *DBSnapshotDeletedWaiter) WaitForOutput(ctx context.Context, params *Des
 func dBSnapshotDeletedStateRetryable(ctx context.Context, input *DescribeDBSnapshotsInput, output *DescribeDBSnapshotsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(DBSnapshots) == `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
+		v1 := output.DBSnapshots
+		v2 := len(v1)
+		v3 := 0
+		v4 := int64(v2) == int64(v3)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v4 == bv {
 			return false, nil
 		}
 	}
@@ -800,103 +756,202 @@ func dBSnapshotDeletedStateRetryable(ctx context.Context, input *DescribeDBSnaps
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "creating"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "modifying"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "rebooting"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("DBSnapshots[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.DBSnapshots
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "resetting-master-credentials"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
+
+// DescribeDBSnapshotsPaginatorOptions is the paginator options for
+// DescribeDBSnapshots
+type DescribeDBSnapshotsPaginatorOptions struct {
+	// The maximum number of records to include in the response. If more records exist
+	// than the specified MaxRecords value, a pagination token called a marker is
+	// included in the response so that you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
+	Limit int32
+
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeDBSnapshotsPaginator is a paginator for DescribeDBSnapshots
+type DescribeDBSnapshotsPaginator struct {
+	options   DescribeDBSnapshotsPaginatorOptions
+	client    DescribeDBSnapshotsAPIClient
+	params    *DescribeDBSnapshotsInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeDBSnapshotsPaginator returns a new DescribeDBSnapshotsPaginator
+func NewDescribeDBSnapshotsPaginator(client DescribeDBSnapshotsAPIClient, params *DescribeDBSnapshotsInput, optFns ...func(*DescribeDBSnapshotsPaginatorOptions)) *DescribeDBSnapshotsPaginator {
+	if params == nil {
+		params = &DescribeDBSnapshotsInput{}
+	}
+
+	options := DescribeDBSnapshotsPaginatorOptions{}
+	if params.MaxRecords != nil {
+		options.Limit = *params.MaxRecords
+	}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeDBSnapshotsPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.Marker,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeDBSnapshotsPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeDBSnapshots page.
+func (p *DescribeDBSnapshotsPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeDBSnapshotsOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.Marker = p.nextToken
+
+	var limit *int32
+	if p.options.Limit > 0 {
+		limit = &p.options.Limit
+	}
+	params.MaxRecords = limit
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeDBSnapshots(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.Marker
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeDBSnapshotsAPIClient is a client that implements the
+// DescribeDBSnapshots operation.
+type DescribeDBSnapshotsAPIClient interface {
+	DescribeDBSnapshots(context.Context, *DescribeDBSnapshotsInput, ...func(*Options)) (*DescribeDBSnapshotsOutput, error)
+}
+
+var _ DescribeDBSnapshotsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBSnapshots(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

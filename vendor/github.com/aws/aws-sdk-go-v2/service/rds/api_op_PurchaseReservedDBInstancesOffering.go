@@ -29,21 +29,30 @@ func (c *Client) PurchaseReservedDBInstancesOffering(ctx context.Context, params
 
 type PurchaseReservedDBInstancesOfferingInput struct {
 
-	// The ID of the Reserved DB instance offering to purchase. Example:
-	// 438012d3-4052-4cc7-b2e3-8d3372e0e706
+	// The ID of the Reserved DB instance offering to purchase.
+	//
+	// Example: 438012d3-4052-4cc7-b2e3-8d3372e0e706
 	//
 	// This member is required.
 	ReservedDBInstancesOfferingId *string
 
-	// The number of instances to reserve. Default: 1
+	// The number of instances to reserve.
+	//
+	// Default: 1
 	DBInstanceCount *int32
 
-	// Customer-specified identifier to track this reservation. Example:
-	// myreservationID
+	// Customer-specified identifier to track this reservation.
+	//
+	// Example: myreservationID
 	ReservedDBInstanceId *string
 
-	// A list of tags. For more information, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html)
-	// in the Amazon RDS User Guide.
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	Tags []types.Tag
 
 	noSmithyDocumentSerde
@@ -104,6 +113,9 @@ func (c *Client) addOperationPurchaseReservedDBInstancesOfferingMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +126,12 @@ func (c *Client) addOperationPurchaseReservedDBInstancesOfferingMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPurchaseReservedDBInstancesOfferingValidationMiddleware(stack); err != nil {
@@ -135,6 +153,18 @@ func (c *Client) addOperationPurchaseReservedDBInstancesOfferingMiddlewares(stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

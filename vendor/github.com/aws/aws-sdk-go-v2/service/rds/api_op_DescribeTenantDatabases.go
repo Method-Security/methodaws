@@ -12,7 +12,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
@@ -41,11 +40,15 @@ type DescribeTenantDatabasesInput struct {
 	// case-sensitive.
 	DBInstanceIdentifier *string
 
-	// A filter that specifies one or more database tenants to describe. Supported
-	// filters:
+	// A filter that specifies one or more database tenants to describe.
+	//
+	// Supported filters:
+	//
 	//   - tenant-db-name - Tenant database names. The results list only includes
 	//   information about the tenant databases that match these tenant DB names.
+	//
 	//   - tenant-database-resource-id - Tenant database resource identifiers.
+	//
 	//   - dbi-resource-id - DB instance resource identifiers. The results list only
 	//   includes information about the tenants contained within the DB instances
 	//   identified by these resource identifiers.
@@ -129,6 +132,9 @@ func (c *Client) addOperationDescribeTenantDatabasesMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +145,12 @@ func (c *Client) addOperationDescribeTenantDatabasesMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeTenantDatabasesValidationMiddleware(stack); err != nil {
@@ -162,101 +174,19 @@ func (c *Client) addOperationDescribeTenantDatabasesMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
-}
-
-// DescribeTenantDatabasesAPIClient is a client that implements the
-// DescribeTenantDatabases operation.
-type DescribeTenantDatabasesAPIClient interface {
-	DescribeTenantDatabases(context.Context, *DescribeTenantDatabasesInput, ...func(*Options)) (*DescribeTenantDatabasesOutput, error)
-}
-
-var _ DescribeTenantDatabasesAPIClient = (*Client)(nil)
-
-// DescribeTenantDatabasesPaginatorOptions is the paginator options for
-// DescribeTenantDatabases
-type DescribeTenantDatabasesPaginatorOptions struct {
-	// The maximum number of records to include in the response. If more records exist
-	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so that you can retrieve the remaining results.
-	Limit int32
-
-	// Set to true if pagination should stop if the service returns a pagination token
-	// that matches the most recent token provided to the service.
-	StopOnDuplicateToken bool
-}
-
-// DescribeTenantDatabasesPaginator is a paginator for DescribeTenantDatabases
-type DescribeTenantDatabasesPaginator struct {
-	options   DescribeTenantDatabasesPaginatorOptions
-	client    DescribeTenantDatabasesAPIClient
-	params    *DescribeTenantDatabasesInput
-	nextToken *string
-	firstPage bool
-}
-
-// NewDescribeTenantDatabasesPaginator returns a new
-// DescribeTenantDatabasesPaginator
-func NewDescribeTenantDatabasesPaginator(client DescribeTenantDatabasesAPIClient, params *DescribeTenantDatabasesInput, optFns ...func(*DescribeTenantDatabasesPaginatorOptions)) *DescribeTenantDatabasesPaginator {
-	if params == nil {
-		params = &DescribeTenantDatabasesInput{}
-	}
-
-	options := DescribeTenantDatabasesPaginatorOptions{}
-	if params.MaxRecords != nil {
-		options.Limit = *params.MaxRecords
-	}
-
-	for _, fn := range optFns {
-		fn(&options)
-	}
-
-	return &DescribeTenantDatabasesPaginator{
-		options:   options,
-		client:    client,
-		params:    params,
-		firstPage: true,
-		nextToken: params.Marker,
-	}
-}
-
-// HasMorePages returns a boolean indicating whether more pages are available
-func (p *DescribeTenantDatabasesPaginator) HasMorePages() bool {
-	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
-}
-
-// NextPage retrieves the next DescribeTenantDatabases page.
-func (p *DescribeTenantDatabasesPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeTenantDatabasesOutput, error) {
-	if !p.HasMorePages() {
-		return nil, fmt.Errorf("no more pages available")
-	}
-
-	params := *p.params
-	params.Marker = p.nextToken
-
-	var limit *int32
-	if p.options.Limit > 0 {
-		limit = &p.options.Limit
-	}
-	params.MaxRecords = limit
-
-	result, err := p.client.DescribeTenantDatabases(ctx, &params, optFns...)
-	if err != nil {
-		return nil, err
-	}
-	p.firstPage = false
-
-	prevToken := p.nextToken
-	p.nextToken = result.Marker
-
-	if p.options.StopOnDuplicateToken &&
-		prevToken != nil &&
-		p.nextToken != nil &&
-		*prevToken == *p.nextToken {
-		p.nextToken = nil
-	}
-
-	return result, nil
 }
 
 // TenantDatabaseAvailableWaiterOptions are waiter options for
@@ -293,12 +223,13 @@ type TenantDatabaseAvailableWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeTenantDatabasesInput, *DescribeTenantDatabasesOutput, error) (bool, error)
 }
 
@@ -375,7 +306,13 @@ func (w *TenantDatabaseAvailableWaiter) WaitForOutput(ctx context.Context, param
 		}
 
 		out, err := w.client.DescribeTenantDatabases(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -414,29 +351,20 @@ func (w *TenantDatabaseAvailableWaiter) WaitForOutput(ctx context.Context, param
 func tenantDatabaseAvailableStateRetryable(ctx context.Context, input *DescribeTenantDatabasesInput, output *DescribeTenantDatabasesOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("TenantDatabases[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
-		expectedValue := "available"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
+		v1 := output.TenantDatabases
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
 			}
-
-			if string(*value) != expectedValue {
+		}
+		expectedValue := "available"
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -446,77 +374,77 @@ func tenantDatabaseAvailableStateRetryable(ctx context.Context, input *DescribeT
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("TenantDatabases[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.TenantDatabases
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "deleted"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("TenantDatabases[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.TenantDatabases
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "incompatible-parameters"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("TenantDatabases[].Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.TenantDatabases
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.Status
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "incompatible-restore"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -554,12 +482,13 @@ type TenantDatabaseDeletedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeTenantDatabasesInput, *DescribeTenantDatabasesOutput, error) (bool, error)
 }
 
@@ -636,7 +565,13 @@ func (w *TenantDatabaseDeletedWaiter) WaitForOutput(ctx context.Context, params 
 		}
 
 		out, err := w.client.DescribeTenantDatabases(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -675,22 +610,16 @@ func (w *TenantDatabaseDeletedWaiter) WaitForOutput(ctx context.Context, params 
 func tenantDatabaseDeletedStateRetryable(ctx context.Context, input *DescribeTenantDatabasesInput, output *DescribeTenantDatabasesOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(TenantDatabases) == `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
+		v1 := output.TenantDatabases
+		v2 := len(v1)
+		v3 := 0
+		v4 := int64(v2) == int64(v3)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v4 == bv {
 			return false, nil
 		}
 	}
@@ -702,8 +631,108 @@ func tenantDatabaseDeletedStateRetryable(ctx context.Context, input *DescribeTen
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
+
+// DescribeTenantDatabasesPaginatorOptions is the paginator options for
+// DescribeTenantDatabases
+type DescribeTenantDatabasesPaginatorOptions struct {
+	// The maximum number of records to include in the response. If more records exist
+	// than the specified MaxRecords value, a pagination token called a marker is
+	// included in the response so that you can retrieve the remaining results.
+	Limit int32
+
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeTenantDatabasesPaginator is a paginator for DescribeTenantDatabases
+type DescribeTenantDatabasesPaginator struct {
+	options   DescribeTenantDatabasesPaginatorOptions
+	client    DescribeTenantDatabasesAPIClient
+	params    *DescribeTenantDatabasesInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeTenantDatabasesPaginator returns a new
+// DescribeTenantDatabasesPaginator
+func NewDescribeTenantDatabasesPaginator(client DescribeTenantDatabasesAPIClient, params *DescribeTenantDatabasesInput, optFns ...func(*DescribeTenantDatabasesPaginatorOptions)) *DescribeTenantDatabasesPaginator {
+	if params == nil {
+		params = &DescribeTenantDatabasesInput{}
+	}
+
+	options := DescribeTenantDatabasesPaginatorOptions{}
+	if params.MaxRecords != nil {
+		options.Limit = *params.MaxRecords
+	}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeTenantDatabasesPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.Marker,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeTenantDatabasesPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeTenantDatabases page.
+func (p *DescribeTenantDatabasesPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeTenantDatabasesOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.Marker = p.nextToken
+
+	var limit *int32
+	if p.options.Limit > 0 {
+		limit = &p.options.Limit
+	}
+	params.MaxRecords = limit
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeTenantDatabases(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.Marker
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeTenantDatabasesAPIClient is a client that implements the
+// DescribeTenantDatabases operation.
+type DescribeTenantDatabasesAPIClient interface {
+	DescribeTenantDatabases(context.Context, *DescribeTenantDatabasesInput, ...func(*Options)) (*DescribeTenantDatabasesOutput, error)
+}
+
+var _ DescribeTenantDatabasesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTenantDatabases(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
