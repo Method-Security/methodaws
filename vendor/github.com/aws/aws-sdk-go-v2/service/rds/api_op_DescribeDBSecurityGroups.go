@@ -13,13 +13,16 @@ import (
 
 // Returns a list of DBSecurityGroup descriptions. If a DBSecurityGroupName is
 // specified, the list will contain only the descriptions of the specified DB
-// security group. EC2-Classic was retired on August 15, 2022. If you haven't
-// migrated from EC2-Classic to a VPC, we recommend that you migrate as soon as
-// possible. For more information, see Migrate from EC2-Classic to a VPC (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/vpc-migrate.html)
-// in the Amazon EC2 User Guide, the blog EC2-Classic Networking is Retiring –
-// Here’s How to Prepare (http://aws.amazon.com/blogs/aws/ec2-classic-is-retiring-heres-how-to-prepare/)
-// , and Moving a DB instance not in a VPC into a VPC (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.Non-VPC2VPC.html)
-// in the Amazon RDS User Guide.
+// security group.
+//
+// EC2-Classic was retired on August 15, 2022. If you haven't migrated from
+// EC2-Classic to a VPC, we recommend that you migrate as soon as possible. For
+// more information, see [Migrate from EC2-Classic to a VPC]in the Amazon EC2 User Guide, the blog [EC2-Classic Networking is Retiring – Here’s How to Prepare], and [Moving a DB instance not in a VPC into a VPC] in the
+// Amazon RDS User Guide.
+//
+// [Migrate from EC2-Classic to a VPC]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/vpc-migrate.html
+// [EC2-Classic Networking is Retiring – Here’s How to Prepare]: http://aws.amazon.com/blogs/aws/ec2-classic-is-retiring-heres-how-to-prepare/
+// [Moving a DB instance not in a VPC into a VPC]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.Non-VPC2VPC.html
 func (c *Client) DescribeDBSecurityGroups(ctx context.Context, params *DescribeDBSecurityGroupsInput, optFns ...func(*Options)) (*DescribeDBSecurityGroupsOutput, error) {
 	if params == nil {
 		params = &DescribeDBSecurityGroupsInput{}
@@ -51,7 +54,10 @@ type DescribeDBSecurityGroupsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	noSmithyDocumentSerde
@@ -118,6 +124,9 @@ func (c *Client) addOperationDescribeDBSecurityGroupsMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +137,12 @@ func (c *Client) addOperationDescribeDBSecurityGroupsMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBSecurityGroupsValidationMiddleware(stack); err != nil {
@@ -151,16 +166,20 @@ func (c *Client) addOperationDescribeDBSecurityGroupsMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBSecurityGroupsAPIClient is a client that implements the
-// DescribeDBSecurityGroups operation.
-type DescribeDBSecurityGroupsAPIClient interface {
-	DescribeDBSecurityGroups(context.Context, *DescribeDBSecurityGroupsInput, ...func(*Options)) (*DescribeDBSecurityGroupsOutput, error)
-}
-
-var _ DescribeDBSecurityGroupsAPIClient = (*Client)(nil)
 
 // DescribeDBSecurityGroupsPaginatorOptions is the paginator options for
 // DescribeDBSecurityGroups
@@ -168,7 +187,10 @@ type DescribeDBSecurityGroupsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -230,6 +252,9 @@ func (p *DescribeDBSecurityGroupsPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBSecurityGroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -248,6 +273,14 @@ func (p *DescribeDBSecurityGroupsPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// DescribeDBSecurityGroupsAPIClient is a client that implements the
+// DescribeDBSecurityGroups operation.
+type DescribeDBSecurityGroupsAPIClient interface {
+	DescribeDBSecurityGroups(context.Context, *DescribeDBSecurityGroupsInput, ...func(*Options)) (*DescribeDBSecurityGroupsOutput, error)
+}
+
+var _ DescribeDBSecurityGroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBSecurityGroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

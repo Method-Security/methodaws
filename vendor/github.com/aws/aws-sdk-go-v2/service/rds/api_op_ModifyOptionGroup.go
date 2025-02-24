@@ -29,10 +29,11 @@ func (c *Client) ModifyOptionGroup(ctx context.Context, params *ModifyOptionGrou
 
 type ModifyOptionGroupInput struct {
 
-	// The name of the option group to be modified. Permanent options, such as the TDE
-	// option for Oracle Advanced Security TDE, can't be removed from an option group,
-	// and that option group can't be removed from a DB instance once it is associated
-	// with a DB instance
+	// The name of the option group to be modified.
+	//
+	// Permanent options, such as the TDE option for Oracle Advanced Security TDE,
+	// can't be removed from an option group, and that option group can't be removed
+	// from a DB instance once it is associated with a DB instance
 	//
 	// This member is required.
 	OptionGroupName *string
@@ -105,6 +106,9 @@ func (c *Client) addOperationModifyOptionGroupMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +119,12 @@ func (c *Client) addOperationModifyOptionGroupMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyOptionGroupValidationMiddleware(stack); err != nil {
@@ -136,6 +146,18 @@ func (c *Client) addOperationModifyOptionGroupMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

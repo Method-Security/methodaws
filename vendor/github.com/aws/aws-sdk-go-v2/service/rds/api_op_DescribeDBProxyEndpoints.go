@@ -50,7 +50,10 @@ type DescribeDBProxyEndpointsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that the remaining results can be retrieved.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	noSmithyDocumentSerde
@@ -115,6 +118,9 @@ func (c *Client) addOperationDescribeDBProxyEndpointsMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +131,12 @@ func (c *Client) addOperationDescribeDBProxyEndpointsMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBProxyEndpointsValidationMiddleware(stack); err != nil {
@@ -148,16 +160,20 @@ func (c *Client) addOperationDescribeDBProxyEndpointsMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBProxyEndpointsAPIClient is a client that implements the
-// DescribeDBProxyEndpoints operation.
-type DescribeDBProxyEndpointsAPIClient interface {
-	DescribeDBProxyEndpoints(context.Context, *DescribeDBProxyEndpointsInput, ...func(*Options)) (*DescribeDBProxyEndpointsOutput, error)
-}
-
-var _ DescribeDBProxyEndpointsAPIClient = (*Client)(nil)
 
 // DescribeDBProxyEndpointsPaginatorOptions is the paginator options for
 // DescribeDBProxyEndpoints
@@ -165,7 +181,10 @@ type DescribeDBProxyEndpointsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that the remaining results can be retrieved.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -227,6 +246,9 @@ func (p *DescribeDBProxyEndpointsPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBProxyEndpoints(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +267,14 @@ func (p *DescribeDBProxyEndpointsPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// DescribeDBProxyEndpointsAPIClient is a client that implements the
+// DescribeDBProxyEndpoints operation.
+type DescribeDBProxyEndpointsAPIClient interface {
+	DescribeDBProxyEndpoints(context.Context, *DescribeDBProxyEndpointsInput, ...func(*Options)) (*DescribeDBProxyEndpointsOutput, error)
+}
+
+var _ DescribeDBProxyEndpointsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBProxyEndpoints(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -11,11 +11,14 @@ import (
 )
 
 // Deletes a specified DB cluster parameter group. The DB cluster parameter group
-// to be deleted can't be associated with any DB clusters. For more information on
-// Amazon Aurora, see What is Amazon Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-// in the Amazon Aurora User Guide. For more information on Multi-AZ DB clusters,
-// see Multi-AZ DB cluster deployments (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
-// in the Amazon RDS User Guide.
+// to be deleted can't be associated with any DB clusters.
+//
+// For more information on Amazon Aurora, see [What is Amazon Aurora?] in the Amazon Aurora User Guide.
+//
+// For more information on Multi-AZ DB clusters, see [Multi-AZ DB cluster deployments] in the Amazon RDS User Guide.
+//
+// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
+// [Multi-AZ DB cluster deployments]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
 func (c *Client) DeleteDBClusterParameterGroup(ctx context.Context, params *DeleteDBClusterParameterGroupInput, optFns ...func(*Options)) (*DeleteDBClusterParameterGroupOutput, error) {
 	if params == nil {
 		params = &DeleteDBClusterParameterGroupInput{}
@@ -33,9 +36,14 @@ func (c *Client) DeleteDBClusterParameterGroup(ctx context.Context, params *Dele
 
 type DeleteDBClusterParameterGroupInput struct {
 
-	// The name of the DB cluster parameter group. Constraints:
+	// The name of the DB cluster parameter group.
+	//
+	// Constraints:
+	//
 	//   - Must be the name of an existing DB cluster parameter group.
+	//
 	//   - You can't delete a default DB cluster parameter group.
+	//
 	//   - Can't be associated with any DB clusters.
 	//
 	// This member is required.
@@ -94,6 +102,9 @@ func (c *Client) addOperationDeleteDBClusterParameterGroupMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -104,6 +115,12 @@ func (c *Client) addOperationDeleteDBClusterParameterGroupMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteDBClusterParameterGroupValidationMiddleware(stack); err != nil {
@@ -125,6 +142,18 @@ func (c *Client) addOperationDeleteDBClusterParameterGroupMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -29,35 +29,58 @@ func (c *Client) DescribeOrderableDBInstanceOptions(ctx context.Context, params 
 
 type DescribeOrderableDBInstanceOptionsInput struct {
 
-	// The name of the database engine to describe DB instance options for. Valid
-	// Values:
+	// The name of the database engine to describe DB instance options for.
+	//
+	// Valid Values:
+	//
 	//   - aurora-mysql
+	//
 	//   - aurora-postgresql
+	//
 	//   - custom-oracle-ee
+	//
 	//   - custom-oracle-ee-cdb
+	//
 	//   - custom-oracle-se2
+	//
 	//   - custom-oracle-se2-cdb
+	//
 	//   - db2-ae
+	//
 	//   - db2-se
+	//
 	//   - mariadb
+	//
 	//   - mysql
+	//
 	//   - oracle-ee
+	//
 	//   - oracle-ee-cdb
+	//
 	//   - oracle-se2
+	//
 	//   - oracle-se2-cdb
+	//
 	//   - postgres
+	//
 	//   - sqlserver-ee
+	//
 	//   - sqlserver-se
+	//
 	//   - sqlserver-ex
+	//
 	//   - sqlserver-web
 	//
 	// This member is required.
 	Engine *string
 
 	// The Availability Zone group associated with a Local Zone. Specify this
-	// parameter to retrieve available options for the Local Zones in the group. Omit
-	// this parameter to show the available options in the specified Amazon Web
-	// Services Region. This setting doesn't apply to RDS Custom DB instances.
+	// parameter to retrieve available options for the Local Zones in the group.
+	//
+	// Omit this parameter to show the available options in the specified Amazon Web
+	// Services Region.
+	//
+	// This setting doesn't apply to RDS Custom DB instances.
 	AvailabilityZoneGroup *string
 
 	// A filter to include only the available options for the specified DB instance
@@ -71,6 +94,7 @@ type DescribeOrderableDBInstanceOptionsInput struct {
 	Filters []types.Filter
 
 	// A filter to include only the available options for the specified license model.
+	//
 	// RDS Custom supports only the BYOL licensing model.
 	LicenseModel *string
 
@@ -83,12 +107,17 @@ type DescribeOrderableDBInstanceOptionsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 1000.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 1000.
 	MaxRecords *int32
 
 	// Specifies whether to show only VPC or non-VPC offerings. RDS Custom supports
-	// only VPC offerings. RDS Custom supports only VPC offerings. If you describe
-	// non-VPC offerings for RDS Custom, the output shows VPC offerings.
+	// only VPC offerings.
+	//
+	// RDS Custom supports only VPC offerings. If you describe non-VPC offerings for
+	// RDS Custom, the output shows VPC offerings.
 	Vpc *bool
 
 	noSmithyDocumentSerde
@@ -156,6 +185,9 @@ func (c *Client) addOperationDescribeOrderableDBInstanceOptionsMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -166,6 +198,12 @@ func (c *Client) addOperationDescribeOrderableDBInstanceOptionsMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeOrderableDBInstanceOptionsValidationMiddleware(stack); err != nil {
@@ -189,16 +227,20 @@ func (c *Client) addOperationDescribeOrderableDBInstanceOptionsMiddlewares(stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeOrderableDBInstanceOptionsAPIClient is a client that implements the
-// DescribeOrderableDBInstanceOptions operation.
-type DescribeOrderableDBInstanceOptionsAPIClient interface {
-	DescribeOrderableDBInstanceOptions(context.Context, *DescribeOrderableDBInstanceOptionsInput, ...func(*Options)) (*DescribeOrderableDBInstanceOptionsOutput, error)
-}
-
-var _ DescribeOrderableDBInstanceOptionsAPIClient = (*Client)(nil)
 
 // DescribeOrderableDBInstanceOptionsPaginatorOptions is the paginator options for
 // DescribeOrderableDBInstanceOptions
@@ -206,7 +248,10 @@ type DescribeOrderableDBInstanceOptionsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 1000.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 1000.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -269,6 +314,9 @@ func (p *DescribeOrderableDBInstanceOptionsPaginator) NextPage(ctx context.Conte
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeOrderableDBInstanceOptions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -287,6 +335,14 @@ func (p *DescribeOrderableDBInstanceOptionsPaginator) NextPage(ctx context.Conte
 
 	return result, nil
 }
+
+// DescribeOrderableDBInstanceOptionsAPIClient is a client that implements the
+// DescribeOrderableDBInstanceOptions operation.
+type DescribeOrderableDBInstanceOptionsAPIClient interface {
+	DescribeOrderableDBInstanceOptions(context.Context, *DescribeOrderableDBInstanceOptionsInput, ...func(*Options)) (*DescribeOrderableDBInstanceOptionsOutput, error)
+}
+
+var _ DescribeOrderableDBInstanceOptionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeOrderableDBInstanceOptions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

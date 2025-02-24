@@ -35,7 +35,10 @@ func (c *Client) ResetDBParameterGroup(ctx context.Context, params *ResetDBParam
 
 type ResetDBParameterGroupInput struct {
 
-	// The name of the DB parameter group. Constraints:
+	// The name of the DB parameter group.
+	//
+	// Constraints:
+	//
 	//   - Must match the name of an existing DBParameterGroup .
 	//
 	// This member is required.
@@ -44,13 +47,26 @@ type ResetDBParameterGroupInput struct {
 	// To reset the entire DB parameter group, specify the DBParameterGroup name and
 	// ResetAllParameters parameters. To reset specific parameters, provide a list of
 	// the following: ParameterName and ApplyMethod . A maximum of 20 parameters can be
-	// modified in a single request. MySQL Valid Values (for Apply method): immediate
-	// | pending-reboot You can use the immediate value with dynamic parameters only.
-	// You can use the pending-reboot value for both dynamic and static parameters,
-	// and changes are applied when DB instance reboots. MariaDB Valid Values (for
-	// Apply method): immediate | pending-reboot You can use the immediate value with
-	// dynamic parameters only. You can use the pending-reboot value for both dynamic
-	// and static parameters, and changes are applied when DB instance reboots. Oracle
+	// modified in a single request.
+	//
+	// MySQL
+	//
+	// Valid Values (for Apply method): immediate | pending-reboot
+	//
+	// You can use the immediate value with dynamic parameters only. You can use the
+	// pending-reboot value for both dynamic and static parameters, and changes are
+	// applied when DB instance reboots.
+	//
+	// MariaDB
+	//
+	// Valid Values (for Apply method): immediate | pending-reboot
+	//
+	// You can use the immediate value with dynamic parameters only. You can use the
+	// pending-reboot value for both dynamic and static parameters, and changes are
+	// applied when DB instance reboots.
+	//
+	// Oracle
+	//
 	// Valid Values (for Apply method): pending-reboot
 	Parameters []types.Parameter
 
@@ -118,6 +134,9 @@ func (c *Client) addOperationResetDBParameterGroupMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +147,12 @@ func (c *Client) addOperationResetDBParameterGroupMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpResetDBParameterGroupValidationMiddleware(stack); err != nil {
@@ -149,6 +174,18 @@ func (c *Client) addOperationResetDBParameterGroupMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

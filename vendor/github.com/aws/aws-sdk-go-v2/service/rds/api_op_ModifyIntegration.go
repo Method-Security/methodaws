@@ -12,10 +12,7 @@ import (
 	"time"
 )
 
-// Modifies a zero-ETL integration with Amazon Redshift. Currently, you can only
-// modify integrations that have Aurora MySQL source DB clusters. Integrations with
-// Aurora PostgreSQL and RDS sources currently don't support modifying the
-// integration.
+// Modifies a zero-ETL integration with Amazon Redshift.
 func (c *Client) ModifyIntegration(ctx context.Context, params *ModifyIntegrationInput, optFns ...func(*Options)) (*ModifyIntegrationOutput, error) {
 	if params == nil {
 		params = &ModifyIntegrationInput{}
@@ -38,9 +35,10 @@ type ModifyIntegrationInput struct {
 	// This member is required.
 	IntegrationIdentifier *string
 
-	// A new data filter for the integration. For more information, see Data filtering
-	// for Aurora zero-ETL integrations with Amazon Redshift (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Zero_ETL_Filtering.html)
-	// .
+	// A new data filter for the integration. For more information, see [Data filtering for Aurora zero-ETL integrations with Amazon Redshift] or [Data filtering for Amazon RDS zero-ETL integrations with Amazon Redshift].
+	//
+	// [Data filtering for Aurora zero-ETL integrations with Amazon Redshift]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Zero_ETL_Filtering.html
+	// [Data filtering for Amazon RDS zero-ETL integrations with Amazon Redshift]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/zero-etl.filtering.html
 	DataFilter *string
 
 	// A new description for the integration.
@@ -55,9 +53,10 @@ type ModifyIntegrationInput struct {
 // A zero-ETL integration with Amazon Redshift.
 type ModifyIntegrationOutput struct {
 
-	// The encryption context for the integration. For more information, see
-	// Encryption context (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context)
-	// in the Amazon Web Services Key Management Service Developer Guide.
+	// The encryption context for the integration. For more information, see [Encryption context] in the
+	// Amazon Web Services Key Management Service Developer Guide.
+	//
+	// [Encryption context]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 	AdditionalEncryptionContext map[string]string
 
 	// The time when the integration was created, in Universal Coordinated Time (UTC).
@@ -90,8 +89,13 @@ type ModifyIntegrationOutput struct {
 	// The current status of the integration.
 	Status types.IntegrationStatus
 
-	// A list of tags. For more information, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html)
-	// in the Amazon RDS User Guide.
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	Tags []types.Tag
 
 	// The ARN of the Redshift data warehouse used as the target for replication.
@@ -146,6 +150,9 @@ func (c *Client) addOperationModifyIntegrationMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -156,6 +163,12 @@ func (c *Client) addOperationModifyIntegrationMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyIntegrationValidationMiddleware(stack); err != nil {
@@ -177,6 +190,18 @@ func (c *Client) addOperationModifyIntegrationMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

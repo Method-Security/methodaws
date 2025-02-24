@@ -6,14 +6,16 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // You might need to reboot your DB shard group, usually for maintenance reasons.
 // For example, if you make certain modifications, reboot the DB shard group for
-// the changes to take effect. This operation applies only to Aurora Limitless
-// Database DBb shard groups.
+// the changes to take effect.
+//
+// This operation applies only to Aurora Limitless Database DBb shard groups.
 func (c *Client) RebootDBShardGroup(ctx context.Context, params *RebootDBShardGroupInput, optFns ...func(*Options)) (*RebootDBShardGroupOutput, error) {
 	if params == nil {
 		params = &RebootDBShardGroupInput{}
@@ -39,20 +41,27 @@ type RebootDBShardGroupInput struct {
 	noSmithyDocumentSerde
 }
 
+// Contains the details for an Amazon RDS DB shard group.
 type RebootDBShardGroupOutput struct {
 
-	// Specifies whether to create standby instances for the DB shard group. Valid
-	// values are the following:
-	//   - 0 - Creates a single, primary DB instance for each physical shard. This is
-	//   the default value, and the only one supported for the preview.
-	//   - 1 - Creates a primary DB instance and a standby instance in a different
-	//   Availability Zone (AZ) for each physical shard.
-	//   - 2 - Creates a primary DB instance and two standby instances in different
-	//   AZs for each physical shard.
+	// Specifies whether to create standby DB shard groups for the DB shard group.
+	// Valid values are the following:
+	//
+	//   - 0 - Creates a DB shard group without a standby DB shard group. This is the
+	//   default value.
+	//
+	//   - 1 - Creates a DB shard group with a standby DB shard group in a different
+	//   Availability Zone (AZ).
+	//
+	//   - 2 - Creates a DB shard group with two standby DB shard groups in two
+	//   different AZs.
 	ComputeRedundancy *int32
 
 	// The name of the primary DB cluster for the DB shard group.
 	DBClusterIdentifier *string
+
+	// The Amazon Resource Name (ARN) for the DB shard group.
+	DBShardGroupArn *string
 
 	// The name of the DB shard group.
 	DBShardGroupIdentifier *string
@@ -67,20 +76,37 @@ type RebootDBShardGroupOutput struct {
 	// The maximum capacity of the DB shard group in Aurora capacity units (ACUs).
 	MaxACU *float64
 
-	// Indicates whether the DB shard group is publicly accessible. When the DB shard
-	// group is publicly accessible, its Domain Name System (DNS) endpoint resolves to
-	// the private IP address from within the DB shard group's virtual private cloud
-	// (VPC). It resolves to the public IP address from outside of the DB shard group's
-	// VPC. Access to the DB shard group is ultimately controlled by the security group
-	// it uses. That public access isn't permitted if the security group assigned to
-	// the DB shard group doesn't permit it. When the DB shard group isn't publicly
-	// accessible, it is an internal DB shard group with a DNS name that resolves to a
-	// private IP address. For more information, see CreateDBShardGroup . This setting
-	// is only for Aurora Limitless Database.
+	// The minimum capacity of the DB shard group in Aurora capacity units (ACUs).
+	MinACU *float64
+
+	// Indicates whether the DB shard group is publicly accessible.
+	//
+	// When the DB shard group is publicly accessible, its Domain Name System (DNS)
+	// endpoint resolves to the private IP address from within the DB shard group's
+	// virtual private cloud (VPC). It resolves to the public IP address from outside
+	// of the DB shard group's VPC. Access to the DB shard group is ultimately
+	// controlled by the security group it uses. That public access isn't permitted if
+	// the security group assigned to the DB shard group doesn't permit it.
+	//
+	// When the DB shard group isn't publicly accessible, it is an internal DB shard
+	// group with a DNS name that resolves to a private IP address.
+	//
+	// For more information, see CreateDBShardGroup.
+	//
+	// This setting is only for Aurora Limitless Database.
 	PubliclyAccessible *bool
 
 	// The status of the DB shard group.
 	Status *string
+
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
+	TagList []types.Tag
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -131,6 +157,9 @@ func (c *Client) addOperationRebootDBShardGroupMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -141,6 +170,12 @@ func (c *Client) addOperationRebootDBShardGroupMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRebootDBShardGroupValidationMiddleware(stack); err != nil {
@@ -162,6 +197,18 @@ func (c *Client) addOperationRebootDBShardGroupMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

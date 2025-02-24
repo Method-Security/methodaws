@@ -14,7 +14,9 @@ import (
 // Lists all of the attributes for a customer account. The attributes include
 // Amazon RDS quotas for the account, such as the number of DB instances allowed.
 // The description for a quota includes the quota name, current usage toward that
-// quota, and the quota's maximum value. This command doesn't take any parameters.
+// quota, and the quota's maximum value.
+//
+// This command doesn't take any parameters.
 func (c *Client) DescribeAccountAttributes(ctx context.Context, params *DescribeAccountAttributesInput, optFns ...func(*Options)) (*DescribeAccountAttributesOutput, error) {
 	if params == nil {
 		params = &DescribeAccountAttributesInput{}
@@ -90,6 +92,9 @@ func (c *Client) addOperationDescribeAccountAttributesMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -100,6 +105,12 @@ func (c *Client) addOperationDescribeAccountAttributesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAccountAttributes(options.Region), middleware.Before); err != nil {
@@ -118,6 +129,18 @@ func (c *Client) addOperationDescribeAccountAttributesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

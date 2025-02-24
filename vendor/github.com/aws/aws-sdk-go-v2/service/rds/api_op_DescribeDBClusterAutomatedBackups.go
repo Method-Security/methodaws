@@ -14,8 +14,9 @@ import (
 // Displays backups for both current and deleted DB clusters. For example, use
 // this operation to find details about automated backups for previously deleted
 // clusters. Current clusters are returned for both the
-// DescribeDBClusterAutomatedBackups and DescribeDBClusters operations. All
-// parameters are optional.
+// DescribeDBClusterAutomatedBackups and DescribeDBClusters operations.
+//
+// All parameters are optional.
 func (c *Client) DescribeDBClusterAutomatedBackups(ctx context.Context, params *DescribeDBClusterAutomatedBackupsInput, optFns ...func(*Options)) (*DescribeDBClusterAutomatedBackupsOutput, error) {
 	if params == nil {
 		params = &DescribeDBClusterAutomatedBackupsInput{}
@@ -43,17 +44,23 @@ type DescribeDBClusterAutomatedBackupsInput struct {
 	// This parameter isn't case-sensitive.
 	DbClusterResourceId *string
 
-	// A filter that specifies which resources to return based on status. Supported
-	// filters are the following:
+	// A filter that specifies which resources to return based on status.
+	//
+	// Supported filters are the following:
+	//
 	//   - status
+	//
 	//   - retained - Automated backups for deleted clusters and after backup
 	//   replication is stopped.
+	//
 	//   - db-cluster-id - Accepts DB cluster identifiers and Amazon Resource Names
 	//   (ARNs). The results list includes only information about the DB cluster
 	//   automated backups identified by these ARNs.
+	//
 	//   - db-cluster-resource-id - Accepts DB resource identifiers and Amazon Resource
 	//   Names (ARNs). The results list includes only information about the DB cluster
 	//   resources identified by these ARNs.
+	//
 	// Returns all resources by default. The status for each resource is specified in
 	// the response.
 	Filters []types.Filter
@@ -130,6 +137,9 @@ func (c *Client) addOperationDescribeDBClusterAutomatedBackupsMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,6 +150,12 @@ func (c *Client) addOperationDescribeDBClusterAutomatedBackupsMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBClusterAutomatedBackupsValidationMiddleware(stack); err != nil {
@@ -163,16 +179,20 @@ func (c *Client) addOperationDescribeDBClusterAutomatedBackupsMiddlewares(stack 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBClusterAutomatedBackupsAPIClient is a client that implements the
-// DescribeDBClusterAutomatedBackups operation.
-type DescribeDBClusterAutomatedBackupsAPIClient interface {
-	DescribeDBClusterAutomatedBackups(context.Context, *DescribeDBClusterAutomatedBackupsInput, ...func(*Options)) (*DescribeDBClusterAutomatedBackupsOutput, error)
-}
-
-var _ DescribeDBClusterAutomatedBackupsAPIClient = (*Client)(nil)
 
 // DescribeDBClusterAutomatedBackupsPaginatorOptions is the paginator options for
 // DescribeDBClusterAutomatedBackups
@@ -242,6 +262,9 @@ func (p *DescribeDBClusterAutomatedBackupsPaginator) NextPage(ctx context.Contex
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBClusterAutomatedBackups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -260,6 +283,14 @@ func (p *DescribeDBClusterAutomatedBackupsPaginator) NextPage(ctx context.Contex
 
 	return result, nil
 }
+
+// DescribeDBClusterAutomatedBackupsAPIClient is a client that implements the
+// DescribeDBClusterAutomatedBackups operation.
+type DescribeDBClusterAutomatedBackupsAPIClient interface {
+	DescribeDBClusterAutomatedBackups(context.Context, *DescribeDBClusterAutomatedBackupsInput, ...func(*Options)) (*DescribeDBClusterAutomatedBackupsOutput, error)
+}
+
+var _ DescribeDBClusterAutomatedBackupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBClusterAutomatedBackups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

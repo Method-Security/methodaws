@@ -43,7 +43,10 @@ type DescribeIntegrationsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	noSmithyDocumentSerde
@@ -106,6 +109,9 @@ func (c *Client) addOperationDescribeIntegrationsMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,6 +122,12 @@ func (c *Client) addOperationDescribeIntegrationsMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeIntegrationsValidationMiddleware(stack); err != nil {
@@ -139,16 +151,20 @@ func (c *Client) addOperationDescribeIntegrationsMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeIntegrationsAPIClient is a client that implements the
-// DescribeIntegrations operation.
-type DescribeIntegrationsAPIClient interface {
-	DescribeIntegrations(context.Context, *DescribeIntegrationsInput, ...func(*Options)) (*DescribeIntegrationsOutput, error)
-}
-
-var _ DescribeIntegrationsAPIClient = (*Client)(nil)
 
 // DescribeIntegrationsPaginatorOptions is the paginator options for
 // DescribeIntegrations
@@ -156,7 +172,10 @@ type DescribeIntegrationsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -217,6 +236,9 @@ func (p *DescribeIntegrationsPaginator) NextPage(ctx context.Context, optFns ...
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeIntegrations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -235,6 +257,14 @@ func (p *DescribeIntegrationsPaginator) NextPage(ctx context.Context, optFns ...
 
 	return result, nil
 }
+
+// DescribeIntegrationsAPIClient is a client that implements the
+// DescribeIntegrations operation.
+type DescribeIntegrationsAPIClient interface {
+	DescribeIntegrations(context.Context, *DescribeIntegrationsInput, ...func(*Options)) (*DescribeIntegrationsOutput, error)
+}
+
+var _ DescribeIntegrationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIntegrations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

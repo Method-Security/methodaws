@@ -36,11 +36,16 @@ type CreateDBSubnetGroupInput struct {
 	DBSubnetGroupDescription *string
 
 	// The name for the DB subnet group. This value is stored as a lowercase string.
+	//
 	// Constraints:
+	//
 	//   - Must contain no more than 255 letters, numbers, periods, underscores,
 	//   spaces, or hyphens.
+	//
 	//   - Must not be default.
+	//
 	//   - First character must be a letter.
+	//
 	// Example: mydbsubnetgroup
 	//
 	// This member is required.
@@ -59,8 +64,10 @@ type CreateDBSubnetGroupInput struct {
 
 type CreateDBSubnetGroupOutput struct {
 
-	// Contains the details of an Amazon RDS DB subnet group. This data type is used
-	// as a response element in the DescribeDBSubnetGroups action.
+	// Contains the details of an Amazon RDS DB subnet group.
+	//
+	// This data type is used as a response element in the DescribeDBSubnetGroups
+	// action.
 	DBSubnetGroup *types.DBSubnetGroup
 
 	// Metadata pertaining to the operation's result.
@@ -112,6 +119,9 @@ func (c *Client) addOperationCreateDBSubnetGroupMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -122,6 +132,12 @@ func (c *Client) addOperationCreateDBSubnetGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateDBSubnetGroupValidationMiddleware(stack); err != nil {
@@ -143,6 +159,18 @@ func (c *Client) addOperationCreateDBSubnetGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

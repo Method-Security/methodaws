@@ -12,7 +12,9 @@ import (
 )
 
 // Creates a new custom endpoint and associates it with an Amazon Aurora DB
-// cluster. This action applies only to Aurora DB clusters.
+// cluster.
+//
+// This action applies only to Aurora DB clusters.
 func (c *Client) CreateDBClusterEndpoint(ctx context.Context, params *CreateDBClusterEndpointInput, optFns ...func(*Options)) (*CreateDBClusterEndpointOutput, error) {
 	if params == nil {
 		params = &CreateDBClusterEndpointInput{}
@@ -64,9 +66,13 @@ type CreateDBClusterEndpointInput struct {
 // This data type represents the information you need to connect to an Amazon
 // Aurora DB cluster. This data type is used as a response element in the following
 // actions:
+//
 //   - CreateDBClusterEndpoint
+//
 //   - DescribeDBClusterEndpoints
+//
 //   - ModifyDBClusterEndpoint
+//
 //   - DeleteDBClusterEndpoint
 //
 // For the data structure that represents Amazon RDS DB instance endpoints, see
@@ -160,6 +166,9 @@ func (c *Client) addOperationCreateDBClusterEndpointMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -170,6 +179,12 @@ func (c *Client) addOperationCreateDBClusterEndpointMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateDBClusterEndpointValidationMiddleware(stack); err != nil {
@@ -191,6 +206,18 @@ func (c *Client) addOperationCreateDBClusterEndpointMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

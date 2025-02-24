@@ -12,15 +12,18 @@ import (
 )
 
 // Returns a list of DB cluster snapshot attribute names and values for a manual
-// DB cluster snapshot. When sharing snapshots with other Amazon Web Services
-// accounts, DescribeDBClusterSnapshotAttributes returns the restore attribute and
-// a list of IDs for the Amazon Web Services accounts that are authorized to copy
-// or restore the manual DB cluster snapshot. If all is included in the list of
-// values for the restore attribute, then the manual DB cluster snapshot is public
-// and can be copied or restored by all Amazon Web Services accounts. To add or
-// remove access for an Amazon Web Services account to copy or restore a manual DB
-// cluster snapshot, or to make the manual DB cluster snapshot public or private,
-// use the ModifyDBClusterSnapshotAttribute API action.
+// DB cluster snapshot.
+//
+// When sharing snapshots with other Amazon Web Services accounts,
+// DescribeDBClusterSnapshotAttributes returns the restore attribute and a list of
+// IDs for the Amazon Web Services accounts that are authorized to copy or restore
+// the manual DB cluster snapshot. If all is included in the list of values for
+// the restore attribute, then the manual DB cluster snapshot is public and can be
+// copied or restored by all Amazon Web Services accounts.
+//
+// To add or remove access for an Amazon Web Services account to copy or restore a
+// manual DB cluster snapshot, or to make the manual DB cluster snapshot public or
+// private, use the ModifyDBClusterSnapshotAttribute API action.
 func (c *Client) DescribeDBClusterSnapshotAttributes(ctx context.Context, params *DescribeDBClusterSnapshotAttributesInput, optFns ...func(*Options)) (*DescribeDBClusterSnapshotAttributesOutput, error) {
 	if params == nil {
 		params = &DescribeDBClusterSnapshotAttributesInput{}
@@ -49,10 +52,11 @@ type DescribeDBClusterSnapshotAttributesInput struct {
 type DescribeDBClusterSnapshotAttributesOutput struct {
 
 	// Contains the results of a successful call to the
-	// DescribeDBClusterSnapshotAttributes API action. Manual DB cluster snapshot
-	// attributes are used to authorize other Amazon Web Services accounts to copy or
-	// restore a manual DB cluster snapshot. For more information, see the
-	// ModifyDBClusterSnapshotAttribute API action.
+	// DescribeDBClusterSnapshotAttributes API action.
+	//
+	// Manual DB cluster snapshot attributes are used to authorize other Amazon Web
+	// Services accounts to copy or restore a manual DB cluster snapshot. For more
+	// information, see the ModifyDBClusterSnapshotAttribute API action.
 	DBClusterSnapshotAttributesResult *types.DBClusterSnapshotAttributesResult
 
 	// Metadata pertaining to the operation's result.
@@ -104,6 +108,9 @@ func (c *Client) addOperationDescribeDBClusterSnapshotAttributesMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +121,12 @@ func (c *Client) addOperationDescribeDBClusterSnapshotAttributesMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBClusterSnapshotAttributesValidationMiddleware(stack); err != nil {
@@ -135,6 +148,18 @@ func (c *Client) addOperationDescribeDBClusterSnapshotAttributesMiddlewares(stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

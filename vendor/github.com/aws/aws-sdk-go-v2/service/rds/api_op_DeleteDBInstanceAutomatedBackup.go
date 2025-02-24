@@ -33,6 +33,7 @@ type DeleteDBInstanceAutomatedBackupInput struct {
 
 	// The Amazon Resource Name (ARN) of the automated backups to delete, for example,
 	// arn:aws:rds:us-east-1:123456789012:auto-backup:ab-L2IJCEXJP7XQ7HOJ4SIEXAMPLE .
+	//
 	// This setting doesn't apply to RDS Custom.
 	DBInstanceAutomatedBackupsArn *string
 
@@ -99,6 +100,9 @@ func (c *Client) addOperationDeleteDBInstanceAutomatedBackupMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +113,12 @@ func (c *Client) addOperationDeleteDBInstanceAutomatedBackupMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteDBInstanceAutomatedBackup(options.Region), middleware.Before); err != nil {
@@ -127,6 +137,18 @@ func (c *Client) addOperationDeleteDBInstanceAutomatedBackupMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

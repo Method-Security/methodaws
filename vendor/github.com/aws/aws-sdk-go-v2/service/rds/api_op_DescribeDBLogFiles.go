@@ -11,8 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns a list of DB log files for the DB instance. This command doesn't apply
-// to RDS Custom.
+// Returns a list of DB log files for the DB instance.
+//
+// This command doesn't apply to RDS Custom.
 func (c *Client) DescribeDBLogFiles(ctx context.Context, params *DescribeDBLogFilesInput, optFns ...func(*Options)) (*DescribeDBLogFilesOutput, error) {
 	if params == nil {
 		params = &DescribeDBLogFilesInput{}
@@ -31,7 +32,10 @@ func (c *Client) DescribeDBLogFiles(ctx context.Context, params *DescribeDBLogFi
 type DescribeDBLogFilesInput struct {
 
 	// The customer-assigned name of the DB instance that contains the log files you
-	// want to list. Constraints:
+	// want to list.
+	//
+	// Constraints:
+	//
 	//   - Must match the identifier of an existing DBInstance.
 	//
 	// This member is required.
@@ -122,6 +126,9 @@ func (c *Client) addOperationDescribeDBLogFilesMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -132,6 +139,12 @@ func (c *Client) addOperationDescribeDBLogFilesMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBLogFilesValidationMiddleware(stack); err != nil {
@@ -155,16 +168,20 @@ func (c *Client) addOperationDescribeDBLogFilesMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBLogFilesAPIClient is a client that implements the DescribeDBLogFiles
-// operation.
-type DescribeDBLogFilesAPIClient interface {
-	DescribeDBLogFiles(context.Context, *DescribeDBLogFilesInput, ...func(*Options)) (*DescribeDBLogFilesOutput, error)
-}
-
-var _ DescribeDBLogFilesAPIClient = (*Client)(nil)
 
 // DescribeDBLogFilesPaginatorOptions is the paginator options for
 // DescribeDBLogFiles
@@ -232,6 +249,9 @@ func (p *DescribeDBLogFilesPaginator) NextPage(ctx context.Context, optFns ...fu
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBLogFiles(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -250,6 +270,14 @@ func (p *DescribeDBLogFilesPaginator) NextPage(ctx context.Context, optFns ...fu
 
 	return result, nil
 }
+
+// DescribeDBLogFilesAPIClient is a client that implements the DescribeDBLogFiles
+// operation.
+type DescribeDBLogFilesAPIClient interface {
+	DescribeDBLogFiles(context.Context, *DescribeDBLogFilesInput, ...func(*Options)) (*DescribeDBLogFilesOutput, error)
+}
+
+var _ DescribeDBLogFilesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBLogFiles(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

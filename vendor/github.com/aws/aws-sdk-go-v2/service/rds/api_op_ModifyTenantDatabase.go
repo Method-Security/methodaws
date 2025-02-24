@@ -32,33 +32,49 @@ func (c *Client) ModifyTenantDatabase(ctx context.Context, params *ModifyTenantD
 type ModifyTenantDatabaseInput struct {
 
 	// The identifier of the DB instance that contains the tenant database that you
-	// are modifying. This parameter isn't case-sensitive. Constraints:
+	// are modifying. This parameter isn't case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - Must match the identifier of an existing DB instance.
 	//
 	// This member is required.
 	DBInstanceIdentifier *string
 
 	// The user-supplied name of the tenant database that you want to modify. This
-	// parameter isn’t case-sensitive. Constraints:
+	// parameter isn’t case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - Must match the identifier of an existing tenant database.
 	//
 	// This member is required.
 	TenantDBName *string
 
 	// The new password for the master user of the specified tenant database in your
-	// DB instance. Amazon RDS operations never return the password, so this action
-	// provides a way to regain access to a tenant database user if the password is
-	// lost. This includes restoring privileges that might have been accidentally
-	// revoked. Constraints:
+	// DB instance.
+	//
+	// Amazon RDS operations never return the password, so this action provides a way
+	// to regain access to a tenant database user if the password is lost. This
+	// includes restoring privileges that might have been accidentally revoked.
+	//
+	// Constraints:
+	//
 	//   - Can include any printable ASCII character except / , " (double quote), @ , &
 	//   (ampersand), and ' (single quote).
+	//
 	// Length constraints:
+	//
 	//   - Must contain between 8 and 30 characters.
 	MasterUserPassword *string
 
 	// The new name of the tenant database when renaming a tenant database. This
-	// parameter isn’t case-sensitive. Constraints:
+	// parameter isn’t case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - Can't be the string null or any other reserved word.
+	//
 	//   - Can't be longer than 8 characters.
 	NewTenantDBName *string
 
@@ -120,6 +136,9 @@ func (c *Client) addOperationModifyTenantDatabaseMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,6 +149,12 @@ func (c *Client) addOperationModifyTenantDatabaseMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyTenantDatabaseValidationMiddleware(stack); err != nil {
@@ -151,6 +176,18 @@ func (c *Client) addOperationModifyTenantDatabaseMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

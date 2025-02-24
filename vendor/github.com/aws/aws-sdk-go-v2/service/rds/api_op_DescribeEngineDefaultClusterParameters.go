@@ -12,9 +12,11 @@ import (
 )
 
 // Returns the default engine and system parameter information for the cluster
-// database engine. For more information on Amazon Aurora, see What is Amazon
-// Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-// in the Amazon Aurora User Guide.
+// database engine.
+//
+// For more information on Amazon Aurora, see [What is Amazon Aurora?] in the Amazon Aurora User Guide.
+//
+// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
 func (c *Client) DescribeEngineDefaultClusterParameters(ctx context.Context, params *DescribeEngineDefaultClusterParametersInput, optFns ...func(*Options)) (*DescribeEngineDefaultClusterParametersOutput, error) {
 	if params == nil {
 		params = &DescribeEngineDefaultClusterParametersInput{}
@@ -49,7 +51,10 @@ type DescribeEngineDefaultClusterParametersInput struct {
 
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
@@ -111,6 +116,9 @@ func (c *Client) addOperationDescribeEngineDefaultClusterParametersMiddlewares(s
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +129,12 @@ func (c *Client) addOperationDescribeEngineDefaultClusterParametersMiddlewares(s
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeEngineDefaultClusterParametersValidationMiddleware(stack); err != nil {
@@ -142,6 +156,18 @@ func (c *Client) addOperationDescribeEngineDefaultClusterParametersMiddlewares(s
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
