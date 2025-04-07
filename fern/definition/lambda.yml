@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  LambdaPackageType:
+    enum:
+      - Zip
+      - Image
+  LambdaArchitecture:
+    enum:
+      - x86_64
+      - arm64
+  LambdaVpcConfig:
+    properties:
+      VpcId: string
+      SubnetIds: list<string>
+      SecurityGroupIds: list<string>
+  LambdaLoggingFormat:
+    enum:
+      - Text
+      - JSON
+  LambdaLoggingConfig:
+    properties:
+      LogFormat: LambdaLoggingFormat
+      LogGroup: string
+  LambdaFunction:
+    properties:
+      Name: string
+      Arn: string
+      Description: string
+      Region: string
+      RoleArn: string
+      RevisionId: string
+      Runtime: string
+      Handler: string
+      CodeSizeInBytes: long
+      TimeoutInSeconds: integer
+      MemorySizeInMb: integer
+      EphemeralStorageInMb: integer
+      LastModified: datetime
+      CodeSha256: string
+      Architectures: list<LambdaArchitecture>
+      Vpc: optional<LambdaVpcConfig>
+      PackageType: LambdaPackageType
+      LoggingConfig: LambdaLoggingConfig
+  LambdaReport:
+    properties:
+      accountId: string
+      functions: optional<list<LambdaFunction>>
+      errors: optional<list<string>>
