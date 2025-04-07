@@ -594,7 +594,7 @@ func (l LambdaArchitecture) Ptr() *LambdaArchitecture {
 type LambdaFunction struct {
 	Name                 string               `json:"Name" url:"Name"`
 	Arn                  string               `json:"Arn" url:"Arn"`
-	Description          string               `json:"Description" url:"Description"`
+	Description          *string              `json:"Description,omitempty" url:"Description,omitempty"`
 	Region               string               `json:"Region" url:"Region"`
 	RoleArn              string               `json:"RoleArn" url:"RoleArn"`
 	RevisionId           string               `json:"RevisionId" url:"RevisionId"`
@@ -605,7 +605,7 @@ type LambdaFunction struct {
 	MemorySizeInMb       int                  `json:"MemorySizeInMb" url:"MemorySizeInMb"`
 	EphemeralStorageInMb int                  `json:"EphemeralStorageInMb" url:"EphemeralStorageInMb"`
 	LastModified         time.Time            `json:"LastModified" url:"LastModified"`
-	CodeSha256           string               `json:"CodeSha256" url:"CodeSha256"`
+	CodeSha256           *string              `json:"CodeSha256,omitempty" url:"CodeSha256,omitempty"`
 	Architectures        []LambdaArchitecture `json:"Architectures,omitempty" url:"Architectures,omitempty"`
 	Vpc                  *LambdaVpcConfig     `json:"Vpc,omitempty" url:"Vpc,omitempty"`
 	PackageType          LambdaPackageType    `json:"PackageType" url:"PackageType"`

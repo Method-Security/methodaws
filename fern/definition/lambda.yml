@@ -26,7 +26,7 @@ types:
     properties:
       Name: string
       Arn: string
-      Description: string
+      Description: optional<string>
       Region: string
       RoleArn: string
       RevisionId: string
@@ -37,11 +37,11 @@ types:
       MemorySizeInMb: integer
       EphemeralStorageInMb: integer
       LastModified: datetime
-      CodeSha256: string
+      CodeSha256: optional<string>
       Architectures: list<LambdaArchitecture>
       Vpc: optional<LambdaVpcConfig>
       PackageType: LambdaPackageType
-      LoggingConfig: LambdaLoggingConfig
+      LoggingConfig: optional<LambdaLoggingConfig>
   LambdaReport:
     properties:
       accountId: string
