@@ -47,15 +47,18 @@ type CreateIntegrationInput struct {
 	TargetArn *string
 
 	// An optional set of non-secret key–value pairs that contains additional
-	// contextual information about the data. For more information, see Encryption
-	// context (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context)
-	// in the Amazon Web Services Key Management Service Developer Guide. You can only
-	// include this parameter if you specify the KMSKeyId parameter.
+	// contextual information about the data. For more information, see [Encryption context]in the Amazon
+	// Web Services Key Management Service Developer Guide.
+	//
+	// You can only include this parameter if you specify the KMSKeyId parameter.
+	//
+	// [Encryption context]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 	AdditionalEncryptionContext map[string]string
 
-	// Data filtering options for the integration. For more information, see Data
-	// filtering for Aurora zero-ETL integrations with Amazon Redshift (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.filtering.html)
-	// . Valid for: Integrations with Aurora MySQL source DB clusters only
+	// Data filtering options for the integration. For more information, see [Data filtering for Aurora zero-ETL integrations with Amazon Redshift] or [Data filtering for Amazon RDS zero-ETL integrations with Amazon Redshift].
+	//
+	// [Data filtering for Aurora zero-ETL integrations with Amazon Redshift]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/zero-etl.filtering.html
+	// [Data filtering for Amazon RDS zero-ETL integrations with Amazon Redshift]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/zero-etl.filtering.html
 	DataFilter *string
 
 	// A description of the integration.
@@ -66,8 +69,13 @@ type CreateIntegrationInput struct {
 	// an encryption key, RDS uses a default Amazon Web Services owned key.
 	KMSKeyId *string
 
-	// A list of tags. For more information, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html)
-	// in the Amazon RDS User Guide.
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	Tags []types.Tag
 
 	noSmithyDocumentSerde
@@ -76,9 +84,10 @@ type CreateIntegrationInput struct {
 // A zero-ETL integration with Amazon Redshift.
 type CreateIntegrationOutput struct {
 
-	// The encryption context for the integration. For more information, see
-	// Encryption context (https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context)
-	// in the Amazon Web Services Key Management Service Developer Guide.
+	// The encryption context for the integration. For more information, see [Encryption context] in the
+	// Amazon Web Services Key Management Service Developer Guide.
+	//
+	// [Encryption context]: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#encrypt_context
 	AdditionalEncryptionContext map[string]string
 
 	// The time when the integration was created, in Universal Coordinated Time (UTC).
@@ -111,8 +120,13 @@ type CreateIntegrationOutput struct {
 	// The current status of the integration.
 	Status types.IntegrationStatus
 
-	// A list of tags. For more information, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html)
-	// in the Amazon RDS User Guide.
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	Tags []types.Tag
 
 	// The ARN of the Redshift data warehouse used as the target for replication.
@@ -167,6 +181,9 @@ func (c *Client) addOperationCreateIntegrationMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -177,6 +194,15 @@ func (c *Client) addOperationCreateIntegrationMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateIntegrationValidationMiddleware(stack); err != nil {
@@ -198,6 +224,18 @@ func (c *Client) addOperationCreateIntegrationMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

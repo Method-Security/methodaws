@@ -29,10 +29,12 @@ func (c *Client) DescribeDBShardGroups(ctx context.Context, params *DescribeDBSh
 
 type DescribeDBShardGroupsInput struct {
 
-	// The user-supplied DB shard group identifier or the Amazon Resource Name (ARN)
-	// of the DB shard group. If this parameter is specified, information for only the
-	// specific DB shard group is returned. This parameter isn't case-sensitive.
+	// The user-supplied DB shard group identifier. If this parameter is specified,
+	// information for only the specific DB shard group is returned. This parameter
+	// isn't case-sensitive.
+	//
 	// Constraints:
+	//
 	//   - If supplied, must match an existing DB shard group identifier.
 	DBShardGroupIdentifier *string
 
@@ -46,7 +48,10 @@ type DescribeDBShardGroupsInput struct {
 
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100
 	MaxRecords *int32
 
@@ -110,6 +115,9 @@ func (c *Client) addOperationDescribeDBShardGroupsMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +128,15 @@ func (c *Client) addOperationDescribeDBShardGroupsMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBShardGroupsValidationMiddleware(stack); err != nil {
@@ -141,6 +158,18 @@ func (c *Client) addOperationDescribeDBShardGroupsMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

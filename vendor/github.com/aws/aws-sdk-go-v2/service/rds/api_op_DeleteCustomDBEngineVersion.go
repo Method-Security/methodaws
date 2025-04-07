@@ -14,19 +14,25 @@ import (
 
 // Deletes a custom engine version. To run this command, make sure you meet the
 // following prerequisites:
+//
 //   - The CEV must not be the default for RDS Custom. If it is, change the
 //     default before running this command.
+//
 //   - The CEV must not be associated with an RDS Custom DB instance, RDS Custom
 //     instance snapshot, or automated backup of your RDS Custom instance.
 //
-// Typically, deletion takes a few minutes. The MediaImport service that imports
-// files from Amazon S3 to create CEVs isn't integrated with Amazon Web Services
-// CloudTrail. If you turn on data logging for Amazon RDS in CloudTrail, calls to
-// the DeleteCustomDbEngineVersion event aren't logged. However, you might see
-// calls from the API gateway that accesses your Amazon S3 bucket. These calls
-// originate from the MediaImport service for the DeleteCustomDbEngineVersion
-// event. For more information, see Deleting a CEV (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-cev.html#custom-cev.delete)
-// in the Amazon RDS User Guide.
+// Typically, deletion takes a few minutes.
+//
+// The MediaImport service that imports files from Amazon S3 to create CEVs isn't
+// integrated with Amazon Web Services CloudTrail. If you turn on data logging for
+// Amazon RDS in CloudTrail, calls to the DeleteCustomDbEngineVersion event aren't
+// logged. However, you might see calls from the API gateway that accesses your
+// Amazon S3 bucket. These calls originate from the MediaImport service for the
+// DeleteCustomDbEngineVersion event.
+//
+// For more information, see [Deleting a CEV] in the Amazon RDS User Guide.
+//
+// [Deleting a CEV]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-cev.html#custom-cev.delete
 func (c *Client) DeleteCustomDBEngineVersion(ctx context.Context, params *DeleteCustomDBEngineVersionInput, optFns ...func(*Options)) (*DeleteCustomDBEngineVersionOutput, error) {
 	if params == nil {
 		params = &DeleteCustomDBEngineVersionInput{}
@@ -45,9 +51,13 @@ func (c *Client) DeleteCustomDBEngineVersion(ctx context.Context, params *Delete
 type DeleteCustomDBEngineVersionInput struct {
 
 	// The database engine. RDS Custom for Oracle supports the following values:
+	//
 	//   - custom-oracle-ee
+	//
 	//   - custom-oracle-ee-cdb
+	//
 	//   - custom-oracle-se2
+	//
 	//   - custom-oracle-se2-cdb
 	//
 	// This member is required.
@@ -74,8 +84,9 @@ type DeleteCustomDBEngineVersionOutput struct {
 	// uses to create a custom engine version (CEV). RDS Custom applies the patches in
 	// the order in which they're listed in the manifest. You can set the Oracle home,
 	// Oracle base, and UNIX/Linux user and group using the installation parameters.
-	// For more information, see JSON fields in the CEV manifest (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-cev.preparing.html#custom-cev.preparing.manifest.fields)
-	// in the Amazon RDS User Guide.
+	// For more information, see [JSON fields in the CEV manifest]in the Amazon RDS User Guide.
+	//
+	// [JSON fields in the CEV manifest]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-cev.preparing.html#custom-cev.preparing.manifest.fields
 	CustomDBEngineVersionManifest *string
 
 	// The description of the database engine.
@@ -125,14 +136,24 @@ type DeleteCustomDBEngineVersionOutput struct {
 	// The major engine version of the CEV.
 	MajorEngineVersion *string
 
+	// Specifies any Aurora Serverless v2 properties or limits that differ between
+	// Aurora engine versions. You can test the values of this attribute when deciding
+	// which Aurora version to use in a new or upgraded DB cluster. You can also
+	// retrieve the version of an existing DB cluster and check whether that version
+	// supports certain Aurora Serverless v2 features before you attempt to use those
+	// features.
+	ServerlessV2FeaturesSupport *types.ServerlessV2FeaturesSupport
+
 	// The status of the DB engine version, either available or deprecated .
 	Status *string
 
-	// A list of the supported CA certificate identifiers. For more information, see
-	// Using SSL/TLS to encrypt a connection to a DB instance (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html)
-	// in the Amazon RDS User Guide and Using SSL/TLS to encrypt a connection to a DB
-	// cluster (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.SSL.html)
-	// in the Amazon Aurora User Guide.
+	// A list of the supported CA certificate identifiers.
+	//
+	// For more information, see [Using SSL/TLS to encrypt a connection to a DB instance] in the Amazon RDS User Guide and [Using SSL/TLS to encrypt a connection to a DB cluster] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Using SSL/TLS to encrypt a connection to a DB cluster]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.SSL.html
+	// [Using SSL/TLS to encrypt a connection to a DB instance]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html
 	SupportedCACertificateIdentifiers []string
 
 	// A list of the character sets supported by this engine for the CharacterSetName
@@ -142,14 +163,21 @@ type DeleteCustomDBEngineVersionOutput struct {
 	// A list of the supported DB engine modes.
 	SupportedEngineModes []string
 
-	// A list of features supported by the DB engine. The supported features vary by
-	// DB engine and DB engine version. To determine the supported features for a
-	// specific DB engine and DB engine version using the CLI, use the following
-	// command: aws rds describe-db-engine-versions --engine --engine-version  For
-	// example, to determine the supported features for RDS for PostgreSQL version 13.3
-	// using the CLI, use the following command: aws rds describe-db-engine-versions
-	// --engine postgres --engine-version 13.3 The supported features are listed under
-	// SupportedFeatureNames in the output.
+	// A list of features supported by the DB engine.
+	//
+	// The supported features vary by DB engine and DB engine version.
+	//
+	// To determine the supported features for a specific DB engine and DB engine
+	// version using the CLI, use the following command:
+	//
+	//     aws rds describe-db-engine-versions --engine --engine-version
+	//
+	// For example, to determine the supported features for RDS for PostgreSQL version
+	// 13.3 using the CLI, use the following command:
+	//
+	//     aws rds describe-db-engine-versions --engine postgres --engine-version 13.3
+	//
+	// The supported features are listed under SupportedFeatureNames in the output.
 	SupportedFeatureNames []string
 
 	// A list of the character sets supported by the Oracle DB engine for the
@@ -180,8 +208,9 @@ type DeleteCustomDBEngineVersionOutput struct {
 
 	// Indicates whether the DB engine version supports forwarding write operations
 	// from reader DB instances to the writer DB instance in the DB cluster. By
-	// default, write operations aren't allowed on reader DB instances. Valid for:
-	// Aurora DB clusters only
+	// default, write operations aren't allowed on reader DB instances.
+	//
+	// Valid for: Aurora DB clusters only
 	SupportsLocalWriteForwarding *bool
 
 	// Indicates whether the engine version supports exporting the log types specified
@@ -195,8 +224,13 @@ type DeleteCustomDBEngineVersionOutput struct {
 	// Indicates whether the database engine version supports read replicas.
 	SupportsReadReplica *bool
 
-	// A list of tags. For more information, see Tagging Amazon RDS Resources (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html)
-	// in the Amazon RDS User Guide.
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	TagList []types.Tag
 
 	// A list of engine versions that this database engine version can be upgraded to.
@@ -251,6 +285,9 @@ func (c *Client) addOperationDeleteCustomDBEngineVersionMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -261,6 +298,15 @@ func (c *Client) addOperationDeleteCustomDBEngineVersionMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteCustomDBEngineVersionValidationMiddleware(stack); err != nil {
@@ -282,6 +328,18 @@ func (c *Client) addOperationDeleteCustomDBEngineVersionMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

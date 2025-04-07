@@ -12,8 +12,13 @@ import (
 )
 
 // Returns information about Aurora global database clusters. This API supports
-// pagination. For more information on Amazon Aurora, see What is Amazon Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-// in the Amazon Aurora User Guide. This action only applies to Aurora DB clusters.
+// pagination.
+//
+// For more information on Amazon Aurora, see [What is Amazon Aurora?] in the Amazon Aurora User Guide.
+//
+// This action only applies to Aurora DB clusters.
+//
+// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
 func (c *Client) DescribeGlobalClusters(ctx context.Context, params *DescribeGlobalClustersInput, optFns ...func(*Options)) (*DescribeGlobalClustersOutput, error) {
 	if params == nil {
 		params = &DescribeGlobalClustersInput{}
@@ -32,14 +37,20 @@ func (c *Client) DescribeGlobalClusters(ctx context.Context, params *DescribeGlo
 type DescribeGlobalClustersInput struct {
 
 	// A filter that specifies one or more global database clusters to describe. This
-	// parameter is case-sensitive. Currently, the only supported filter is region . If
-	// used, the request returns information about any global cluster with at least one
-	// member (primary or secondary) in the specified Amazon Web Services Regions.
+	// parameter is case-sensitive.
+	//
+	// Currently, the only supported filter is region .
+	//
+	// If used, the request returns information about any global cluster with at least
+	// one member (primary or secondary) in the specified Amazon Web Services Regions.
 	Filters []types.Filter
 
 	// The user-supplied DB cluster identifier. If this parameter is specified,
 	// information from only the specific DB cluster is returned. This parameter isn't
-	// case-sensitive. Constraints:
+	// case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - If supplied, must match an existing DBClusterIdentifier.
 	GlobalClusterIdentifier *string
 
@@ -51,7 +62,10 @@ type DescribeGlobalClustersInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	noSmithyDocumentSerde
@@ -116,6 +130,9 @@ func (c *Client) addOperationDescribeGlobalClustersMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +143,15 @@ func (c *Client) addOperationDescribeGlobalClustersMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeGlobalClustersValidationMiddleware(stack); err != nil {
@@ -149,16 +175,20 @@ func (c *Client) addOperationDescribeGlobalClustersMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeGlobalClustersAPIClient is a client that implements the
-// DescribeGlobalClusters operation.
-type DescribeGlobalClustersAPIClient interface {
-	DescribeGlobalClusters(context.Context, *DescribeGlobalClustersInput, ...func(*Options)) (*DescribeGlobalClustersOutput, error)
-}
-
-var _ DescribeGlobalClustersAPIClient = (*Client)(nil)
 
 // DescribeGlobalClustersPaginatorOptions is the paginator options for
 // DescribeGlobalClusters
@@ -166,7 +196,10 @@ type DescribeGlobalClustersPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -227,6 +260,9 @@ func (p *DescribeGlobalClustersPaginator) NextPage(ctx context.Context, optFns .
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeGlobalClusters(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +281,14 @@ func (p *DescribeGlobalClustersPaginator) NextPage(ctx context.Context, optFns .
 
 	return result, nil
 }
+
+// DescribeGlobalClustersAPIClient is a client that implements the
+// DescribeGlobalClusters operation.
+type DescribeGlobalClustersAPIClient interface {
+	DescribeGlobalClusters(context.Context, *DescribeGlobalClustersInput, ...func(*Options)) (*DescribeGlobalClustersOutput, error)
+}
+
+var _ DescribeGlobalClustersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeGlobalClusters(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

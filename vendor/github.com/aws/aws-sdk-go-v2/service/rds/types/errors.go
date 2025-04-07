@@ -35,8 +35,10 @@ func (e *AuthorizationAlreadyExistsFault) ErrorCode() string {
 func (e *AuthorizationAlreadyExistsFault) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 // The specified CIDR IP range or Amazon EC2 security group might not be
-// authorized for the specified DB security group. Or, RDS might not be authorized
-// to perform necessary actions using IAM on your behalf.
+// authorized for the specified DB security group.
+//
+// Or, RDS might not be authorized to perform necessary actions using IAM on your
+// behalf.
 type AuthorizationNotFoundFault struct {
 	Message *string
 
@@ -851,6 +853,33 @@ func (e *DBInstanceNotFoundFault) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *DBInstanceNotFoundFault) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// An attempt to download or examine log files didn't succeed because an Aurora
+// Serverless v2 instance was paused.
+type DBInstanceNotReadyFault struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *DBInstanceNotReadyFault) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *DBInstanceNotReadyFault) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *DBInstanceNotReadyFault) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "DBInstanceNotReady"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *DBInstanceNotReadyFault) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
 
 // The specified RoleArn or FeatureName value is already associated with the DB
 // instance.
@@ -1848,8 +1877,9 @@ func (e *ExportTaskNotFoundFault) ErrorCode() string {
 }
 func (e *ExportTaskNotFoundFault) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
-// The GlobalClusterIdentifier already exists. Choose a new global database
-// identifier (unique name) to create a new global database cluster.
+// The GlobalClusterIdentifier already exists. Specify a new global database
+// identifier (unique name) to create a new global database cluster or to rename an
+// existing one.
 type GlobalClusterAlreadyExistsFault struct {
 	Message *string
 
@@ -2882,33 +2912,6 @@ func (e *InvalidIntegrationStateFault) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *InvalidIntegrationStateFault) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
-
-// The maximum capacity of the DB shard group must be 48-7168 Aurora capacity
-// units (ACUs).
-type InvalidMaxAcuFault struct {
-	Message *string
-
-	ErrorCodeOverride *string
-
-	noSmithyDocumentSerde
-}
-
-func (e *InvalidMaxAcuFault) Error() string {
-	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
-}
-func (e *InvalidMaxAcuFault) ErrorMessage() string {
-	if e.Message == nil {
-		return ""
-	}
-	return *e.Message
-}
-func (e *InvalidMaxAcuFault) ErrorCode() string {
-	if e == nil || e.ErrorCodeOverride == nil {
-		return "InvalidMaxAcu"
-	}
-	return *e.ErrorCodeOverride
-}
-func (e *InvalidMaxAcuFault) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 // The option group isn't in the available state.
 type InvalidOptionGroupStateFault struct {
