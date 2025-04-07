@@ -20,6 +20,7 @@ func main() {
 	methodaws.InitEc2Command()
 	methodaws.InitEksCommand()
 	methodaws.InitIamCommand()
+	methodaws.InitLambdaCommand()
 	methodaws.InitLoadBalancerCommand()
 	methodaws.InitRdsCommand()
 	methodaws.InitRoute53Command()

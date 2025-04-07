@@ -569,6 +569,248 @@ func (c *CredentialReport) String() string {
 	return fmt.Sprintf("%#v", c)
 }
 
+type LambdaArchitecture string
+
+const (
+	LambdaArchitectureX8664 LambdaArchitecture = "x86_64"
+	LambdaArchitectureArm64 LambdaArchitecture = "arm64"
+)
+
+func NewLambdaArchitectureFromString(s string) (LambdaArchitecture, error) {
+	switch s {
+	case "x86_64":
+		return LambdaArchitectureX8664, nil
+	case "arm64":
+		return LambdaArchitectureArm64, nil
+	}
+	var t LambdaArchitecture
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (l LambdaArchitecture) Ptr() *LambdaArchitecture {
+	return &l
+}
+
+type LambdaFunction struct {
+	Name                 string               `json:"Name" url:"Name"`
+	Arn                  string               `json:"Arn" url:"Arn"`
+	Description          *string              `json:"Description,omitempty" url:"Description,omitempty"`
+	Region               string               `json:"Region" url:"Region"`
+	RoleArn              string               `json:"RoleArn" url:"RoleArn"`
+	RevisionId           string               `json:"RevisionId" url:"RevisionId"`
+	Runtime              string               `json:"Runtime" url:"Runtime"`
+	Handler              string               `json:"Handler" url:"Handler"`
+	CodeSizeInBytes      int64                `json:"CodeSizeInBytes" url:"CodeSizeInBytes"`
+	TimeoutInSeconds     int                  `json:"TimeoutInSeconds" url:"TimeoutInSeconds"`
+	MemorySizeInMb       int                  `json:"MemorySizeInMb" url:"MemorySizeInMb"`
+	EphemeralStorageInMb int                  `json:"EphemeralStorageInMb" url:"EphemeralStorageInMb"`
+	LastModified         time.Time            `json:"LastModified" url:"LastModified"`
+	CodeSha256           *string              `json:"CodeSha256,omitempty" url:"CodeSha256,omitempty"`
+	Architectures        []LambdaArchitecture `json:"Architectures,omitempty" url:"Architectures,omitempty"`
+	Vpc                  *LambdaVpcConfig     `json:"Vpc,omitempty" url:"Vpc,omitempty"`
+	PackageType          LambdaPackageType    `json:"PackageType" url:"PackageType"`
+	LoggingConfig        *LambdaLoggingConfig `json:"LoggingConfig,omitempty" url:"LoggingConfig,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (l *LambdaFunction) GetExtraProperties() map[string]interface{} {
+	return l.extraProperties
+}
+
+func (l *LambdaFunction) UnmarshalJSON(data []byte) error {
+	type embed LambdaFunction
+	var unmarshaler = struct {
+		embed
+		LastModified *core.DateTime `json:"LastModified"`
+	}{
+		embed: embed(*l),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*l = LambdaFunction(unmarshaler.embed)
+	l.LastModified = unmarshaler.LastModified.Time()
+
+	extraProperties, err := core.ExtractExtraProperties(data, *l)
+	if err != nil {
+		return err
+	}
+	l.extraProperties = extraProperties
+
+	return nil
+}
+
+func (l *LambdaFunction) MarshalJSON() ([]byte, error) {
+	type embed LambdaFunction
+	var marshaler = struct {
+		embed
+		LastModified *core.DateTime `json:"LastModified"`
+	}{
+		embed:        embed(*l),
+		LastModified: core.NewDateTime(l.LastModified),
+	}
+	return json.Marshal(marshaler)
+}
+
+func (l *LambdaFunction) String() string {
+	if value, err := core.StringifyJSON(l); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", l)
+}
+
+type LambdaLoggingConfig struct {
+	LogFormat LambdaLoggingFormat `json:"LogFormat" url:"LogFormat"`
+	LogGroup  string              `json:"LogGroup" url:"LogGroup"`
+
+	extraProperties map[string]interface{}
+}
+
+func (l *LambdaLoggingConfig) GetExtraProperties() map[string]interface{} {
+	return l.extraProperties
+}
+
+func (l *LambdaLoggingConfig) UnmarshalJSON(data []byte) error {
+	type unmarshaler LambdaLoggingConfig
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*l = LambdaLoggingConfig(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *l)
+	if err != nil {
+		return err
+	}
+	l.extraProperties = extraProperties
+
+	return nil
+}
+
+func (l *LambdaLoggingConfig) String() string {
+	if value, err := core.StringifyJSON(l); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", l)
+}
+
+type LambdaLoggingFormat string
+
+const (
+	LambdaLoggingFormatText LambdaLoggingFormat = "Text"
+	LambdaLoggingFormatJson LambdaLoggingFormat = "JSON"
+)
+
+func NewLambdaLoggingFormatFromString(s string) (LambdaLoggingFormat, error) {
+	switch s {
+	case "Text":
+		return LambdaLoggingFormatText, nil
+	case "JSON":
+		return LambdaLoggingFormatJson, nil
+	}
+	var t LambdaLoggingFormat
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (l LambdaLoggingFormat) Ptr() *LambdaLoggingFormat {
+	return &l
+}
+
+type LambdaPackageType string
+
+const (
+	LambdaPackageTypeZip   LambdaPackageType = "Zip"
+	LambdaPackageTypeImage LambdaPackageType = "Image"
+)
+
+func NewLambdaPackageTypeFromString(s string) (LambdaPackageType, error) {
+	switch s {
+	case "Zip":
+		return LambdaPackageTypeZip, nil
+	case "Image":
+		return LambdaPackageTypeImage, nil
+	}
+	var t LambdaPackageType
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (l LambdaPackageType) Ptr() *LambdaPackageType {
+	return &l
+}
+
+type LambdaReport struct {
+	AccountId string            `json:"accountId" url:"accountId"`
+	Functions []*LambdaFunction `json:"functions,omitempty" url:"functions,omitempty"`
+	Errors    []string          `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (l *LambdaReport) GetExtraProperties() map[string]interface{} {
+	return l.extraProperties
+}
+
+func (l *LambdaReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler LambdaReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*l = LambdaReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *l)
+	if err != nil {
+		return err
+	}
+	l.extraProperties = extraProperties
+
+	return nil
+}
+
+func (l *LambdaReport) String() string {
+	if value, err := core.StringifyJSON(l); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", l)
+}
+
+type LambdaVpcConfig struct {
+	VpcId            string   `json:"VpcId" url:"VpcId"`
+	SubnetIds        []string `json:"SubnetIds,omitempty" url:"SubnetIds,omitempty"`
+	SecurityGroupIds []string `json:"SecurityGroupIds,omitempty" url:"SecurityGroupIds,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (l *LambdaVpcConfig) GetExtraProperties() map[string]interface{} {
+	return l.extraProperties
+}
+
+func (l *LambdaVpcConfig) UnmarshalJSON(data []byte) error {
+	type unmarshaler LambdaVpcConfig
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*l = LambdaVpcConfig(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *l)
+	if err != nil {
+		return err
+	}
+	l.extraProperties = extraProperties
+
+	return nil
+}
+
+func (l *LambdaVpcConfig) String() string {
+	if value, err := core.StringifyJSON(l); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", l)
+}
+
 type Certificate struct {
 	Arn       string `json:"arn" url:"arn"`
 	IsDefault bool   `json:"isDefault" url:"isDefault"`
