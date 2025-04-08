@@ -2,6 +2,23 @@
 
 package types
 
+type AccessAssociationSourceType string
+
+// Enum values for AccessAssociationSourceType
+const (
+	AccessAssociationSourceTypeVpce AccessAssociationSourceType = "VPCE"
+)
+
+// Values returns all known values for AccessAssociationSourceType. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (AccessAssociationSourceType) Values() []AccessAssociationSourceType {
+	return []AccessAssociationSourceType{
+		"VPCE",
+	}
+}
+
 type ApiKeysFormat string
 
 // Enum values for ApiKeysFormat
@@ -320,6 +337,25 @@ func (IntegrationType) Values() []IntegrationType {
 	}
 }
 
+type IpAddressType string
+
+// Enum values for IpAddressType
+const (
+	IpAddressTypeIpv4      IpAddressType = "ipv4"
+	IpAddressTypeDualstack IpAddressType = "dualstack"
+)
+
+// Values returns all known values for IpAddressType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IpAddressType) Values() []IpAddressType {
+	return []IpAddressType{
+		"ipv4",
+		"dualstack",
+	}
+}
+
 type LocationStatusType string
 
 // Enum values for LocationStatusType
@@ -403,6 +439,25 @@ func (QuotaPeriodType) Values() []QuotaPeriodType {
 		"DAY",
 		"WEEK",
 		"MONTH",
+	}
+}
+
+type ResourceOwner string
+
+// Enum values for ResourceOwner
+const (
+	ResourceOwnerSelf          ResourceOwner = "SELF"
+	ResourceOwnerOtherAccounts ResourceOwner = "OTHER_ACCOUNTS"
+)
+
+// Values returns all known values for ResourceOwner. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ResourceOwner) Values() []ResourceOwner {
+	return []ResourceOwner{
+		"SELF",
+		"OTHER_ACCOUNTS",
 	}
 }
 

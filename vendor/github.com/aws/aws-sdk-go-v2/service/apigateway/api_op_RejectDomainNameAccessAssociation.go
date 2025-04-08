@@ -10,63 +10,62 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Represents a delete integration.
-func (c *Client) DeleteIntegration(ctx context.Context, params *DeleteIntegrationInput, optFns ...func(*Options)) (*DeleteIntegrationOutput, error) {
+// Rejects a domain name access association with a private custom domain name.
+//
+// To reject a domain name access association with an access association source in
+// another AWS account, use this operation. To remove a domain name access
+// association with an access association source in your own account, use the
+// DeleteDomainNameAccessAssociation operation.
+func (c *Client) RejectDomainNameAccessAssociation(ctx context.Context, params *RejectDomainNameAccessAssociationInput, optFns ...func(*Options)) (*RejectDomainNameAccessAssociationOutput, error) {
 	if params == nil {
-		params = &DeleteIntegrationInput{}
+		params = &RejectDomainNameAccessAssociationInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "DeleteIntegration", params, optFns, c.addOperationDeleteIntegrationMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "RejectDomainNameAccessAssociation", params, optFns, c.addOperationRejectDomainNameAccessAssociationMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*DeleteIntegrationOutput)
+	out := result.(*RejectDomainNameAccessAssociationOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-// Represents a delete integration request.
-type DeleteIntegrationInput struct {
+type RejectDomainNameAccessAssociationInput struct {
 
-	// Specifies a delete integration request's HTTP method.
+	// The ARN of the domain name access association resource.
 	//
 	// This member is required.
-	HttpMethod *string
+	DomainNameAccessAssociationArn *string
 
-	// Specifies a delete integration request's resource identifier.
+	//  The ARN of the domain name.
 	//
 	// This member is required.
-	ResourceId *string
-
-	// The string identifier of the associated RestApi.
-	//
-	// This member is required.
-	RestApiId *string
+	DomainNameArn *string
 
 	noSmithyDocumentSerde
 }
 
-type DeleteIntegrationOutput struct {
+type RejectDomainNameAccessAssociationOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
 
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stack, options Options) (err error) {
+func (c *Client) addOperationRejectDomainNameAccessAssociationMiddlewares(stack *middleware.Stack, options Options) (err error) {
 	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsRestjson1_serializeOpDeleteIntegration{}, middleware.After)
+	err = stack.Serialize.Add(&awsRestjson1_serializeOpRejectDomainNameAccessAssociation{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpDeleteIntegration{}, middleware.After)
+	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpRejectDomainNameAccessAssociation{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DeleteIntegration"); err != nil {
+	if err := addProtocolFinalizerMiddlewares(stack, options, "RejectDomainNameAccessAssociation"); err != nil {
 		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
@@ -121,10 +120,10 @@ func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stac
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpDeleteIntegrationValidationMiddleware(stack); err != nil {
+	if err = addOpRejectDomainNameAccessAssociationValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteIntegration(options.Region), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRejectDomainNameAccessAssociation(options.Region), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRecursionDetection(stack); err != nil {
@@ -160,10 +159,10 @@ func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stac
 	return nil
 }
 
-func newServiceMetadataMiddleware_opDeleteIntegration(region string) *awsmiddleware.RegisterServiceMetadata {
+func newServiceMetadataMiddleware_opRejectDomainNameAccessAssociation(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		OperationName: "DeleteIntegration",
+		OperationName: "RejectDomainNameAccessAssociation",
 	}
 }
