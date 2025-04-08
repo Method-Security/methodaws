@@ -10,8 +10,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Downloads all or a portion of the specified log file, up to 1 MB in size. This
-// command doesn't apply to RDS Custom.
+// Downloads all or a portion of the specified log file, up to 1 MB in size.
+//
+// This command doesn't apply to RDS Custom.
 func (c *Client) DownloadDBLogFilePortion(ctx context.Context, params *DownloadDBLogFilePortionInput, optFns ...func(*Options)) (*DownloadDBLogFilePortionOutput, error) {
 	if params == nil {
 		params = &DownloadDBLogFilePortionInput{}
@@ -30,7 +31,10 @@ func (c *Client) DownloadDBLogFilePortion(ctx context.Context, params *DownloadD
 type DownloadDBLogFilePortionInput struct {
 
 	// The customer-assigned name of the DB instance that contains the log files you
-	// want to list. Constraints:
+	// want to list.
+	//
+	// Constraints:
+	//
 	//   - Must match the identifier of an existing DBInstance.
 	//
 	// This member is required.
@@ -47,17 +51,22 @@ type DownloadDBLogFilePortionInput struct {
 	Marker *string
 
 	// The number of lines to download. If the number of lines specified results in a
-	// file over 1 MB in size, the file is truncated at 1 MB in size. If the
-	// NumberOfLines parameter is specified, then the block of lines returned can be
-	// from the beginning or the end of the log file, depending on the value of the
-	// Marker parameter.
+	// file over 1 MB in size, the file is truncated at 1 MB in size.
+	//
+	// If the NumberOfLines parameter is specified, then the block of lines returned
+	// can be from the beginning or the end of the log file, depending on the value of
+	// the Marker parameter.
+	//
 	//   - If neither Marker or NumberOfLines are specified, the entire log file is
 	//   returned up to a maximum of 10000 lines, starting with the most recent log
 	//   entries first.
+	//
 	//   - If NumberOfLines is specified and Marker isn't specified, then the most
 	//   recent lines from the end of the log file are returned.
+	//
 	//   - If Marker is specified as "0", then the specified number of lines from the
 	//   beginning of the log file are returned.
+	//
 	//   - You can download the log file in blocks of lines by specifying the size of
 	//   the block using the NumberOfLines parameter, and by specifying a value of "0"
 	//   for the Marker parameter in your first request. Include the Marker value
@@ -129,6 +138,9 @@ func (c *Client) addOperationDownloadDBLogFilePortionMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +151,15 @@ func (c *Client) addOperationDownloadDBLogFilePortionMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDownloadDBLogFilePortionValidationMiddleware(stack); err != nil {
@@ -162,32 +183,41 @@ func (c *Client) addOperationDownloadDBLogFilePortionMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DownloadDBLogFilePortionAPIClient is a client that implements the
-// DownloadDBLogFilePortion operation.
-type DownloadDBLogFilePortionAPIClient interface {
-	DownloadDBLogFilePortion(context.Context, *DownloadDBLogFilePortionInput, ...func(*Options)) (*DownloadDBLogFilePortionOutput, error)
-}
-
-var _ DownloadDBLogFilePortionAPIClient = (*Client)(nil)
 
 // DownloadDBLogFilePortionPaginatorOptions is the paginator options for
 // DownloadDBLogFilePortion
 type DownloadDBLogFilePortionPaginatorOptions struct {
 	// The number of lines to download. If the number of lines specified results in a
-	// file over 1 MB in size, the file is truncated at 1 MB in size. If the
-	// NumberOfLines parameter is specified, then the block of lines returned can be
-	// from the beginning or the end of the log file, depending on the value of the
-	// Marker parameter.
+	// file over 1 MB in size, the file is truncated at 1 MB in size.
+	//
+	// If the NumberOfLines parameter is specified, then the block of lines returned
+	// can be from the beginning or the end of the log file, depending on the value of
+	// the Marker parameter.
+	//
 	//   - If neither Marker or NumberOfLines are specified, the entire log file is
 	//   returned up to a maximum of 10000 lines, starting with the most recent log
 	//   entries first.
+	//
 	//   - If NumberOfLines is specified and Marker isn't specified, then the most
 	//   recent lines from the end of the log file are returned.
+	//
 	//   - If Marker is specified as "0", then the specified number of lines from the
 	//   beginning of the log file are returned.
+	//
 	//   - You can download the log file in blocks of lines by specifying the size of
 	//   the block using the NumberOfLines parameter, and by specifying a value of "0"
 	//   for the Marker parameter in your first request. Include the Marker value
@@ -254,6 +284,9 @@ func (p *DownloadDBLogFilePortionPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.NumberOfLines = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DownloadDBLogFilePortion(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -272,6 +305,14 @@ func (p *DownloadDBLogFilePortionPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// DownloadDBLogFilePortionAPIClient is a client that implements the
+// DownloadDBLogFilePortion operation.
+type DownloadDBLogFilePortionAPIClient interface {
+	DownloadDBLogFilePortion(context.Context, *DownloadDBLogFilePortionInput, ...func(*Options)) (*DownloadDBLogFilePortionOutput, error)
+}
+
+var _ DownloadDBLogFilePortionAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDownloadDBLogFilePortion(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

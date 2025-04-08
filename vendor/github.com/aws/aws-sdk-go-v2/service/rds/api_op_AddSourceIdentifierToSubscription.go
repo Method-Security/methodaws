@@ -29,19 +29,28 @@ func (c *Client) AddSourceIdentifierToSubscription(ctx context.Context, params *
 
 type AddSourceIdentifierToSubscriptionInput struct {
 
-	// The identifier of the event source to be added. Constraints:
+	// The identifier of the event source to be added.
+	//
+	// Constraints:
+	//
 	//   - If the source type is a DB instance, a DBInstanceIdentifier value must be
 	//   supplied.
+	//
 	//   - If the source type is a DB cluster, a DBClusterIdentifier value must be
 	//   supplied.
+	//
 	//   - If the source type is a DB parameter group, a DBParameterGroupName value
 	//   must be supplied.
+	//
 	//   - If the source type is a DB security group, a DBSecurityGroupName value must
 	//   be supplied.
+	//
 	//   - If the source type is a DB snapshot, a DBSnapshotIdentifier value must be
 	//   supplied.
+	//
 	//   - If the source type is a DB cluster snapshot, a DBClusterSnapshotIdentifier
 	//   value must be supplied.
+	//
 	//   - If the source type is an RDS Proxy, a DBProxyName value must be supplied.
 	//
 	// This member is required.
@@ -111,6 +120,9 @@ func (c *Client) addOperationAddSourceIdentifierToSubscriptionMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +133,15 @@ func (c *Client) addOperationAddSourceIdentifierToSubscriptionMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAddSourceIdentifierToSubscriptionValidationMiddleware(stack); err != nil {
@@ -142,6 +163,18 @@ func (c *Client) addOperationAddSourceIdentifierToSubscriptionMiddlewares(stack 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

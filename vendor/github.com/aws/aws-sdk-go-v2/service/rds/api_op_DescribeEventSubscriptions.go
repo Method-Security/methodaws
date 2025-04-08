@@ -13,8 +13,9 @@ import (
 
 // Lists all the subscription descriptions for a customer account. The description
 // for a subscription includes SubscriptionName , SNSTopicARN , CustomerID ,
-// SourceType , SourceID , CreationTime , and Status . If you specify a
-// SubscriptionName , lists the description for that subscription.
+// SourceType , SourceID , CreationTime , and Status .
+//
+// If you specify a SubscriptionName , lists the description for that subscription.
 func (c *Client) DescribeEventSubscriptions(ctx context.Context, params *DescribeEventSubscriptionsInput, optFns ...func(*Options)) (*DescribeEventSubscriptionsOutput, error) {
 	if params == nil {
 		params = &DescribeEventSubscriptionsInput{}
@@ -44,7 +45,10 @@ type DescribeEventSubscriptionsInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	// The name of the RDS event notification subscription you want to describe.
@@ -114,6 +118,9 @@ func (c *Client) addOperationDescribeEventSubscriptionsMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,6 +131,15 @@ func (c *Client) addOperationDescribeEventSubscriptionsMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeEventSubscriptionsValidationMiddleware(stack); err != nil {
@@ -147,16 +163,20 @@ func (c *Client) addOperationDescribeEventSubscriptionsMiddlewares(stack *middle
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeEventSubscriptionsAPIClient is a client that implements the
-// DescribeEventSubscriptions operation.
-type DescribeEventSubscriptionsAPIClient interface {
-	DescribeEventSubscriptions(context.Context, *DescribeEventSubscriptionsInput, ...func(*Options)) (*DescribeEventSubscriptionsOutput, error)
-}
-
-var _ DescribeEventSubscriptionsAPIClient = (*Client)(nil)
 
 // DescribeEventSubscriptionsPaginatorOptions is the paginator options for
 // DescribeEventSubscriptions
@@ -164,7 +184,10 @@ type DescribeEventSubscriptionsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -227,6 +250,9 @@ func (p *DescribeEventSubscriptionsPaginator) NextPage(ctx context.Context, optF
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeEventSubscriptions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -245,6 +271,14 @@ func (p *DescribeEventSubscriptionsPaginator) NextPage(ctx context.Context, optF
 
 	return result, nil
 }
+
+// DescribeEventSubscriptionsAPIClient is a client that implements the
+// DescribeEventSubscriptions operation.
+type DescribeEventSubscriptionsAPIClient interface {
+	DescribeEventSubscriptions(context.Context, *DescribeEventSubscriptionsInput, ...func(*Options)) (*DescribeEventSubscriptionsOutput, error)
+}
+
+var _ DescribeEventSubscriptionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeEventSubscriptions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
