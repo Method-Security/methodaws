@@ -30,26 +30,47 @@ func (c *Client) ApplyPendingMaintenanceAction(ctx context.Context, params *Appl
 
 type ApplyPendingMaintenanceActionInput struct {
 
-	// The pending maintenance action to apply to this resource. Valid Values:
-	// system-update , db-upgrade , hardware-maintenance , ca-certificate-rotation
+	// The pending maintenance action to apply to this resource.
+	//
+	// Valid Values:
+	//
+	//   - ca-certificate-rotation
+	//
+	//   - db-upgrade
+	//
+	//   - hardware-maintenance
+	//
+	//   - os-upgrade
+	//
+	//   - system-update
+	//
+	// For more information about these actions, see [Maintenance actions for Amazon Aurora] or [Maintenance actions for Amazon RDS].
+	//
+	// [Maintenance actions for Amazon RDS]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#maintenance-actions-rds
+	// [Maintenance actions for Amazon Aurora]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_UpgradeDBInstance.Maintenance.html#maintenance-actions-aurora
 	//
 	// This member is required.
 	ApplyAction *string
 
 	// A value that specifies the type of opt-in request, or undoes an opt-in request.
-	// An opt-in request of type immediate can't be undone. Valid Values:
+	// An opt-in request of type immediate can't be undone.
+	//
+	// Valid Values:
+	//
 	//   - immediate - Apply the maintenance action immediately.
+	//
 	//   - next-maintenance - Apply the maintenance action during the next maintenance
 	//   window for the resource.
+	//
 	//   - undo-opt-in - Cancel any existing next-maintenance opt-in requests.
 	//
 	// This member is required.
 	OptInType *string
 
 	// The RDS Amazon Resource Name (ARN) of the resource that the pending maintenance
-	// action applies to. For information about creating an ARN, see Constructing an
-	// RDS Amazon Resource Name (ARN) (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.ARN.html#USER_Tagging.ARN.Constructing)
-	// .
+	// action applies to. For information about creating an ARN, see [Constructing an RDS Amazon Resource Name (ARN)].
+	//
+	// [Constructing an RDS Amazon Resource Name (ARN)]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.ARN.html#USER_Tagging.ARN.Constructing
 	//
 	// This member is required.
 	ResourceIdentifier *string
@@ -111,6 +132,9 @@ func (c *Client) addOperationApplyPendingMaintenanceActionMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +145,15 @@ func (c *Client) addOperationApplyPendingMaintenanceActionMiddlewares(stack *mid
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpApplyPendingMaintenanceActionValidationMiddleware(stack); err != nil {
@@ -142,6 +175,18 @@ func (c *Client) addOperationApplyPendingMaintenanceActionMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -13,12 +13,17 @@ import (
 
 // Returns a list of the source Amazon Web Services Regions where the current
 // Amazon Web Services Region can create a read replica, copy a DB snapshot from,
-// or replicate automated backups from. Use this operation to determine whether
-// cross-Region features are supported between other Regions and your current
-// Region. This operation supports pagination. To return information about the
-// Regions that are enabled for your account, or all Regions, use the EC2 operation
-// DescribeRegions . For more information, see  DescribeRegions (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html)
+// or replicate automated backups from.
+//
+// Use this operation to determine whether cross-Region features are supported
+// between other Regions and your current Region. This operation supports
+// pagination.
+//
+// To return information about the Regions that are enabled for your account, or
+// all Regions, use the EC2 operation DescribeRegions . For more information, see [DescribeRegions]
 // in the Amazon EC2 API Reference.
+//
+// [DescribeRegions]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html
 func (c *Client) DescribeSourceRegions(ctx context.Context, params *DescribeSourceRegionsInput, optFns ...func(*Options)) (*DescribeSourceRegionsOutput, error) {
 	if params == nil {
 		params = &DescribeSourceRegionsInput{}
@@ -46,12 +51,17 @@ type DescribeSourceRegionsInput struct {
 
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
 	// The source Amazon Web Services Region name. For example, us-east-1 .
+	//
 	// Constraints:
+	//
 	//   - Must specify a valid Amazon Web Services Region name.
 	RegionName *string
 
@@ -121,6 +131,9 @@ func (c *Client) addOperationDescribeSourceRegionsMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -131,6 +144,15 @@ func (c *Client) addOperationDescribeSourceRegionsMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeSourceRegionsValidationMiddleware(stack); err != nil {
@@ -154,23 +176,30 @@ func (c *Client) addOperationDescribeSourceRegionsMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeSourceRegionsAPIClient is a client that implements the
-// DescribeSourceRegions operation.
-type DescribeSourceRegionsAPIClient interface {
-	DescribeSourceRegions(context.Context, *DescribeSourceRegionsInput, ...func(*Options)) (*DescribeSourceRegionsOutput, error)
-}
-
-var _ DescribeSourceRegionsAPIClient = (*Client)(nil)
 
 // DescribeSourceRegionsPaginatorOptions is the paginator options for
 // DescribeSourceRegions
 type DescribeSourceRegionsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
@@ -232,6 +261,9 @@ func (p *DescribeSourceRegionsPaginator) NextPage(ctx context.Context, optFns ..
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeSourceRegions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -250,6 +282,14 @@ func (p *DescribeSourceRegionsPaginator) NextPage(ctx context.Context, optFns ..
 
 	return result, nil
 }
+
+// DescribeSourceRegionsAPIClient is a client that implements the
+// DescribeSourceRegions operation.
+type DescribeSourceRegionsAPIClient interface {
+	DescribeSourceRegions(context.Context, *DescribeSourceRegionsInput, ...func(*Options)) (*DescribeSourceRegionsOutput, error)
+}
+
+var _ DescribeSourceRegionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeSourceRegions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

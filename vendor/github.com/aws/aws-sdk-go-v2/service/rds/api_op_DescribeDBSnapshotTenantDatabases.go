@@ -12,10 +12,11 @@ import (
 )
 
 // Describes the tenant databases that exist in a DB snapshot. This command only
-// applies to RDS for Oracle DB instances in the multi-tenant configuration. You
-// can use this command to inspect the tenant databases within a snapshot before
-// restoring it. You can't directly interact with the tenant databases in a DB
-// snapshot. If you restore a snapshot that was taken from DB instance using the
+// applies to RDS for Oracle DB instances in the multi-tenant configuration.
+//
+// You can use this command to inspect the tenant databases within a snapshot
+// before restoring it. You can't directly interact with the tenant databases in a
+// DB snapshot. If you restore a snapshot that was taken from DB instance using the
 // multi-tenant configuration, you restore all its tenant databases.
 func (c *Client) DescribeDBSnapshotTenantDatabases(ctx context.Context, params *DescribeDBSnapshotTenantDatabasesInput, optFns ...func(*Options)) (*DescribeDBSnapshotTenantDatabasesOutput, error) {
 	if params == nil {
@@ -35,33 +36,47 @@ func (c *Client) DescribeDBSnapshotTenantDatabases(ctx context.Context, params *
 type DescribeDBSnapshotTenantDatabasesInput struct {
 
 	// The ID of the DB instance used to create the DB snapshots. This parameter isn't
-	// case-sensitive. Constraints:
+	// case-sensitive.
+	//
+	// Constraints:
+	//
 	//   - If supplied, must match the identifier of an existing DBInstance .
 	DBInstanceIdentifier *string
 
 	// The ID of a DB snapshot that contains the tenant databases to describe. This
-	// value is stored as a lowercase string. Constraints:
+	// value is stored as a lowercase string.
+	//
+	// Constraints:
+	//
 	//   - If you specify this parameter, the value must match the ID of an existing
 	//   DB snapshot.
+	//
 	//   - If you specify an automatic snapshot, you must also specify SnapshotType .
 	DBSnapshotIdentifier *string
 
 	// A specific DB resource identifier to describe.
 	DbiResourceId *string
 
-	// A filter that specifies one or more tenant databases to describe. Supported
-	// filters:
+	// A filter that specifies one or more tenant databases to describe.
+	//
+	// Supported filters:
+	//
 	//   - tenant-db-name - Tenant database names. The results list only includes
 	//   information about the tenant databases that match these tenant DB names.
+	//
 	//   - tenant-database-resource-id - Tenant database resource identifiers. The
 	//   results list only includes information about the tenant databases contained
 	//   within the DB snapshots.
+	//
 	//   - dbi-resource-id - DB instance resource identifiers. The results list only
 	//   includes information about snapshots containing tenant databases contained
 	//   within the DB instances identified by these resource identifiers.
+	//
 	//   - db-instance-id - Accepts DB instance identifiers and DB instance Amazon
 	//   Resource Names (ARNs).
+	//
 	//   - db-snapshot-id - Accepts DB snapshot identifiers.
+	//
 	//   - snapshot-type - Accepts types of DB snapshots.
 	Filters []types.Filter
 
@@ -78,13 +93,18 @@ type DescribeDBSnapshotTenantDatabasesInput struct {
 
 	// The type of DB snapshots to be returned. You can specify one of the following
 	// values:
+	//
 	//   - automated – All DB snapshots that have been automatically taken by Amazon
 	//   RDS for my Amazon Web Services account.
+	//
 	//   - manual – All DB snapshots that have been taken by my Amazon Web Services
 	//   account.
+	//
 	//   - shared – All manual DB snapshots that have been shared to my Amazon Web
 	//   Services account.
+	//
 	//   - public – All DB snapshots that have been marked as public.
+	//
 	//   - awsbackup – All DB snapshots managed by the Amazon Web Services Backup
 	//   service.
 	SnapshotType *string
@@ -151,6 +171,9 @@ func (c *Client) addOperationDescribeDBSnapshotTenantDatabasesMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -161,6 +184,15 @@ func (c *Client) addOperationDescribeDBSnapshotTenantDatabasesMiddlewares(stack 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBSnapshotTenantDatabasesValidationMiddleware(stack); err != nil {
@@ -184,16 +216,20 @@ func (c *Client) addOperationDescribeDBSnapshotTenantDatabasesMiddlewares(stack 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBSnapshotTenantDatabasesAPIClient is a client that implements the
-// DescribeDBSnapshotTenantDatabases operation.
-type DescribeDBSnapshotTenantDatabasesAPIClient interface {
-	DescribeDBSnapshotTenantDatabases(context.Context, *DescribeDBSnapshotTenantDatabasesInput, ...func(*Options)) (*DescribeDBSnapshotTenantDatabasesOutput, error)
-}
-
-var _ DescribeDBSnapshotTenantDatabasesAPIClient = (*Client)(nil)
 
 // DescribeDBSnapshotTenantDatabasesPaginatorOptions is the paginator options for
 // DescribeDBSnapshotTenantDatabases
@@ -263,6 +299,9 @@ func (p *DescribeDBSnapshotTenantDatabasesPaginator) NextPage(ctx context.Contex
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBSnapshotTenantDatabases(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -281,6 +320,14 @@ func (p *DescribeDBSnapshotTenantDatabasesPaginator) NextPage(ctx context.Contex
 
 	return result, nil
 }
+
+// DescribeDBSnapshotTenantDatabasesAPIClient is a client that implements the
+// DescribeDBSnapshotTenantDatabases operation.
+type DescribeDBSnapshotTenantDatabasesAPIClient interface {
+	DescribeDBSnapshotTenantDatabases(context.Context, *DescribeDBSnapshotTenantDatabasesInput, ...func(*Options)) (*DescribeDBSnapshotTenantDatabasesOutput, error)
+}
+
+var _ DescribeDBSnapshotTenantDatabasesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBSnapshotTenantDatabases(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

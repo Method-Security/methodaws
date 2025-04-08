@@ -11,8 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a new option group. You can create up to 20 option groups. This command
-// doesn't apply to RDS Custom.
+// Creates a new option group. You can create up to 20 option groups.
+//
+// This command doesn't apply to RDS Custom.
 func (c *Client) CreateOptionGroup(ctx context.Context, params *CreateOptionGroupInput, optFns ...func(*Options)) (*CreateOptionGroupOutput, error) {
 	if params == nil {
 		params = &CreateOptionGroupInput{}
@@ -30,19 +31,34 @@ func (c *Client) CreateOptionGroup(ctx context.Context, params *CreateOptionGrou
 
 type CreateOptionGroupInput struct {
 
-	// The name of the engine to associate this option group with. Valid Values:
+	// The name of the engine to associate this option group with.
+	//
+	// Valid Values:
+	//
 	//   - db2-ae
+	//
 	//   - db2-se
+	//
 	//   - mariadb
+	//
 	//   - mysql
+	//
 	//   - oracle-ee
+	//
 	//   - oracle-ee-cdb
+	//
 	//   - oracle-se2
+	//
 	//   - oracle-se2-cdb
+	//
 	//   - postgres
+	//
 	//   - sqlserver-ee
+	//
 	//   - sqlserver-se
+	//
 	//   - sqlserver-ex
+	//
 	//   - sqlserver-web
 	//
 	// This member is required.
@@ -59,10 +75,16 @@ type CreateOptionGroupInput struct {
 	// This member is required.
 	OptionGroupDescription *string
 
-	// Specifies the name of the option group to be created. Constraints:
+	// Specifies the name of the option group to be created.
+	//
+	// Constraints:
+	//
 	//   - Must be 1 to 255 letters, numbers, or hyphens
+	//
 	//   - First character must be a letter
+	//
 	//   - Can't end with a hyphen or contain two consecutive hyphens
+	//
 	// Example: myoptiongroup
 	//
 	// This member is required.
@@ -128,6 +150,9 @@ func (c *Client) addOperationCreateOptionGroupMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -138,6 +163,15 @@ func (c *Client) addOperationCreateOptionGroupMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateOptionGroupValidationMiddleware(stack); err != nil {
@@ -159,6 +193,18 @@ func (c *Client) addOperationCreateOptionGroupMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
