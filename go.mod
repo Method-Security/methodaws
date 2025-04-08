@@ -3,7 +3,7 @@ module github.com/Method-Security/methodaws
 go 1.22.5
 
 require (
-	github.com/Method-Security/pkg v0.0.3
+	github.com/Method-Security/pkg v0.0.5
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.27.11

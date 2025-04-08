@@ -39,6 +39,7 @@ type MethodAws struct {
 // initialize the root command and all subcommands that are used throughout execution of the CLI.
 // We pass the version command in here from the main.go file, where we set the version string during the build process.
 func NewMethodAws(version string) *MethodAws {
+	startedAt := datetime.DateTime(time.Now())
 	methodAws := MethodAws{
 		Version: version,
 		RootFlags: config.RootFlags{
@@ -47,7 +48,7 @@ func NewMethodAws(version string) *MethodAws {
 			Regions: []string{},
 		},
 		OutputConfig: writer.NewOutputConfig(nil, writer.NewFormat(writer.SIGNAL)),
-		OutputSignal: signal.NewSignal(nil, datetime.DateTime(time.Now()), nil, 0, nil),
+		OutputSignal: signal.NewSignal(nil, &startedAt, nil, 0, nil),
 		AwsConfig:    nil,
 	}
 	return &methodAws
@@ -114,7 +115,7 @@ func (a *MethodAws) InitRootCommand() {
 			return writer.Write(
 				a.OutputSignal.Content,
 				a.OutputConfig,
-				a.OutputSignal.StartedAt,
+				&a.OutputSignal.StartedAt,
 				a.OutputSignal.CompletedAt,
 				a.OutputSignal.Status,
 				a.OutputSignal.ErrorMessage,
