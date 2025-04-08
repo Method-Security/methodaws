@@ -13,7 +13,9 @@ import (
 
 // You can call DescribeValidDBInstanceModifications to learn what modifications
 // you can make to your DB instance. You can use this information when you call
-// ModifyDBInstance . This command doesn't apply to RDS Custom.
+// ModifyDBInstance .
+//
+// This command doesn't apply to RDS Custom.
 func (c *Client) DescribeValidDBInstanceModifications(ctx context.Context, params *DescribeValidDBInstanceModificationsInput, optFns ...func(*Options)) (*DescribeValidDBInstanceModificationsOutput, error) {
 	if params == nil {
 		params = &DescribeValidDBInstanceModificationsInput{}
@@ -96,6 +98,9 @@ func (c *Client) addOperationDescribeValidDBInstanceModificationsMiddlewares(sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -106,6 +111,15 @@ func (c *Client) addOperationDescribeValidDBInstanceModificationsMiddlewares(sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeValidDBInstanceModificationsValidationMiddleware(stack); err != nil {
@@ -127,6 +141,18 @@ func (c *Client) addOperationDescribeValidDBInstanceModificationsMiddlewares(sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

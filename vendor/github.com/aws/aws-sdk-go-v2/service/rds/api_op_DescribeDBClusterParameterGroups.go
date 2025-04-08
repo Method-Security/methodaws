@@ -13,11 +13,14 @@ import (
 
 // Returns a list of DBClusterParameterGroup descriptions. If a
 // DBClusterParameterGroupName parameter is specified, the list will contain only
-// the description of the specified DB cluster parameter group. For more
-// information on Amazon Aurora, see What is Amazon Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-// in the Amazon Aurora User Guide. For more information on Multi-AZ DB clusters,
-// see Multi-AZ DB cluster deployments (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
-// in the Amazon RDS User Guide.
+// the description of the specified DB cluster parameter group.
+//
+// For more information on Amazon Aurora, see [What is Amazon Aurora?] in the Amazon Aurora User Guide.
+//
+// For more information on Multi-AZ DB clusters, see [Multi-AZ DB cluster deployments] in the Amazon RDS User Guide.
+//
+// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
+// [Multi-AZ DB cluster deployments]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
 func (c *Client) DescribeDBClusterParameterGroups(ctx context.Context, params *DescribeDBClusterParameterGroupsInput, optFns ...func(*Options)) (*DescribeDBClusterParameterGroupsOutput, error) {
 	if params == nil {
 		params = &DescribeDBClusterParameterGroupsInput{}
@@ -36,7 +39,9 @@ func (c *Client) DescribeDBClusterParameterGroups(ctx context.Context, params *D
 type DescribeDBClusterParameterGroupsInput struct {
 
 	// The name of a specific DB cluster parameter group to return details for.
+	//
 	// Constraints:
+	//
 	//   - If supplied, must match the name of an existing DBClusterParameterGroup.
 	DBClusterParameterGroupName *string
 
@@ -51,7 +56,10 @@ type DescribeDBClusterParameterGroupsInput struct {
 
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
@@ -118,6 +126,9 @@ func (c *Client) addOperationDescribeDBClusterParameterGroupsMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,6 +139,15 @@ func (c *Client) addOperationDescribeDBClusterParameterGroupsMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBClusterParameterGroupsValidationMiddleware(stack); err != nil {
@@ -151,23 +171,30 @@ func (c *Client) addOperationDescribeDBClusterParameterGroupsMiddlewares(stack *
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBClusterParameterGroupsAPIClient is a client that implements the
-// DescribeDBClusterParameterGroups operation.
-type DescribeDBClusterParameterGroupsAPIClient interface {
-	DescribeDBClusterParameterGroups(context.Context, *DescribeDBClusterParameterGroupsInput, ...func(*Options)) (*DescribeDBClusterParameterGroupsOutput, error)
-}
-
-var _ DescribeDBClusterParameterGroupsAPIClient = (*Client)(nil)
 
 // DescribeDBClusterParameterGroupsPaginatorOptions is the paginator options for
 // DescribeDBClusterParameterGroups
 type DescribeDBClusterParameterGroupsPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
-	// included in the response so you can retrieve the remaining results. Default: 100
+	// included in the response so you can retrieve the remaining results.
+	//
+	// Default: 100
+	//
 	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
@@ -231,6 +258,9 @@ func (p *DescribeDBClusterParameterGroupsPaginator) NextPage(ctx context.Context
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBClusterParameterGroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -249,6 +279,14 @@ func (p *DescribeDBClusterParameterGroupsPaginator) NextPage(ctx context.Context
 
 	return result, nil
 }
+
+// DescribeDBClusterParameterGroupsAPIClient is a client that implements the
+// DescribeDBClusterParameterGroups operation.
+type DescribeDBClusterParameterGroupsAPIClient interface {
+	DescribeDBClusterParameterGroups(context.Context, *DescribeDBClusterParameterGroupsInput, ...func(*Options)) (*DescribeDBClusterParameterGroupsOutput, error)
+}
+
+var _ DescribeDBClusterParameterGroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBClusterParameterGroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

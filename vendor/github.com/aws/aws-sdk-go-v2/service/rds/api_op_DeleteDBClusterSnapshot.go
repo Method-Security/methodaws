@@ -12,11 +12,16 @@ import (
 )
 
 // Deletes a DB cluster snapshot. If the snapshot is being copied, the copy
-// operation is terminated. The DB cluster snapshot must be in the available state
-// to be deleted. For more information on Amazon Aurora, see What is Amazon Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-// in the Amazon Aurora User Guide. For more information on Multi-AZ DB clusters,
-// see Multi-AZ DB cluster deployments (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
-// in the Amazon RDS User Guide.
+// operation is terminated.
+//
+// The DB cluster snapshot must be in the available state to be deleted.
+//
+// For more information on Amazon Aurora, see [What is Amazon Aurora?] in the Amazon Aurora User Guide.
+//
+// For more information on Multi-AZ DB clusters, see [Multi-AZ DB cluster deployments] in the Amazon RDS User Guide.
+//
+// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
+// [Multi-AZ DB cluster deployments]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
 func (c *Client) DeleteDBClusterSnapshot(ctx context.Context, params *DeleteDBClusterSnapshotInput, optFns ...func(*Options)) (*DeleteDBClusterSnapshotOutput, error) {
 	if params == nil {
 		params = &DeleteDBClusterSnapshotInput{}
@@ -34,8 +39,10 @@ func (c *Client) DeleteDBClusterSnapshot(ctx context.Context, params *DeleteDBCl
 
 type DeleteDBClusterSnapshotInput struct {
 
-	// The identifier of the DB cluster snapshot to delete. Constraints: Must be the
-	// name of an existing DB cluster snapshot in the available state.
+	// The identifier of the DB cluster snapshot to delete.
+	//
+	// Constraints: Must be the name of an existing DB cluster snapshot in the
+	// available state.
 	//
 	// This member is required.
 	DBClusterSnapshotIdentifier *string
@@ -45,8 +52,10 @@ type DeleteDBClusterSnapshotInput struct {
 
 type DeleteDBClusterSnapshotOutput struct {
 
-	// Contains the details for an Amazon RDS DB cluster snapshot This data type is
-	// used as a response element in the DescribeDBClusterSnapshots action.
+	// Contains the details for an Amazon RDS DB cluster snapshot
+	//
+	// This data type is used as a response element in the DescribeDBClusterSnapshots
+	// action.
 	DBClusterSnapshot *types.DBClusterSnapshot
 
 	// Metadata pertaining to the operation's result.
@@ -98,6 +107,9 @@ func (c *Client) addOperationDeleteDBClusterSnapshotMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -108,6 +120,15 @@ func (c *Client) addOperationDeleteDBClusterSnapshotMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteDBClusterSnapshotValidationMiddleware(stack); err != nil {
@@ -129,6 +150,18 @@ func (c *Client) addOperationDeleteDBClusterSnapshotMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

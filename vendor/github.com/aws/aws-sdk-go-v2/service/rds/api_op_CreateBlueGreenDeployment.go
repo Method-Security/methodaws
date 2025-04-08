@@ -11,21 +11,25 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a blue/green deployment. A blue/green deployment creates a staging
-// environment that copies the production environment. In a blue/green deployment,
-// the blue environment is the current production environment. The green
-// environment is the staging environment. The staging environment stays in sync
-// with the current production environment using logical replication. You can make
-// changes to the databases in the green environment without affecting production
-// workloads. For example, you can upgrade the major or minor DB engine version,
-// change database parameters, or make schema changes in the staging environment.
-// You can thoroughly test changes in the green environment. When ready, you can
-// switch over the environments to promote the green environment to be the new
-// production environment. The switchover typically takes under a minute. For more
-// information, see Using Amazon RDS Blue/Green Deployments for database updates (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html)
-// in the Amazon RDS User Guide and Using Amazon RDS Blue/Green Deployments for
-// database updates (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/blue-green-deployments.html)
-// in the Amazon Aurora User Guide.
+// Creates a blue/green deployment.
+//
+// A blue/green deployment creates a staging environment that copies the
+// production environment. In a blue/green deployment, the blue environment is the
+// current production environment. The green environment is the staging
+// environment, and it stays in sync with the current production environment.
+//
+// You can make changes to the databases in the green environment without
+// affecting production workloads. For example, you can upgrade the major or minor
+// DB engine version, change database parameters, or make schema changes in the
+// staging environment. You can thoroughly test changes in the green environment.
+// When ready, you can switch over the environments to promote the green
+// environment to be the new production environment. The switchover typically takes
+// under a minute.
+//
+// For more information, see [Using Amazon RDS Blue/Green Deployments for database updates] in the Amazon RDS User Guide and [Using Amazon RDS Blue/Green Deployments for database updates] in the Amazon
+// Aurora User Guide.
+//
+// [Using Amazon RDS Blue/Green Deployments for database updates]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/blue-green-deployments.html
 func (c *Client) CreateBlueGreenDeployment(ctx context.Context, params *CreateBlueGreenDeploymentInput, optFns ...func(*Options)) (*CreateBlueGreenDeploymentOutput, error) {
 	if params == nil {
 		params = &CreateBlueGreenDeploymentInput{}
@@ -43,18 +47,23 @@ func (c *Client) CreateBlueGreenDeployment(ctx context.Context, params *CreateBl
 
 type CreateBlueGreenDeploymentInput struct {
 
-	// The name of the blue/green deployment. Constraints:
+	// The name of the blue/green deployment.
+	//
+	// Constraints:
+	//
 	//   - Can't be the same as an existing blue/green deployment name in the same
 	//   account and Amazon Web Services Region.
 	//
 	// This member is required.
 	BlueGreenDeploymentName *string
 
-	// The Amazon Resource Name (ARN) of the source production database. Specify the
-	// database that you want to clone. The blue/green deployment creates this database
-	// in the green environment. You can make updates to the database in the green
-	// environment, such as an engine version upgrade. When you are ready, you can
-	// switch the database in the green environment to be the production database.
+	// The Amazon Resource Name (ARN) of the source production database.
+	//
+	// Specify the database that you want to clone. The blue/green deployment creates
+	// this database in the green environment. You can make updates to the database in
+	// the green environment, such as an engine version upgrade. When you are ready,
+	// you can switch the database in the green environment to be the production
+	// database.
 	//
 	// This member is required.
 	Source *string
@@ -62,33 +71,68 @@ type CreateBlueGreenDeploymentInput struct {
 	// Tags to assign to the blue/green deployment.
 	Tags []types.Tag
 
+	// The amount of storage in gibibytes (GiB) to allocate for the green DB instance.
+	// You can choose to increase or decrease the allocated storage on the green DB
+	// instance.
+	//
+	// This setting doesn't apply to Amazon Aurora blue/green deployments.
+	TargetAllocatedStorage *int32
+
 	// The DB cluster parameter group associated with the Aurora DB cluster in the
-	// green environment. To test parameter changes, specify a DB cluster parameter
-	// group that is different from the one associated with the source DB cluster.
+	// green environment.
+	//
+	// To test parameter changes, specify a DB cluster parameter group that is
+	// different from the one associated with the source DB cluster.
 	TargetDBClusterParameterGroupName *string
 
-	// Specify the DB instance class for the databases in the green environment. This
-	// parameter only applies to RDS DB instances, because DB instances within an
+	// Specify the DB instance class for the databases in the green environment.
+	//
+	// This parameter only applies to RDS DB instances, because DB instances within an
 	// Aurora DB cluster can have multiple different instance classes. If you're
 	// creating a blue/green deployment from an Aurora DB cluster, don't specify this
 	// parameter. After the green environment is created, you can individually modify
 	// the instance classes of the DB instances within the green DB cluster.
 	TargetDBInstanceClass *string
 
-	// The DB parameter group associated with the DB instance in the green
-	// environment. To test parameter changes, specify a DB parameter group that is
-	// different from the one associated with the source DB instance.
+	// The DB parameter group associated with the DB instance in the green environment.
+	//
+	// To test parameter changes, specify a DB parameter group that is different from
+	// the one associated with the source DB instance.
 	TargetDBParameterGroupName *string
 
-	// The engine version of the database in the green environment. Specify the engine
-	// version to upgrade to in the green environment.
+	// The engine version of the database in the green environment.
+	//
+	// Specify the engine version to upgrade to in the green environment.
 	TargetEngineVersion *string
+
+	// The amount of Provisioned IOPS (input/output operations per second) to allocate
+	// for the green DB instance. For information about valid IOPS values, see [Amazon RDS DB instance storage]in the
+	// Amazon RDS User Guide.
+	//
+	// This setting doesn't apply to Amazon Aurora blue/green deployments.
+	//
+	// [Amazon RDS DB instance storage]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html
+	TargetIops *int32
+
+	// The storage throughput value for the green DB instance.
+	//
+	// This setting applies only to the gp3 storage type.
+	//
+	// This setting doesn't apply to Amazon Aurora blue/green deployments.
+	TargetStorageThroughput *int32
+
+	// The storage type to associate with the green DB instance.
+	//
+	// Valid Values: gp2 | gp3 | io1 | io2
+	//
+	// This setting doesn't apply to Amazon Aurora blue/green deployments.
+	TargetStorageType *string
 
 	// Whether to upgrade the storage file system configuration on the green database.
 	// This option migrates the green DB instance from the older 32-bit file system to
-	// the preferred configuration. For more information, see Upgrading the storage
-	// file system for a DB instance (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIOPS.StorageTypes.html#USER_PIOPS.UpgradeFileSystem)
-	// .
+	// the preferred configuration. For more information, see [Upgrading the storage file system for a DB instance].
+	//
+	// [Upgrading the storage file system for a DB instance]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIOPS.StorageTypes.html#USER_PIOPS.UpgradeFileSystem
 	UpgradeTargetStorageConfig *bool
 
 	noSmithyDocumentSerde
@@ -96,11 +140,12 @@ type CreateBlueGreenDeploymentInput struct {
 
 type CreateBlueGreenDeploymentOutput struct {
 
-	// Details about a blue/green deployment. For more information, see Using Amazon
-	// RDS Blue/Green Deployments for database updates (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments.html)
-	// in the Amazon RDS User Guide and Using Amazon RDS Blue/Green Deployments for
-	// database updates (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/blue-green-deployments.html)
-	// in the Amazon Aurora User Guide.
+	// Details about a blue/green deployment.
+	//
+	// For more information, see [Using Amazon RDS Blue/Green Deployments for database updates] in the Amazon RDS User Guide and [Using Amazon RDS Blue/Green Deployments for database updates] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Using Amazon RDS Blue/Green Deployments for database updates]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/blue-green-deployments.html
 	BlueGreenDeployment *types.BlueGreenDeployment
 
 	// Metadata pertaining to the operation's result.
@@ -152,6 +197,9 @@ func (c *Client) addOperationCreateBlueGreenDeploymentMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -162,6 +210,15 @@ func (c *Client) addOperationCreateBlueGreenDeploymentMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateBlueGreenDeploymentValidationMiddleware(stack); err != nil {
@@ -183,6 +240,18 @@ func (c *Client) addOperationCreateBlueGreenDeploymentMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

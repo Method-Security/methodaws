@@ -14,12 +14,18 @@ import (
 // You might need to reboot your DB cluster, usually for maintenance reasons. For
 // example, if you make certain modifications, or if you change the DB cluster
 // parameter group associated with the DB cluster, reboot the DB cluster for the
-// changes to take effect. Rebooting a DB cluster restarts the database engine
-// service. Rebooting a DB cluster results in a momentary outage, during which the
-// DB cluster status is set to rebooting. Use this operation only for a non-Aurora
-// Multi-AZ DB cluster. For more information on Multi-AZ DB clusters, see Multi-AZ
-// DB cluster deployments (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
-// in the Amazon RDS User Guide.
+// changes to take effect.
+//
+// Rebooting a DB cluster restarts the database engine service. Rebooting a DB
+// cluster results in a momentary outage, during which the DB cluster status is set
+// to rebooting.
+//
+// Use this operation only for a non-Aurora Multi-AZ DB cluster.
+//
+// For more information on Multi-AZ DB clusters, see [Multi-AZ DB cluster deployments] in the Amazon RDS User
+// Guide.
+//
+// [Multi-AZ DB cluster deployments]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
 func (c *Client) RebootDBCluster(ctx context.Context, params *RebootDBClusterInput, optFns ...func(*Options)) (*RebootDBClusterOutput, error) {
 	if params == nil {
 		params = &RebootDBClusterInput{}
@@ -38,7 +44,9 @@ func (c *Client) RebootDBCluster(ctx context.Context, params *RebootDBClusterInp
 type RebootDBClusterInput struct {
 
 	// The DB cluster identifier. This parameter is stored as a lowercase string.
+	//
 	// Constraints:
+	//
 	//   - Must match the identifier of an existing DBCluster.
 	//
 	// This member is required.
@@ -49,20 +57,27 @@ type RebootDBClusterInput struct {
 
 type RebootDBClusterOutput struct {
 
-	// Contains the details of an Amazon Aurora DB cluster or Multi-AZ DB cluster. For
-	// an Amazon Aurora DB cluster, this data type is used as a response element in the
-	// operations CreateDBCluster , DeleteDBCluster , DescribeDBClusters ,
+	// Contains the details of an Amazon Aurora DB cluster or Multi-AZ DB cluster.
+	//
+	// For an Amazon Aurora DB cluster, this data type is used as a response element
+	// in the operations CreateDBCluster , DeleteDBCluster , DescribeDBClusters ,
 	// FailoverDBCluster , ModifyDBCluster , PromoteReadReplicaDBCluster ,
 	// RestoreDBClusterFromS3 , RestoreDBClusterFromSnapshot ,
-	// RestoreDBClusterToPointInTime , StartDBCluster , and StopDBCluster . For a
-	// Multi-AZ DB cluster, this data type is used as a response element in the
+	// RestoreDBClusterToPointInTime , StartDBCluster , and StopDBCluster .
+	//
+	// For a Multi-AZ DB cluster, this data type is used as a response element in the
 	// operations CreateDBCluster , DeleteDBCluster , DescribeDBClusters ,
 	// FailoverDBCluster , ModifyDBCluster , RebootDBCluster ,
-	// RestoreDBClusterFromSnapshot , and RestoreDBClusterToPointInTime . For more
-	// information on Amazon Aurora DB clusters, see What is Amazon Aurora? (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
-	// in the Amazon Aurora User Guide. For more information on Multi-AZ DB clusters,
-	// see Multi-AZ deployments with two readable standby DB instances (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html)
-	// in the Amazon RDS User Guide.
+	// RestoreDBClusterFromSnapshot , and RestoreDBClusterToPointInTime .
+	//
+	// For more information on Amazon Aurora DB clusters, see [What is Amazon Aurora?] in the Amazon Aurora
+	// User Guide.
+	//
+	// For more information on Multi-AZ DB clusters, see [Multi-AZ deployments with two readable standby DB instances] in the Amazon RDS User
+	// Guide.
+	//
+	// [Multi-AZ deployments with two readable standby DB instances]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/multi-az-db-clusters-concepts.html
+	// [What is Amazon Aurora?]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html
 	DBCluster *types.DBCluster
 
 	// Metadata pertaining to the operation's result.
@@ -114,6 +129,9 @@ func (c *Client) addOperationRebootDBClusterMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,6 +142,15 @@ func (c *Client) addOperationRebootDBClusterMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRebootDBClusterValidationMiddleware(stack); err != nil {
@@ -145,6 +172,18 @@ func (c *Client) addOperationRebootDBClusterMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

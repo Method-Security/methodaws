@@ -29,9 +29,14 @@ func (c *Client) DeleteDBParameterGroup(ctx context.Context, params *DeleteDBPar
 
 type DeleteDBParameterGroupInput struct {
 
-	// The name of the DB parameter group. Constraints:
+	// The name of the DB parameter group.
+	//
+	// Constraints:
+	//
 	//   - Must be the name of an existing DB parameter group
+	//
 	//   - You can't delete a default DB parameter group
+	//
 	//   - Can't be associated with any DB instances
 	//
 	// This member is required.
@@ -90,6 +95,9 @@ func (c *Client) addOperationDeleteDBParameterGroupMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -100,6 +108,15 @@ func (c *Client) addOperationDeleteDBParameterGroupMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteDBParameterGroupValidationMiddleware(stack); err != nil {
@@ -121,6 +138,18 @@ func (c *Client) addOperationDeleteDBParameterGroupMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
