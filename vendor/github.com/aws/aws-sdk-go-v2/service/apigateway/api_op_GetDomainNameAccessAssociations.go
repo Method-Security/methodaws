@@ -6,67 +6,72 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/apigateway/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Represents a delete integration.
-func (c *Client) DeleteIntegration(ctx context.Context, params *DeleteIntegrationInput, optFns ...func(*Options)) (*DeleteIntegrationOutput, error) {
+// Represents a collection on DomainNameAccessAssociations resources.
+func (c *Client) GetDomainNameAccessAssociations(ctx context.Context, params *GetDomainNameAccessAssociationsInput, optFns ...func(*Options)) (*GetDomainNameAccessAssociationsOutput, error) {
 	if params == nil {
-		params = &DeleteIntegrationInput{}
+		params = &GetDomainNameAccessAssociationsInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "DeleteIntegration", params, optFns, c.addOperationDeleteIntegrationMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "GetDomainNameAccessAssociations", params, optFns, c.addOperationGetDomainNameAccessAssociationsMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*DeleteIntegrationOutput)
+	out := result.(*GetDomainNameAccessAssociationsOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-// Represents a delete integration request.
-type DeleteIntegrationInput struct {
+type GetDomainNameAccessAssociationsInput struct {
 
-	// Specifies a delete integration request's HTTP method.
-	//
-	// This member is required.
-	HttpMethod *string
+	// The maximum number of returned results per page. The default value is 25 and
+	// the maximum value is 500.
+	Limit *int32
 
-	// Specifies a delete integration request's resource identifier.
-	//
-	// This member is required.
-	ResourceId *string
+	// The current pagination position in the paged result set.
+	Position *string
 
-	// The string identifier of the associated RestApi.
-	//
-	// This member is required.
-	RestApiId *string
+	//  The owner of the domain name access association. Use SELF to only list the
+	// domain name access associations owned by your own account. Use OTHER_ACCOUNTS
+	// to list the domain name access associations with your private custom domain
+	// names that are owned by other AWS accounts.
+	ResourceOwner types.ResourceOwner
 
 	noSmithyDocumentSerde
 }
 
-type DeleteIntegrationOutput struct {
+type GetDomainNameAccessAssociationsOutput struct {
+
+	//  The current page of elements from this collection.
+	Items []types.DomainNameAccessAssociation
+
+	// The current pagination position in the paged result set.
+	Position *string
+
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
 
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stack, options Options) (err error) {
+func (c *Client) addOperationGetDomainNameAccessAssociationsMiddlewares(stack *middleware.Stack, options Options) (err error) {
 	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsRestjson1_serializeOpDeleteIntegration{}, middleware.After)
+	err = stack.Serialize.Add(&awsRestjson1_serializeOpGetDomainNameAccessAssociations{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpDeleteIntegration{}, middleware.After)
+	err = stack.Deserialize.Add(&awsRestjson1_deserializeOpGetDomainNameAccessAssociations{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DeleteIntegration"); err != nil {
+	if err := addProtocolFinalizerMiddlewares(stack, options, "GetDomainNameAccessAssociations"); err != nil {
 		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
@@ -121,10 +126,7 @@ func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stac
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpDeleteIntegrationValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteIntegration(options.Region), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetDomainNameAccessAssociations(options.Region), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRecursionDetection(stack); err != nil {
@@ -160,10 +162,10 @@ func (c *Client) addOperationDeleteIntegrationMiddlewares(stack *middleware.Stac
 	return nil
 }
 
-func newServiceMetadataMiddleware_opDeleteIntegration(region string) *awsmiddleware.RegisterServiceMetadata {
+func newServiceMetadataMiddleware_opGetDomainNameAccessAssociations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		OperationName: "DeleteIntegration",
+		OperationName: "GetDomainNameAccessAssociations",
 	}
 }

@@ -1,3 +1,92 @@
+# v1.30.1 (2025-04-03)
+
+* No change notes available for this release.
+
+# v1.30.0 (2025-03-28)
+
+* **Feature**: Adds support for setting the IP address type to allow dual-stack or IPv4 address types to invoke your APIs or domain names.
+
+# v1.29.1 (2025-03-04.2)
+
+* **Bug Fix**: Add assurance test for operation order.
+
+# v1.29.0 (2025-02-27)
+
+* **Feature**: Track credential providers via User-Agent Feature ids
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.12 (2025-02-18)
+
+* **Bug Fix**: Bump go version to 1.22
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.11 (2025-02-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.10 (2025-01-31)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.9 (2025-01-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.8 (2025-01-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.22.2.
+
+# v1.28.7 (2025-01-17)
+
+* **Bug Fix**: Fix bug where credentials weren't refreshed during retry loop.
+
+# v1.28.6 (2025-01-15)
+
+* **Documentation**: Documentation updates for Amazon API Gateway
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.5 (2025-01-14)
+
+* No change notes available for this release.
+
+# v1.28.4 (2025-01-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.3 (2025-01-08)
+
+* No change notes available for this release.
+
+# v1.28.2 (2024-12-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.1 (2024-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.28.0 (2024-11-21)
+
+* **Feature**: Added support for custom domain names for private APIs.
+
+# v1.27.6 (2024-11-18)
+
+* **Dependency Update**: Update to smithy-go v1.22.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.5 (2024-11-07)
+
+* **Bug Fix**: Adds case-insensitive handling of error message fields in service responses
+
+# v1.27.4 (2024-11-06)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.3 (2024-10-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.27.2 (2024-10-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions
