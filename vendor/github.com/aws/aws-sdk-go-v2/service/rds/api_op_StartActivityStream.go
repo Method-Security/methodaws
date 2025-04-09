@@ -12,10 +12,11 @@ import (
 )
 
 // Starts a database activity stream to monitor activity on the database. For more
-// information, see Monitoring Amazon Aurora with Database Activity Streams (https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/DBActivityStreams.html)
-// in the Amazon Aurora User Guide or Monitoring Amazon RDS with Database Activity
-// Streams (https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/DBActivityStreams.html)
-// in the Amazon RDS User Guide.
+// information, see [Monitoring Amazon Aurora with Database Activity Streams]in the Amazon Aurora User Guide or [Monitoring Amazon RDS with Database Activity Streams] in the Amazon RDS User
+// Guide.
+//
+// [Monitoring Amazon Aurora with Database Activity Streams]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/DBActivityStreams.html
+// [Monitoring Amazon RDS with Database Activity Streams]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/DBActivityStreams.html
 func (c *Client) StartActivityStream(ctx context.Context, params *StartActivityStreamInput, optFns ...func(*Options)) (*StartActivityStreamOutput, error) {
 	if params == nil {
 		params = &StartActivityStreamInput{}
@@ -138,6 +139,9 @@ func (c *Client) addOperationStartActivityStreamMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -148,6 +152,15 @@ func (c *Client) addOperationStartActivityStreamMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStartActivityStreamValidationMiddleware(stack); err != nil {
@@ -169,6 +182,18 @@ func (c *Client) addOperationStartActivityStreamMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

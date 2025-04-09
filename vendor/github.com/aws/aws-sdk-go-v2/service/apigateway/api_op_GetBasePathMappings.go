@@ -35,6 +35,10 @@ type GetBasePathMappingsInput struct {
 	// This member is required.
 	DomainName *string
 
+	//  The identifier for the domain name resource. Supported only for private custom
+	// domain names.
+	DomainNameId *string
+
 	// The maximum number of returned results per page. The default value is 25 and
 	// the maximum value is 500.
 	Limit *int32
@@ -122,6 +126,9 @@ func (c *Client) addOperationGetBasePathMappingsMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetBasePathMappingsValidationMiddleware(stack); err != nil {

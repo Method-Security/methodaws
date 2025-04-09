@@ -29,13 +29,19 @@ func (c *Client) DescribeDBParameters(ctx context.Context, params *DescribeDBPar
 
 type DescribeDBParametersInput struct {
 
-	// The name of a specific DB parameter group to return details for. Constraints:
+	// The name of a specific DB parameter group to return details for.
+	//
+	// Constraints:
+	//
 	//   - If supplied, must match the name of an existing DBParameterGroup.
 	//
 	// This member is required.
 	DBParameterGroupName *string
 
-	// This parameter isn't currently supported.
+	// A filter that specifies one or more DB parameters to describe.
+	//
+	// The only supported filter is parameter-name . The results list only includes
+	// information about the DB parameters with these names.
 	Filters []types.Filter
 
 	// An optional pagination token provided by a previous DescribeDBParameters
@@ -46,11 +52,17 @@ type DescribeDBParametersInput struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	MaxRecords *int32
 
-	// The parameter types to return. Default: All parameter types returned Valid
-	// Values: user | system | engine-default
+	// The parameter types to return.
+	//
+	// Default: All parameter types returned
+	//
+	// Valid Values: user | system | engine-default
 	Source *string
 
 	noSmithyDocumentSerde
@@ -117,6 +129,9 @@ func (c *Client) addOperationDescribeDBParametersMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,6 +142,15 @@ func (c *Client) addOperationDescribeDBParametersMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBParametersValidationMiddleware(stack); err != nil {
@@ -150,16 +174,20 @@ func (c *Client) addOperationDescribeDBParametersMiddlewares(stack *middleware.S
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeDBParametersAPIClient is a client that implements the
-// DescribeDBParameters operation.
-type DescribeDBParametersAPIClient interface {
-	DescribeDBParameters(context.Context, *DescribeDBParametersInput, ...func(*Options)) (*DescribeDBParametersOutput, error)
-}
-
-var _ DescribeDBParametersAPIClient = (*Client)(nil)
 
 // DescribeDBParametersPaginatorOptions is the paginator options for
 // DescribeDBParameters
@@ -167,7 +195,10 @@ type DescribeDBParametersPaginatorOptions struct {
 	// The maximum number of records to include in the response. If more records exist
 	// than the specified MaxRecords value, a pagination token called a marker is
 	// included in the response so that you can retrieve the remaining results.
-	// Default: 100 Constraints: Minimum 20, maximum 100.
+	//
+	// Default: 100
+	//
+	// Constraints: Minimum 20, maximum 100.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -228,6 +259,9 @@ func (p *DescribeDBParametersPaginator) NextPage(ctx context.Context, optFns ...
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeDBParameters(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -246,6 +280,14 @@ func (p *DescribeDBParametersPaginator) NextPage(ctx context.Context, optFns ...
 
 	return result, nil
 }
+
+// DescribeDBParametersAPIClient is a client that implements the
+// DescribeDBParameters operation.
+type DescribeDBParametersAPIClient interface {
+	DescribeDBParameters(context.Context, *DescribeDBParametersInput, ...func(*Options)) (*DescribeDBParametersOutput, error)
+}
+
+var _ DescribeDBParametersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeDBParameters(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

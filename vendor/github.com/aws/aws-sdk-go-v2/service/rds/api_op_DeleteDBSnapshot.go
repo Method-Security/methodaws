@@ -12,7 +12,9 @@ import (
 )
 
 // Deletes a DB snapshot. If the snapshot is being copied, the copy operation is
-// terminated. The DB snapshot must be in the available state to be deleted.
+// terminated.
+//
+// The DB snapshot must be in the available state to be deleted.
 func (c *Client) DeleteDBSnapshot(ctx context.Context, params *DeleteDBSnapshotInput, optFns ...func(*Options)) (*DeleteDBSnapshotOutput, error) {
 	if params == nil {
 		params = &DeleteDBSnapshotInput{}
@@ -30,8 +32,9 @@ func (c *Client) DeleteDBSnapshot(ctx context.Context, params *DeleteDBSnapshotI
 
 type DeleteDBSnapshotInput struct {
 
-	// The DB snapshot identifier. Constraints: Must be the name of an existing DB
-	// snapshot in the available state.
+	// The DB snapshot identifier.
+	//
+	// Constraints: Must be the name of an existing DB snapshot in the available state.
 	//
 	// This member is required.
 	DBSnapshotIdentifier *string
@@ -41,8 +44,9 @@ type DeleteDBSnapshotInput struct {
 
 type DeleteDBSnapshotOutput struct {
 
-	// Contains the details of an Amazon RDS DB snapshot. This data type is used as a
-	// response element in the DescribeDBSnapshots action.
+	// Contains the details of an Amazon RDS DB snapshot.
+	//
+	// This data type is used as a response element in the DescribeDBSnapshots action.
 	DBSnapshot *types.DBSnapshot
 
 	// Metadata pertaining to the operation's result.
@@ -94,6 +98,9 @@ func (c *Client) addOperationDeleteDBSnapshotMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -104,6 +111,15 @@ func (c *Client) addOperationDeleteDBSnapshotMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteDBSnapshotValidationMiddleware(stack); err != nil {
@@ -125,6 +141,18 @@ func (c *Client) addOperationDeleteDBSnapshotMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

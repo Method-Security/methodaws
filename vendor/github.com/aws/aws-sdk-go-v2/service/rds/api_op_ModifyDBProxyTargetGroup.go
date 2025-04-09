@@ -46,6 +46,8 @@ type ModifyDBProxyTargetGroupInput struct {
 	// The new name for the modified DBProxyTarget . An identifier must begin with a
 	// letter and must contain only ASCII letters, digits, and hyphens; it can't end
 	// with a hyphen or contain two consecutive hyphens.
+	//
+	// You can't rename the default target group.
 	NewName *string
 
 	noSmithyDocumentSerde
@@ -105,6 +107,9 @@ func (c *Client) addOperationModifyDBProxyTargetGroupMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +120,15 @@ func (c *Client) addOperationModifyDBProxyTargetGroupMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyDBProxyTargetGroupValidationMiddleware(stack); err != nil {
@@ -136,6 +150,18 @@ func (c *Client) addOperationModifyDBProxyTargetGroupMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

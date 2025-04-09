@@ -41,6 +41,10 @@ type DeleteBasePathMappingInput struct {
 	// This member is required.
 	DomainName *string
 
+	//  The identifier for the domain name resource. Supported only for private custom
+	// domain names.
+	DomainNameId *string
+
 	noSmithyDocumentSerde
 }
 
@@ -113,6 +117,9 @@ func (c *Client) addOperationDeleteBasePathMappingMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteBasePathMappingValidationMiddleware(stack); err != nil {
