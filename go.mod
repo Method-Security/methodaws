@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.211.3
+	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.45.3
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.26.1
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.41.1
@@ -25,7 +26,6 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.45.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

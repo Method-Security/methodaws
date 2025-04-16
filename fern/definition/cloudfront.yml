@@ -20,6 +20,6 @@ types:
       Status: CloudFrontDistributionStatus
   CloudFrontReport:
     properties:
-      accountId: string
+      accountID: string
       distributions: optional<list<CloudFrontDistribution>>
       errors: optional<list<string>>

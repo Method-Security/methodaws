@@ -573,7 +573,7 @@ func (c CloudFrontDistributionStatus) Ptr() *CloudFrontDistributionStatus {
 }
 
 type CloudFrontReport struct {
-	AccountId     string                    `json:"accountId" url:"accountId"`
+	AccountId     string                    `json:"accountID" url:"accountID"`
 	Distributions []*CloudFrontDistribution `json:"distributions,omitempty" url:"distributions,omitempty"`
 	Errors        []string                  `json:"errors,omitempty" url:"errors,omitempty"`
 

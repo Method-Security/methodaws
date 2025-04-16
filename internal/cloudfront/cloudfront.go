@@ -66,11 +66,11 @@ func EnumerateCloudFrontForRegion(ctx context.Context, cfg aws.Config, region st
 
 func EnumerateCloudFront(ctx context.Context, cfg aws.Config, regions []string) (*methodaws.CloudFrontReport, error) {
 	// try to setup an account id
-	accountId, err := sts.GetAccountID(ctx, cfg)
+	accountID, err := sts.GetAccountID(ctx, cfg)
 	if err != nil {
 		// return a resource report with error information if we can't get id
 		return &methodaws.CloudFrontReport{
-			AccountId:     aws.ToString(accountId),
+			AccountId:     aws.ToString(accountID),
 			Distributions: []*methodaws.CloudFrontDistribution{},
 			Errors:        []string{err.Error()},
 		}, err
@@ -78,7 +78,7 @@ func EnumerateCloudFront(ctx context.Context, cfg aws.Config, regions []string) 
 
 	// initialize a resource report
 	report := methodaws.CloudFrontReport{
-		AccountId:     aws.ToString(accountId),
+		AccountId:     aws.ToString(accountID),
 		Distributions: []*methodaws.CloudFrontDistribution{},
 		Errors:        []string{},
 	}
