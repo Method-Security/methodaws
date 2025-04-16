@@ -29,6 +29,7 @@ func main() {
 	methodaws.InitStsCommand()
 	methodaws.InitVPCCommand()
 	methodaws.InitWAFCommand()
+	methodaws.InitCloudFrontCommand()
 
 	if err := methodaws.RootCmd.Execute(); err != nil {
 		os.Exit(1)
