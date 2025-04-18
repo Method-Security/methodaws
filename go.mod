@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/iam v1.31.0
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.71.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.77.0
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.18
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19
 	github.com/aws/aws-sdk-go-v2/service/wafv2 v1.54.2
 	github.com/palantir/pkg/datetime v1.1.0
 	github.com/palantir/witchcraft-go-logging v1.57.0
