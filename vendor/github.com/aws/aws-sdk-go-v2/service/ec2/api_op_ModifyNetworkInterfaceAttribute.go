@@ -37,6 +37,11 @@ type ModifyNetworkInterfaceAttributeInput struct {
 	// This member is required.
 	NetworkInterfaceId *string
 
+	// Indicates whether to assign a public IPv4 address to a network interface. This
+	// option can be enabled for any network interface but will only apply to the
+	// primary network interface (eth0).
+	AssociatePublicIpAddress *bool
+
 	// Information about the interface attachment. If modifying the delete on
 	// termination attribute, you must specify the ID of the interface attachment.
 	Attachment *types.NetworkInterfaceAttachmentChanges
@@ -139,6 +144,9 @@ func (c *Client) addOperationModifyNetworkInterfaceAttributeMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -149,6 +157,15 @@ func (c *Client) addOperationModifyNetworkInterfaceAttributeMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyNetworkInterfaceAttributeValidationMiddleware(stack); err != nil {
@@ -170,6 +187,18 @@ func (c *Client) addOperationModifyNetworkInterfaceAttributeMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
