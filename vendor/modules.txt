@@ -140,8 +140,8 @@ github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types
-# github.com/aws/aws-sdk-go-v2/service/iam v1.31.0
-## explicit; go 1.20
+# github.com/aws/aws-sdk-go-v2/service/iam v1.41.1
+## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/service/iam
 github.com/aws/aws-sdk-go-v2/service/iam/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/iam/types
