@@ -10,16 +10,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disassociates the specified regional application resource from any existing web
-// ACL association. A resource can have at most one web ACL association. A regional
-// application can be an Application Load Balancer (ALB), an Amazon API Gateway
-// REST API, an AppSync GraphQL API, an Amazon Cognito user pool, an App Runner
-// service, or an Amazon Web Services Verified Access instance.
+// Disassociates the specified resource from its web ACL association, if it has
+// one.
 //
-// For Amazon CloudFront, don't use this call. Instead, use your CloudFront
-// distribution configuration. To disassociate a web ACL, provide an empty web ACL
-// ID in the CloudFront call UpdateDistribution . For information, see [UpdateDistribution] in the
-// Amazon CloudFront API Reference.
+// Use this for all resource types except for Amazon CloudFront distributions. For
+// Amazon CloudFront, call UpdateDistribution for the distribution and provide an
+// empty web ACL ID. For information, see [UpdateDistribution]in the Amazon CloudFront API Reference.
 //
 // # Required permissions for customer-managed IAM policies
 //
@@ -67,6 +63,9 @@ type DisassociateWebACLInput struct {
 	//
 	//   - For an Amazon Web Services Verified Access instance:
 	//   arn:partition:ec2:region:account-id:verified-access-instance/instance-id
+	//
+	//   - For an Amplify application:
+	//   arn:partition:amplify:region:account-id:apps/app-id
 	//
 	// This member is required.
 	ResourceArn *string
@@ -143,6 +142,9 @@ func (c *Client) addOperationDisassociateWebACLMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisassociateWebACLValidationMiddleware(stack); err != nil {

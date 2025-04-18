@@ -3832,6 +3832,62 @@ func awsAwsjson11_serializeDocumentCustomResponseBody(v *types.CustomResponseBod
 	return nil
 }
 
+func awsAwsjson11_serializeDocumentDataProtection(v *types.DataProtection, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if len(v.Action) > 0 {
+		ok := object.Key("Action")
+		ok.String(string(v.Action))
+	}
+
+	if v.ExcludeRateBasedDetails {
+		ok := object.Key("ExcludeRateBasedDetails")
+		ok.Boolean(v.ExcludeRateBasedDetails)
+	}
+
+	if v.ExcludeRuleMatchDetails {
+		ok := object.Key("ExcludeRuleMatchDetails")
+		ok.Boolean(v.ExcludeRuleMatchDetails)
+	}
+
+	if v.Field != nil {
+		ok := object.Key("Field")
+		if err := awsAwsjson11_serializeDocumentFieldToProtect(v.Field, ok); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentDataProtectionConfig(v *types.DataProtectionConfig, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if v.DataProtections != nil {
+		ok := object.Key("DataProtections")
+		if err := awsAwsjson11_serializeDocumentDataProtections(v.DataProtections, ok); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentDataProtections(v []types.DataProtection, value smithyjson.Value) error {
+	array := value.Array()
+	defer array.Close()
+
+	for i := range v {
+		av := array.Value()
+		if err := awsAwsjson11_serializeDocumentDataProtection(&v[i], av); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func awsAwsjson11_serializeDocumentDefaultAction(v *types.DefaultAction, value smithyjson.Value) error {
 	object := value.Object()
 	defer object.Close()
@@ -3936,6 +3992,13 @@ func awsAwsjson11_serializeDocumentFieldToMatch(v *types.FieldToMatch, value smi
 		}
 	}
 
+	if v.JA4Fingerprint != nil {
+		ok := object.Key("JA4Fingerprint")
+		if err := awsAwsjson11_serializeDocumentJA4Fingerprint(v.JA4Fingerprint, ok); err != nil {
+			return err
+		}
+	}
+
 	if v.JsonBody != nil {
 		ok := object.Key("JsonBody")
 		if err := awsAwsjson11_serializeDocumentJsonBody(v.JsonBody, ok); err != nil {
@@ -3971,6 +4034,13 @@ func awsAwsjson11_serializeDocumentFieldToMatch(v *types.FieldToMatch, value smi
 		}
 	}
 
+	if v.UriFragment != nil {
+		ok := object.Key("UriFragment")
+		if err := awsAwsjson11_serializeDocumentUriFragment(v.UriFragment, ok); err != nil {
+			return err
+		}
+	}
+
 	if v.UriPath != nil {
 		ok := object.Key("UriPath")
 		if err := awsAwsjson11_serializeDocumentUriPath(v.UriPath, ok); err != nil {
@@ -3978,6 +4048,36 @@ func awsAwsjson11_serializeDocumentFieldToMatch(v *types.FieldToMatch, value smi
 		}
 	}
 
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentFieldToProtect(v *types.FieldToProtect, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if v.FieldKeys != nil {
+		ok := object.Key("FieldKeys")
+		if err := awsAwsjson11_serializeDocumentFieldToProtectKeys(v.FieldKeys, ok); err != nil {
+			return err
+		}
+	}
+
+	if len(v.FieldType) > 0 {
+		ok := object.Key("FieldType")
+		ok.String(string(v.FieldType))
+	}
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentFieldToProtectKeys(v []string, value smithyjson.Value) error {
+	array := value.Array()
+	defer array.Close()
+
+	for i := range v {
+		av := array.Value()
+		av.String(v[i])
+	}
 	return nil
 }
 
@@ -4196,6 +4296,18 @@ func awsAwsjson11_serializeDocumentIPSetReferenceStatement(v *types.IPSetReferen
 }
 
 func awsAwsjson11_serializeDocumentJA3Fingerprint(v *types.JA3Fingerprint, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if len(v.FallbackBehavior) > 0 {
+		ok := object.Key("FallbackBehavior")
+		ok.String(string(v.FallbackBehavior))
+	}
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentJA4Fingerprint(v *types.JA4Fingerprint, value smithyjson.Value) error {
 	object := value.Object()
 	defer object.Close()
 
@@ -4704,6 +4816,20 @@ func awsAwsjson11_serializeDocumentRateBasedStatementCustomKey(v *types.RateBase
 		}
 	}
 
+	if v.JA3Fingerprint != nil {
+		ok := object.Key("JA3Fingerprint")
+		if err := awsAwsjson11_serializeDocumentRateLimitJA3Fingerprint(v.JA3Fingerprint, ok); err != nil {
+			return err
+		}
+	}
+
+	if v.JA4Fingerprint != nil {
+		ok := object.Key("JA4Fingerprint")
+		if err := awsAwsjson11_serializeDocumentRateLimitJA4Fingerprint(v.JA4Fingerprint, ok); err != nil {
+			return err
+		}
+	}
+
 	if v.LabelNamespace != nil {
 		ok := object.Key("LabelNamespace")
 		if err := awsAwsjson11_serializeDocumentRateLimitLabelNamespace(v.LabelNamespace, ok); err != nil {
@@ -4803,6 +4929,30 @@ func awsAwsjson11_serializeDocumentRateLimitHTTPMethod(v *types.RateLimitHTTPMet
 func awsAwsjson11_serializeDocumentRateLimitIP(v *types.RateLimitIP, value smithyjson.Value) error {
 	object := value.Object()
 	defer object.Close()
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentRateLimitJA3Fingerprint(v *types.RateLimitJA3Fingerprint, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if len(v.FallbackBehavior) > 0 {
+		ok := object.Key("FallbackBehavior")
+		ok.String(string(v.FallbackBehavior))
+	}
+
+	return nil
+}
+
+func awsAwsjson11_serializeDocumentRateLimitJA4Fingerprint(v *types.RateLimitJA4Fingerprint, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if len(v.FallbackBehavior) > 0 {
+		ok := object.Key("FallbackBehavior")
+		ok.String(string(v.FallbackBehavior))
+	}
 
 	return nil
 }
@@ -5756,6 +5906,18 @@ func awsAwsjson11_serializeDocumentTokenDomains(v []string, value smithyjson.Val
 	return nil
 }
 
+func awsAwsjson11_serializeDocumentUriFragment(v *types.UriFragment, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if len(v.FallbackBehavior) > 0 {
+		ok := object.Key("FallbackBehavior")
+		ok.String(string(v.FallbackBehavior))
+	}
+
+	return nil
+}
+
 func awsAwsjson11_serializeDocumentUriPath(v *types.UriPath, value smithyjson.Value) error {
 	object := value.Object()
 	defer object.Close()
@@ -6064,6 +6226,13 @@ func awsAwsjson11_serializeOpDocumentCreateWebACLInput(v *CreateWebACLInput, val
 	if v.CustomResponseBodies != nil {
 		ok := object.Key("CustomResponseBodies")
 		if err := awsAwsjson11_serializeDocumentCustomResponseBodies(v.CustomResponseBodies, ok); err != nil {
+			return err
+		}
+	}
+
+	if v.DataProtectionConfig != nil {
+		ok := object.Key("DataProtectionConfig")
+		if err := awsAwsjson11_serializeDocumentDataProtectionConfig(v.DataProtectionConfig, ok); err != nil {
 			return err
 		}
 	}
@@ -6624,6 +6793,11 @@ func awsAwsjson11_serializeOpDocumentGetWebACLForResourceInput(v *GetWebACLForRe
 func awsAwsjson11_serializeOpDocumentGetWebACLInput(v *GetWebACLInput, value smithyjson.Value) error {
 	object := value.Object()
 	defer object.Close()
+
+	if v.ARN != nil {
+		ok := object.Key("ARN")
+		ok.String(*v.ARN)
+	}
 
 	if v.Id != nil {
 		ok := object.Key("Id")
@@ -7221,6 +7395,13 @@ func awsAwsjson11_serializeOpDocumentUpdateWebACLInput(v *UpdateWebACLInput, val
 	if v.CustomResponseBodies != nil {
 		ok := object.Key("CustomResponseBodies")
 		if err := awsAwsjson11_serializeDocumentCustomResponseBodies(v.CustomResponseBodies, ok); err != nil {
+			return err
+		}
+	}
+
+	if v.DataProtectionConfig != nil {
+		ok := object.Key("DataProtectionConfig")
+		if err := awsAwsjson11_serializeDocumentDataProtectionConfig(v.DataProtectionConfig, ok); err != nil {
 			return err
 		}
 	}

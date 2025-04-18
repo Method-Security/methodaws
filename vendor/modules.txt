@@ -197,8 +197,8 @@ github.com/aws/aws-sdk-go-v2/service/ssooidc/types
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sts/types
-# github.com/aws/aws-sdk-go-v2/service/wafv2 v1.54.2
-## explicit; go 1.21
+# github.com/aws/aws-sdk-go-v2/service/wafv2 v1.60.1
+## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/service/wafv2
 github.com/aws/aws-sdk-go-v2/service/wafv2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/wafv2/types

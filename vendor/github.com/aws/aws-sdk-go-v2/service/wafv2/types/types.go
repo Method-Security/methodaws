@@ -346,6 +346,8 @@ type Body struct {
 	//   limit for each resource type in the web ACL AssociationConfig , for additional
 	//   processing fees.
 	//
+	//   - For Amplify, use the CloudFront limit.
+	//
 	// The options for oversize handling are the following:
 	//
 	//   - CONTINUE - Inspect the available body contents normally, according to the
@@ -865,6 +867,71 @@ type CustomResponseBody struct {
 	noSmithyDocumentSerde
 }
 
+// Specifies the protection behavior for a field type. This is part of the data
+// protection configuration for a web ACL.
+type DataProtection struct {
+
+	// Specifies how to protect the field. WAF can apply a one-way hash to the field
+	// or hard code a string substitution.
+	//
+	//   - One-way hash example:
+	//   ade099751dEXAMPLEHASH2ea9f3393f80dd5d3bEXAMPLEHASH966ae0d3cd5a1e
+	//
+	//   - Substitution example: REDACTED
+	//
+	// This member is required.
+	Action DataProtectionAction
+
+	// Specifies the field type and optional keys to apply the protection behavior to.
+	//
+	// This member is required.
+	Field *FieldToProtect
+
+	// Specifies whether to also exclude any rate-based rule details from the data
+	// protection you have enabled for a given field. If you specify this exception,
+	// RateBasedDetails will show the value of the field. For additional information,
+	// see the log field rateBasedRuleList at [Log fields for web ACL traffic] in the WAF Developer Guide.
+	//
+	// Default: FALSE
+	//
+	// [Log fields for web ACL traffic]: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html
+	ExcludeRateBasedDetails bool
+
+	// Specifies whether to also exclude any rule match details from the data
+	// protection you have enabled for a given field. WAF logs these details for
+	// non-terminating matching rules and for the terminating matching rule. For
+	// additional information, see [Log fields for web ACL traffic]in the WAF Developer Guide.
+	//
+	// Default: FALSE
+	//
+	// [Log fields for web ACL traffic]: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html
+	ExcludeRuleMatchDetails bool
+
+	noSmithyDocumentSerde
+}
+
+// Specifies data protection to apply to the web request data for the web ACL.
+// This is a web ACL level data protection option.
+//
+// The data protection that you configure for the web ACL alters the data that's
+// available for any other data collection activity, including your WAF logging
+// destinations, web ACL request sampling, and Amazon Security Lake data collection
+// and management. Your other option for data protection is in the logging
+// configuration, which only affects logging.
+//
+// This is part of the data protection configuration for a web ACL.
+type DataProtectionConfig struct {
+
+	// An array of data protection configurations for specific web request field
+	// types. This is defined for each web ACL. WAF applies the specified protection to
+	// all web requests that the web ACL inspects.
+	//
+	// This member is required.
+	DataProtections []DataProtection
+
+	noSmithyDocumentSerde
+}
+
 // In a WebACL, this is the action that you want WAF to perform when a web request
 // doesn't match any of the rules in the WebACL . The default action must be a
 // terminating action.
@@ -954,8 +1021,9 @@ type ExcludedRule struct {
 //     are specifying the component type to redact from the logs.
 //
 //   - If you have request sampling enabled, the redacted fields configuration for
-//     logging has no impact on sampling. The only way to exclude fields from request
-//     sampling is by disabling sampling in the web ACL visibility configuration.
+//     logging has no impact on sampling. You can only exclude fields from request
+//     sampling by disabling sampling in the web ACL visibility configuration or by
+//     configuring data protection for the web ACL.
 type FieldToMatch struct {
 
 	// Inspect all query arguments.
@@ -978,6 +1046,8 @@ type FieldToMatch struct {
 	//   Access, the default limit is 16 KB (16,384 bytes), and you can increase the
 	//   limit for each resource type in the web ACL AssociationConfig , for additional
 	//   processing fees.
+	//
+	//   - For Amplify, use the CloudFront limit.
 	//
 	// For information about how to handle oversized request bodies, see the Body
 	// object configuration.
@@ -1034,6 +1104,28 @@ type FieldToMatch struct {
 	// [Log fields]: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html
 	JA3Fingerprint *JA3Fingerprint
 
+	// Available for use with Amazon CloudFront distributions and Application Load
+	// Balancers. Match against the request's JA4 fingerprint. The JA4 fingerprint is a
+	// 36-character hash derived from the TLS Client Hello of an incoming request. This
+	// fingerprint serves as a unique identifier for the client's TLS configuration.
+	// WAF calculates and logs this fingerprint for each request that has enough TLS
+	// Client Hello information for the calculation. Almost all web requests include
+	// this information.
+	//
+	// You can use this choice only with a string match ByteMatchStatement with the
+	// PositionalConstraint set to EXACTLY .
+	//
+	// You can obtain the JA4 fingerprint for client requests from the web ACL logs.
+	// If WAF is able to calculate the fingerprint, it includes it in the logs. For
+	// information about the logging fields, see [Log fields]in the WAF Developer Guide.
+	//
+	// Provide the JA4 fingerprint string from the logs in your string match statement
+	// specification, to match with any future requests that have the same TLS
+	// configuration.
+	//
+	// [Log fields]: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html
+	JA4Fingerprint *JA4Fingerprint
+
 	// Inspect the request body as JSON. The request body immediately follows the
 	// request headers. This is the part of a request that contains any additional data
 	// that you want to send to your web server as the HTTP request body, such as data
@@ -1051,6 +1143,8 @@ type FieldToMatch struct {
 	//   Access, the default limit is 16 KB (16,384 bytes), and you can increase the
 	//   limit for each resource type in the web ACL AssociationConfig , for additional
 	//   processing fees.
+	//
+	//   - For Amplify, use the CloudFront limit.
 	//
 	// For information about how to handle oversized request bodies, see the JsonBody
 	// object configuration.
@@ -1080,9 +1174,36 @@ type FieldToMatch struct {
 	// Example JSON: "SingleQueryArgument": { "Name": "myArgument" }
 	SingleQueryArgument *SingleQueryArgument
 
+	// Inspect fragments of the request URI. You must configure scope and pattern
+	// matching filters in the UriFragment object, to define the fragment of a URI
+	// that WAF inspects.
+	//
+	// Only the first 8 KB (8192 bytes) of a request's URI fragments and only the
+	// first 200 URI fragments are forwarded to WAF for inspection by the underlying
+	// host service. You must configure how to handle any oversize URI fragment content
+	// in the UriFragment object. WAF applies the pattern matching filters to the
+	// cookies that it receives from the underlying host service.
+	UriFragment *UriFragment
+
 	// Inspect the request URI path. This is the part of the web request that
 	// identifies a resource, for example, /images/daily-ad.jpg .
 	UriPath *UriPath
+
+	noSmithyDocumentSerde
+}
+
+// Specifies a field type and keys to protect in stored web request data. This is
+// part of the data protection configuration for a web ACL.
+type FieldToProtect struct {
+
+	// Specifies the web request component type to protect.
+	//
+	// This member is required.
+	FieldType FieldToProtectType
+
+	// Specifies the keys to protect for the specified field type. If you don't
+	// specify any key, then all keys for the field type are protected.
+	FieldKeys []string
 
 	noSmithyDocumentSerde
 }
@@ -1686,6 +1807,44 @@ type JA3Fingerprint struct {
 	noSmithyDocumentSerde
 }
 
+// Available for use with Amazon CloudFront distributions and Application Load
+// Balancers. Match against the request's JA4 fingerprint. The JA4 fingerprint is a
+// 36-character hash derived from the TLS Client Hello of an incoming request. This
+// fingerprint serves as a unique identifier for the client's TLS configuration.
+// WAF calculates and logs this fingerprint for each request that has enough TLS
+// Client Hello information for the calculation. Almost all web requests include
+// this information.
+//
+// You can use this choice only with a string match ByteMatchStatement with the
+// PositionalConstraint set to EXACTLY .
+//
+// You can obtain the JA4 fingerprint for client requests from the web ACL logs.
+// If WAF is able to calculate the fingerprint, it includes it in the logs. For
+// information about the logging fields, see [Log fields]in the WAF Developer Guide.
+//
+// Provide the JA4 fingerprint string from the logs in your string match statement
+// specification, to match with any future requests that have the same TLS
+// configuration.
+//
+// [Log fields]: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html
+type JA4Fingerprint struct {
+
+	// The match status to assign to the web request if the request doesn't have a JA4
+	// fingerprint.
+	//
+	// You can specify the following fallback behaviors:
+	//
+	//   - MATCH - Treat the web request as matching the rule statement. WAF applies
+	//   the rule action to the request.
+	//
+	//   - NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// This member is required.
+	FallbackBehavior FallbackBehavior
+
+	noSmithyDocumentSerde
+}
+
 // Inspect the body of the web request as JSON. The body immediately follows the
 // request headers.
 //
@@ -1758,6 +1917,8 @@ type JsonBody struct {
 	//   Access, the default limit is 16 KB (16,384 bytes), and you can increase the
 	//   limit for each resource type in the web ACL AssociationConfig , for additional
 	//   processing fees.
+	//
+	//   - For Amplify, use the CloudFront limit.
 	//
 	// The options for oversize handling are the following:
 	//
@@ -1890,6 +2051,9 @@ type LabelSummary struct {
 // standard logging fields to keep out of the logs and you can specify filters so
 // that you log only a subset of the logging records.
 //
+// If you configure data protection for the web ACL, the protection applies to the
+// data that WAF sends to the logs.
+//
 // You can define one logging destination per web ACL.
 //
 // You can access information about the traffic that WAF inspects using the
@@ -1966,12 +2130,23 @@ type LoggingConfiguration struct {
 	// Indicates whether the logging configuration was created by Firewall Manager, as
 	// part of an WAF policy configuration. If true, only Firewall Manager can modify
 	// or delete the configuration.
+	//
+	// The logging configuration can be created by Firewall Manager for use with any
+	// web ACL that Firewall Manager is using for an WAF policy. Web ACLs that Firewall
+	// Manager creates and uses have their ManagedByFirewallManager property set to
+	// true. Web ACLs that were created by a customer account and then retrofitted by
+	// Firewall Manager for use by a policy have their RetrofittedByFirewallManager
+	// property set to true. For either case, any corresponding logging configuration
+	// will indicate ManagedByFirewallManager .
 	ManagedByFirewallManager bool
 
 	// The parts of the request that you want to keep out of the logs.
 	//
 	// For example, if you redact the SingleHeader field, the HEADER field in the logs
 	// will be REDACTED for all rules that use the SingleHeader FieldToMatch setting.
+	//
+	// If you configure data protection for the web ACL, the protection applies to the
+	// data that WAF sends to the logs.
 	//
 	// Redaction applies only to the component that's specified in the rule's
 	// FieldToMatch setting, so the SingleHeader redaction doesn't apply to rules that
@@ -1980,9 +2155,9 @@ type LoggingConfiguration struct {
 	// You can specify only the following fields for redaction: UriPath , QueryString ,
 	// SingleHeader , and Method .
 	//
-	// This setting has no impact on request sampling. With request sampling, the only
-	// way to exclude fields is by disabling sampling in the web ACL visibility
-	// configuration.
+	// This setting has no impact on request sampling. You can only exclude fields
+	// from request sampling by disabling sampling in the web ACL visibility
+	// configuration or by configuring data protection for the web ACL.
 	RedactedFields []FieldToMatch
 
 	noSmithyDocumentSerde
@@ -2209,6 +2384,10 @@ type ManagedRuleGroupStatement struct {
 	// Action settings to use in the place of the rule actions that are configured
 	// inside the rule group. You specify one override for each rule whose action you
 	// want to change.
+	//
+	// Take care to verify the rule names in your overrides. If you provide a rule
+	// name that doesn't match the name of any rule in the rule group, WAF doesn't
+	// return an error and doesn't apply the override setting.
 	//
 	// You can use overrides for testing, for example you can override all of rule
 	// actions to Count and then monitor the resulting count metrics to understand how
@@ -2755,9 +2934,10 @@ type RateBasedStatement struct {
 	// This member is required.
 	AggregateKeyType RateBasedStatementAggregateKeyType
 
-	// The limit on requests per 5-minute period for a single aggregation instance for
-	// the rate-based rule. If the rate-based statement includes a ScopeDownStatement ,
-	// this limit is applied only to the requests that match the statement.
+	// The limit on requests during the specified evaluation window for a single
+	// aggregation instance for the rate-based rule. If the rate-based statement
+	// includes a ScopeDownStatement , this limit is applied only to the requests that
+	// match the statement.
 	//
 	// Examples:
 	//
@@ -2849,6 +3029,16 @@ type RateBasedStatementCustomKey struct {
 	// also specify at least one other key to use. You can aggregate on only the IP
 	// address by specifying IP in your rate-based statement's AggregateKeyType .
 	IP *RateLimitIP
+
+	//  Use the request's JA3 fingerprint as an aggregate key. If you use a single JA3
+	// fingerprint as your custom key, then each value fully defines an aggregation
+	// instance.
+	JA3Fingerprint *RateLimitJA3Fingerprint
+
+	// Use the request's JA4 fingerprint as an aggregate key. If you use a single JA4
+	// fingerprint as your custom key, then each value fully defines an aggregation
+	// instance.
+	JA4Fingerprint *RateLimitJA4Fingerprint
 
 	// Use the specified label namespace as an aggregate key. Each distinct fully
 	// qualified label name that has the specified label namespace contributes to the
@@ -3005,6 +3195,49 @@ type RateLimitHTTPMethod struct {
 //
 // JSON specification: "RateLimitIP": {}
 type RateLimitIP struct {
+	noSmithyDocumentSerde
+}
+
+//	Use the request's JA3 fingerprint derived from the TLS Client Hello of an
+//
+// incoming request as an aggregate key. If you use a single JA3 fingerprint as
+// your custom key, then each value fully defines an aggregation instance.
+type RateLimitJA3Fingerprint struct {
+
+	// The match status to assign to the web request if there is insufficient TSL
+	// Client Hello information to compute the JA3 fingerprint.
+	//
+	// You can specify the following fallback behaviors:
+	//
+	//   - MATCH - Treat the web request as matching the rule statement. WAF applies
+	//   the rule action to the request.
+	//
+	//   - NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// This member is required.
+	FallbackBehavior FallbackBehavior
+
+	noSmithyDocumentSerde
+}
+
+// Use the request's JA4 fingerprint derived from the TLS Client Hello of an
+// incoming request as an aggregate key. If you use a single JA4 fingerprint as
+// your custom key, then each value fully defines an aggregation instance.
+type RateLimitJA4Fingerprint struct {
+
+	// The match status to assign to the web request if there is insufficient TSL
+	// Client Hello information to compute the JA4 fingerprint.
+	//
+	// You can specify the following fallback behaviors:
+	//
+	//   - MATCH - Treat the web request as matching the rule statement. WAF applies
+	//   the rule action to the request.
+	//
+	//   - NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// This member is required.
+	FallbackBehavior FallbackBehavior
+
 	noSmithyDocumentSerde
 }
 
@@ -3737,6 +3970,9 @@ type Rule struct {
 	// is the concatenation of a label namespace and a rule label. The rule's rule
 	// group or web ACL defines the label namespace.
 	//
+	// Any rule that isn't a rule group reference statement or managed rule group
+	// statement can add labels to matching web requests.
+	//
 	// Rules that run after this rule in the web ACL can match against these labels
 	// using a LabelMatchStatement .
 	//
@@ -3785,6 +4021,10 @@ type RuleAction struct {
 // the rule group. You specify one override for each rule whose action you want to
 // change.
 //
+// Take care to verify the rule names in your overrides. If you provide a rule
+// name that doesn't match the name of any rule in the rule group, WAF doesn't
+// return an error and doesn't apply the override setting.
+//
 // You can use overrides for testing, for example you can override all of rule
 // actions to Count and then monitor the resulting count metrics to understand how
 // the rule group would handle your web traffic. You can also permanently override
@@ -3798,6 +4038,10 @@ type RuleActionOverride struct {
 	ActionToUse *RuleAction
 
 	// The name of the rule to override.
+	//
+	// Take care to verify the rule names in your overrides. If you provide a rule
+	// name that doesn't match the name of any rule in the rule group, WAF doesn't
+	// return an error and doesn't apply the override setting.
 	//
 	// This member is required.
 	Name *string
@@ -3930,6 +4174,10 @@ type RuleGroupReferenceStatement struct {
 	// Action settings to use in the place of the rule actions that are configured
 	// inside the rule group. You specify one override for each rule whose action you
 	// want to change.
+	//
+	// Take care to verify the rule names in your overrides. If you provide a rule
+	// name that doesn't match the name of any rule in the rule group, WAF doesn't
+	// return an error and doesn't apply the override setting.
 	//
 	// You can use overrides for testing, for example you can override all of rule
 	// actions to Count and then monitor the resulting count metrics to understand how
@@ -4534,6 +4782,44 @@ type TimeWindow struct {
 	noSmithyDocumentSerde
 }
 
+// Inspect fragments of the request URI. You can specify the parts of the URI
+// fragment to inspect and you can narrow the set of URI fragments to inspect by
+// including or excluding specific keys.
+//
+// This is used to indicate the web request component to inspect, in the FieldToMatch
+// specification.
+//
+// Example JSON: "UriFragment": { "MatchPattern": { "All": {} }, "MatchScope":
+// "KEY", "OversizeHandling": "MATCH" }
+type UriFragment struct {
+
+	// What WAF should do if it fails to completely parse the JSON body. The options
+	// are the following:
+	//
+	//   - EVALUATE_AS_STRING - Inspect the body as plain text. WAF applies the text
+	//   transformations and inspection criteria that you defined for the JSON inspection
+	//   to the body text string.
+	//
+	//   - MATCH - Treat the web request as matching the rule statement. WAF applies
+	//   the rule action to the request.
+	//
+	//   - NO_MATCH - Treat the web request as not matching the rule statement.
+	//
+	// If you don't provide this setting, WAF parses and evaluates the content only up
+	// to the first parsing failure that it encounters.
+	//
+	// Example JSON: { "UriFragment": { "FallbackBehavior": "MATCH"} }
+	//
+	// WAF parsing doesn't fully validate the input JSON string, so parsing can
+	// succeed even for invalid JSON. When parsing succeeds, WAF doesn't apply the
+	// fallback behavior. For more information, see [JSON body]in the WAF Developer Guide.
+	//
+	// [JSON body]: https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-fields-list.html#waf-rule-statement-request-component-json-body
+	FallbackBehavior FallbackBehavior
+
+	noSmithyDocumentSerde
+}
+
 // Inspect the path component of the URI of the web request. This is the part of
 // the web request that identifies a resource. For example, /images/daily-ad.jpg .
 //
@@ -4627,10 +4913,14 @@ type VisibilityConfig struct {
 	// Indicates whether WAF should store a sampling of the web requests that match
 	// the rules. You can view the sampled requests through the WAF console.
 	//
+	// If you configure data protection for the web ACL, the protection applies to the
+	// web ACL's sampled web request data.
+	//
 	// Request sampling doesn't provide a field redaction option, and any field
 	// redaction that you specify in your logging configuration doesn't affect
-	// sampling. The only way to exclude fields from request sampling is by disabling
-	// sampling in the web ACL visibility configuration.
+	// sampling. You can only exclude fields from request sampling by disabling
+	// sampling in the web ACL visibility configuration or by configuring data
+	// protection for the web ACL.
 	//
 	// This member is required.
 	SampledRequestsEnabled bool
@@ -4645,10 +4935,11 @@ type VisibilityConfig struct {
 // the web ACL, you assign a default action to take (allow, block) for any request
 // that does not match any of the rules. The rules in a web ACL can be a
 // combination of the types Rule, RuleGroup, and managed rule group. You can associate a web
-// ACL with one or more Amazon Web Services resources to protect. The resources can
-// be an Amazon CloudFront distribution, an Amazon API Gateway REST API, an
-// Application Load Balancer, an AppSync GraphQL API, an Amazon Cognito user pool,
-// an App Runner service, or an Amazon Web Services Verified Access instance.
+// ACL with one or more Amazon Web Services resources to protect. The resource
+// types include Amazon CloudFront distribution, Amazon API Gateway REST API,
+// Application Load Balancer, AppSync GraphQL API, Amazon Cognito user pool, App
+// Runner service, Amplify application, and Amazon Web Services Verified Access
+// instance.
 type WebACL struct {
 
 	// The Amazon Resource Name (ARN) of the web ACL that you want to associate with
@@ -4736,6 +5027,16 @@ type WebACL struct {
 	// [Customizing web requests and responses in WAF]: https://docs.aws.amazon.com/waf/latest/developerguide/waf-custom-request-response.html
 	CustomResponseBodies map[string]CustomResponseBody
 
+	// Specifies data protection to apply to the web request data for the web ACL.
+	// This is a web ACL level data protection option.
+	//
+	// The data protection that you configure for the web ACL alters the data that's
+	// available for any other data collection activity, including your WAF logging
+	// destinations, web ACL request sampling, and Amazon Security Lake data collection
+	// and management. Your other option for data protection is in the logging
+	// configuration, which only affects logging.
+	DataProtectionConfig *DataProtectionConfig
+
 	// A description of the web ACL that helps with identification.
 	Description *string
 
@@ -4754,9 +5055,11 @@ type WebACL struct {
 	// :
 	LabelNamespace *string
 
-	// Indicates whether this web ACL is managed by Firewall Manager. If true, then
-	// only Firewall Manager can delete the web ACL or any Firewall Manager rule groups
-	// in the web ACL.
+	// Indicates whether this web ACL was created by Firewall Manager and is being
+	// managed by Firewall Manager. If true, then only Firewall Manager can delete the
+	// web ACL or any Firewall Manager rule groups in the web ACL. See also the
+	// properties RetrofittedByFirewallManager , PreProcessFirewallManagerRuleGroups ,
+	// and PostProcessFirewallManagerRuleGroups .
 	ManagedByFirewallManager bool
 
 	// The last set of rules for WAF to process in the web ACL. This is defined in an
@@ -4780,6 +5083,14 @@ type WebACL struct {
 	// to run last. Within each set, the administrator prioritizes the rule groups, to
 	// determine their relative processing order.
 	PreProcessFirewallManagerRuleGroups []FirewallManagerRuleGroup
+
+	// Indicates whether this web ACL was created by a customer account and then
+	// retrofitted by Firewall Manager. If true, then the web ACL is currently being
+	// managed by a Firewall Manager WAF policy, and only Firewall Manager can manage
+	// any Firewall Manager rule groups in the web ACL. See also the properties
+	// ManagedByFirewallManager , PreProcessFirewallManagerRuleGroups , and
+	// PostProcessFirewallManagerRuleGroups .
+	RetrofittedByFirewallManager bool
 
 	// The Rule statements used to identify the web requests that you want to manage. Each
 	// rule includes one top-level statement that WAF uses to identify matching web
