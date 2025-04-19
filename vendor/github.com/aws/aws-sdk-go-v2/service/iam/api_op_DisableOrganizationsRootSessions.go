@@ -6,77 +6,62 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Removes the specified tags from the IAM server certificate. For more
-// information about tagging, see [Tagging IAM resources]in the IAM User Guide.
-//
-// For certificates in a Region supported by Certificate Manager (ACM), we
-// recommend that you don't use IAM server certificates. Instead, use ACM to
-// provision, manage, and deploy your server certificates. For more information
-// about IAM server certificates, [Working with server certificates]in the IAM User Guide.
-//
-// [Working with server certificates]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html
-// [Tagging IAM resources]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html
-func (c *Client) UntagServerCertificate(ctx context.Context, params *UntagServerCertificateInput, optFns ...func(*Options)) (*UntagServerCertificateOutput, error) {
+// Disables root user sessions for privileged tasks across member accounts in your
+// organization. When you disable this feature, the management account and the
+// delegated administrator for IAM can no longer perform privileged tasks on member
+// accounts in your organization.
+func (c *Client) DisableOrganizationsRootSessions(ctx context.Context, params *DisableOrganizationsRootSessionsInput, optFns ...func(*Options)) (*DisableOrganizationsRootSessionsOutput, error) {
 	if params == nil {
-		params = &UntagServerCertificateInput{}
+		params = &DisableOrganizationsRootSessionsInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "UntagServerCertificate", params, optFns, c.addOperationUntagServerCertificateMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "DisableOrganizationsRootSessions", params, optFns, c.addOperationDisableOrganizationsRootSessionsMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*UntagServerCertificateOutput)
+	out := result.(*DisableOrganizationsRootSessionsOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-type UntagServerCertificateInput struct {
-
-	// The name of the IAM server certificate from which you want to remove tags.
-	//
-	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
-	//
-	// [regex pattern]: http://wikipedia.org/wiki/regex
-	//
-	// This member is required.
-	ServerCertificateName *string
-
-	// A list of key names as a simple array of strings. The tags with matching keys
-	// are removed from the specified IAM server certificate.
-	//
-	// This member is required.
-	TagKeys []string
-
+type DisableOrganizationsRootSessionsInput struct {
 	noSmithyDocumentSerde
 }
 
-type UntagServerCertificateOutput struct {
+type DisableOrganizationsRootSessionsOutput struct {
+
+	// The features you have enabled for centralized root access of member accounts in
+	// your organization.
+	EnabledFeatures []types.FeatureType
+
+	// The unique identifier (ID) of an organization.
+	OrganizationId *string
+
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
 
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware.Stack, options Options) (err error) {
+func (c *Client) addOperationDisableOrganizationsRootSessionsMiddlewares(stack *middleware.Stack, options Options) (err error) {
 	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
 		return err
 	}
-	err = stack.Serialize.Add(&awsAwsquery_serializeOpUntagServerCertificate{}, middleware.After)
+	err = stack.Serialize.Add(&awsAwsquery_serializeOpDisableOrganizationsRootSessions{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsAwsquery_deserializeOpUntagServerCertificate{}, middleware.After)
+	err = stack.Deserialize.Add(&awsAwsquery_deserializeOpDisableOrganizationsRootSessions{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "UntagServerCertificate"); err != nil {
+	if err := addProtocolFinalizerMiddlewares(stack, options, "DisableOrganizationsRootSessions"); err != nil {
 		return fmt.Errorf("add protocol finalizers: %v", err)
 	}
 
@@ -131,10 +116,7 @@ func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpUntagServerCertificateValidationMiddleware(stack); err != nil {
-		return err
-	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUntagServerCertificate(options.Region), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableOrganizationsRootSessions(options.Region), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRecursionDetection(stack); err != nil {
@@ -167,10 +149,10 @@ func (c *Client) addOperationUntagServerCertificateMiddlewares(stack *middleware
 	return nil
 }
 
-func newServiceMetadataMiddleware_opUntagServerCertificate(region string) *awsmiddleware.RegisterServiceMetadata {
+func newServiceMetadataMiddleware_opDisableOrganizationsRootSessions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
 		Region:        region,
 		ServiceID:     ServiceID,
-		OperationName: "UntagServerCertificate",
+		OperationName: "DisableOrganizationsRootSessions",
 	}
 }
