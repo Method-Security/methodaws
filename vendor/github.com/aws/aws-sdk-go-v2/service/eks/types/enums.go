@@ -97,6 +97,8 @@ const (
 	AMITypesCustom                  AMITypes = "CUSTOM"
 	AMITypesBottlerocketArm64       AMITypes = "BOTTLEROCKET_ARM_64"
 	AMITypesBottlerocketX8664       AMITypes = "BOTTLEROCKET_x86_64"
+	AMITypesBottlerocketArm64Fips   AMITypes = "BOTTLEROCKET_ARM_64_FIPS"
+	AMITypesBottlerocketX8664Fips   AMITypes = "BOTTLEROCKET_x86_64_FIPS"
 	AMITypesBottlerocketArm64Nvidia AMITypes = "BOTTLEROCKET_ARM_64_NVIDIA"
 	AMITypesBottlerocketX8664Nvidia AMITypes = "BOTTLEROCKET_x86_64_NVIDIA"
 	AMITypesWindowsCore2019X8664    AMITypes = "WINDOWS_CORE_2019_x86_64"
@@ -107,6 +109,7 @@ const (
 	AMITypesAl2023Arm64Standard     AMITypes = "AL2023_ARM_64_STANDARD"
 	AMITypesAl2023X8664Neuron       AMITypes = "AL2023_x86_64_NEURON"
 	AMITypesAl2023X8664Nvidia       AMITypes = "AL2023_x86_64_NVIDIA"
+	AMITypesAl2023Arm64Nvidia       AMITypes = "AL2023_ARM_64_NVIDIA"
 )
 
 // Values returns all known values for AMITypes. Note that this can be expanded in
@@ -121,6 +124,8 @@ func (AMITypes) Values() []AMITypes {
 		"CUSTOM",
 		"BOTTLEROCKET_ARM_64",
 		"BOTTLEROCKET_x86_64",
+		"BOTTLEROCKET_ARM_64_FIPS",
+		"BOTTLEROCKET_x86_64_FIPS",
 		"BOTTLEROCKET_ARM_64_NVIDIA",
 		"BOTTLEROCKET_x86_64_NVIDIA",
 		"WINDOWS_CORE_2019_x86_64",
@@ -131,6 +136,7 @@ func (AMITypes) Values() []AMITypes {
 		"AL2023_ARM_64_STANDARD",
 		"AL2023_x86_64_NEURON",
 		"AL2023_x86_64_NVIDIA",
+		"AL2023_ARM_64_NVIDIA",
 	}
 }
 
@@ -692,6 +698,25 @@ func (NodegroupStatus) Values() []NodegroupStatus {
 	}
 }
 
+type NodegroupUpdateStrategies string
+
+// Enum values for NodegroupUpdateStrategies
+const (
+	NodegroupUpdateStrategiesDefault NodegroupUpdateStrategies = "DEFAULT"
+	NodegroupUpdateStrategiesMinimal NodegroupUpdateStrategies = "MINIMAL"
+)
+
+// Values returns all known values for NodegroupUpdateStrategies. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (NodegroupUpdateStrategies) Values() []NodegroupUpdateStrategies {
+	return []NodegroupUpdateStrategies{
+		"DEFAULT",
+		"MINIMAL",
+	}
+}
+
 type ResolveConflicts string
 
 // Enum values for ResolveConflicts
@@ -781,6 +806,7 @@ const (
 	UpdateParamTypeMaxUnavailable           UpdateParamType = "MaxUnavailable"
 	UpdateParamTypeMaxUnavailablePercentage UpdateParamType = "MaxUnavailablePercentage"
 	UpdateParamTypeNodeRepairEnabled        UpdateParamType = "NodeRepairEnabled"
+	UpdateParamTypeUpdateStrategy           UpdateParamType = "UpdateStrategy"
 	UpdateParamTypeConfigurationValues      UpdateParamType = "ConfigurationValues"
 	UpdateParamTypeSecurityGroups           UpdateParamType = "SecurityGroups"
 	UpdateParamTypeSubnets                  UpdateParamType = "Subnets"
@@ -791,6 +817,7 @@ const (
 	UpdateParamTypeComputeConfig            UpdateParamType = "ComputeConfig"
 	UpdateParamTypeStorageConfig            UpdateParamType = "StorageConfig"
 	UpdateParamTypeKubernetesNetworkConfig  UpdateParamType = "KubernetesNetworkConfig"
+	UpdateParamTypeRemoteNetworkConfig      UpdateParamType = "RemoteNetworkConfig"
 )
 
 // Values returns all known values for UpdateParamType. Note that this can be
@@ -823,6 +850,7 @@ func (UpdateParamType) Values() []UpdateParamType {
 		"MaxUnavailable",
 		"MaxUnavailablePercentage",
 		"NodeRepairEnabled",
+		"UpdateStrategy",
 		"ConfigurationValues",
 		"SecurityGroups",
 		"Subnets",
@@ -833,6 +861,7 @@ func (UpdateParamType) Values() []UpdateParamType {
 		"ComputeConfig",
 		"StorageConfig",
 		"KubernetesNetworkConfig",
+		"RemoteNetworkConfig",
 	}
 }
 
@@ -876,6 +905,7 @@ const (
 	UpdateTypeUpgradePolicyUpdate                UpdateType = "UpgradePolicyUpdate"
 	UpdateTypeZonalShiftConfigUpdate             UpdateType = "ZonalShiftConfigUpdate"
 	UpdateTypeAutoModeUpdate                     UpdateType = "AutoModeUpdate"
+	UpdateTypeRemoteNetworkConfigUpdate          UpdateType = "RemoteNetworkConfigUpdate"
 )
 
 // Values returns all known values for UpdateType. Note that this can be expanded
@@ -897,5 +927,27 @@ func (UpdateType) Values() []UpdateType {
 		"UpgradePolicyUpdate",
 		"ZonalShiftConfigUpdate",
 		"AutoModeUpdate",
+		"RemoteNetworkConfigUpdate",
+	}
+}
+
+type VersionStatus string
+
+// Enum values for VersionStatus
+const (
+	VersionStatusUnsupported     VersionStatus = "UNSUPPORTED"
+	VersionStatusStandardSupport VersionStatus = "STANDARD_SUPPORT"
+	VersionStatusExtendedSupport VersionStatus = "EXTENDED_SUPPORT"
+)
+
+// Values returns all known values for VersionStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (VersionStatus) Values() []VersionStatus {
+	return []VersionStatus{
+		"UNSUPPORTED",
+		"STANDARD_SUPPORT",
+		"EXTENDED_SUPPORT",
 	}
 }

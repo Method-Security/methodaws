@@ -59,7 +59,7 @@ type ListClustersInput struct {
 type ListClustersOutput struct {
 
 	// A list of all of the clusters for your account in the specified Amazon Web
-	// Services Region.
+	// Services Region .
 	Clusters []string
 
 	// The nextToken value returned from a previous paginated request, where maxResults
@@ -139,6 +139,9 @@ func (c *Client) addOperationListClustersMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListClusters(options.Region), middleware.Before); err != nil {
