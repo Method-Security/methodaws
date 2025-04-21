@@ -486,8 +486,8 @@ k8s.io/klog/v2/internal/sloghandler
 k8s.io/utils/internal/third_party/forked/golang/net
 k8s.io/utils/net
 k8s.io/utils/ptr
-# sigs.k8s.io/aws-iam-authenticator v0.6.31
-## explicit; go 1.23.4
+# sigs.k8s.io/aws-iam-authenticator v0.7.1
+## explicit; go 1.24.2
 sigs.k8s.io/aws-iam-authenticator/pkg
 sigs.k8s.io/aws-iam-authenticator/pkg/arn
 sigs.k8s.io/aws-iam-authenticator/pkg/filecache

@@ -1,9 +1,6 @@
 module github.com/Method-Security/methodaws
 
 go 1.24
-
-toolchain go1.24.2
-
 require (
 	github.com/Method-Security/pkg v0.0.6
 	github.com/aws/aws-sdk-go v1.55.6
@@ -99,5 +96,5 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	sigs.k8s.io/aws-iam-authenticator v0.6.31
+	sigs.k8s.io/aws-iam-authenticator v0.7.1
 )
