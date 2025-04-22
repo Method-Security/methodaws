@@ -33,7 +33,7 @@ func EnumerateCloudFrontForRegion(ctx context.Context, cfg aws.Config, region st
 			origins := []*methodaws.CloudFrontDistributionOrigin{}
 			for _, origin := range dist.Origins.Items {
 				origins = append(origins, &methodaws.CloudFrontDistributionOrigin{
-					DomainName: origin.DomainName,
+					DomainName: *origin.DomainName,
 					Id:         *origin.Id,
 				})
 			}

@@ -516,8 +516,8 @@ func (c *CloudFrontDistribution) String() string {
 }
 
 type CloudFrontDistributionOrigin struct {
-	DomainName *string `json:"DomainName,omitempty" url:"DomainName,omitempty"`
-	Id         string  `json:"Id" url:"Id"`
+	DomainName string `json:"DomainName" url:"DomainName"`
+	Id         string `json:"Id" url:"Id"`
 
 	extraProperties map[string]interface{}
 }
@@ -573,7 +573,7 @@ func (c CloudFrontDistributionStatus) Ptr() *CloudFrontDistributionStatus {
 }
 
 type CloudFrontReport struct {
-	AccountId     string                    `json:"accountID" url:"accountID"`
+	AccountId     string                    `json:"accountId" url:"accountId"`
 	Distributions []*CloudFrontDistribution `json:"distributions,omitempty" url:"distributions,omitempty"`
 	Errors        []string                  `json:"errors,omitempty" url:"errors,omitempty"`
 

@@ -5,7 +5,7 @@ types:
   # maybe let's go deepr on the origin type and capture more types of origins here?
   CloudFrontDistributionOrigin:
     properties:
-      DomainName: optional<string>
+      DomainName: string
       Id: string
   CloudFrontDistributionStatus:
     enum:
@@ -20,6 +20,6 @@ types:
       Status: CloudFrontDistributionStatus
   CloudFrontReport:
     properties:
-      accountID: string
+      accountId: string
       distributions: optional<list<CloudFrontDistribution>>
       errors: optional<list<string>>
