@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.211.3
+	github.com/aws/aws-sdk-go-v2/service/cloudfront v1.45.3
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.26.1
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.41.1

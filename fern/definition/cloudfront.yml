@@ -1,0 +1,25 @@
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  # maybe let's go deepr on the origin type and capture more types of origins here?
+  CloudFrontDistributionOrigin:
+    properties:
+      DomainName: string
+      Id: string
+  CloudFrontDistributionStatus:
+    enum:
+      - ENABLED
+      - DISABLED
+  CloudFrontDistribution:
+    properties:
+      Arn: string
+      DomainName: string
+      Comment: optional<string>
+      Origins: list<CloudFrontDistributionOrigin>
+      Status: CloudFrontDistributionStatus
+  CloudFrontReport:
+    properties:
+      accountId: string
+      distributions: optional<list<CloudFrontDistribution>>
+      errors: optional<list<string>>

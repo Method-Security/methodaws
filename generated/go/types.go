@@ -477,6 +477,137 @@ func (r *RestApiPath) String() string {
 	return fmt.Sprintf("%#v", r)
 }
 
+type CloudFrontDistribution struct {
+	Arn        string                          `json:"Arn" url:"Arn"`
+	DomainName string                          `json:"DomainName" url:"DomainName"`
+	Comment    *string                         `json:"Comment,omitempty" url:"Comment,omitempty"`
+	Origins    []*CloudFrontDistributionOrigin `json:"Origins,omitempty" url:"Origins,omitempty"`
+	Status     CloudFrontDistributionStatus    `json:"Status" url:"Status"`
+
+	extraProperties map[string]interface{}
+}
+
+func (c *CloudFrontDistribution) GetExtraProperties() map[string]interface{} {
+	return c.extraProperties
+}
+
+func (c *CloudFrontDistribution) UnmarshalJSON(data []byte) error {
+	type unmarshaler CloudFrontDistribution
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*c = CloudFrontDistribution(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *c)
+	if err != nil {
+		return err
+	}
+	c.extraProperties = extraProperties
+
+	return nil
+}
+
+func (c *CloudFrontDistribution) String() string {
+	if value, err := core.StringifyJSON(c); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", c)
+}
+
+type CloudFrontDistributionOrigin struct {
+	DomainName string `json:"DomainName" url:"DomainName"`
+	Id         string `json:"Id" url:"Id"`
+
+	extraProperties map[string]interface{}
+}
+
+func (c *CloudFrontDistributionOrigin) GetExtraProperties() map[string]interface{} {
+	return c.extraProperties
+}
+
+func (c *CloudFrontDistributionOrigin) UnmarshalJSON(data []byte) error {
+	type unmarshaler CloudFrontDistributionOrigin
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*c = CloudFrontDistributionOrigin(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *c)
+	if err != nil {
+		return err
+	}
+	c.extraProperties = extraProperties
+
+	return nil
+}
+
+func (c *CloudFrontDistributionOrigin) String() string {
+	if value, err := core.StringifyJSON(c); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", c)
+}
+
+type CloudFrontDistributionStatus string
+
+const (
+	CloudFrontDistributionStatusEnabled  CloudFrontDistributionStatus = "ENABLED"
+	CloudFrontDistributionStatusDisabled CloudFrontDistributionStatus = "DISABLED"
+)
+
+func NewCloudFrontDistributionStatusFromString(s string) (CloudFrontDistributionStatus, error) {
+	switch s {
+	case "ENABLED":
+		return CloudFrontDistributionStatusEnabled, nil
+	case "DISABLED":
+		return CloudFrontDistributionStatusDisabled, nil
+	}
+	var t CloudFrontDistributionStatus
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (c CloudFrontDistributionStatus) Ptr() *CloudFrontDistributionStatus {
+	return &c
+}
+
+type CloudFrontReport struct {
+	AccountId     string                    `json:"accountId" url:"accountId"`
+	Distributions []*CloudFrontDistribution `json:"distributions,omitempty" url:"distributions,omitempty"`
+	Errors        []string                  `json:"errors,omitempty" url:"errors,omitempty"`
+
+	extraProperties map[string]interface{}
+}
+
+func (c *CloudFrontReport) GetExtraProperties() map[string]interface{} {
+	return c.extraProperties
+}
+
+func (c *CloudFrontReport) UnmarshalJSON(data []byte) error {
+	type unmarshaler CloudFrontReport
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*c = CloudFrontReport(value)
+
+	extraProperties, err := core.ExtractExtraProperties(data, *c)
+	if err != nil {
+		return err
+	}
+	c.extraProperties = extraProperties
+
+	return nil
+}
+
+func (c *CloudFrontReport) String() string {
+	if value, err := core.StringifyJSON(c); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", c)
+}
+
 type CredentialInfo struct {
 	Url        string     `json:"url" url:"url"`
 	Token      string     `json:"token" url:"token"`
