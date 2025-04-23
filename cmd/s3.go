@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/Method-Security/methodaws/internal/s3"
+	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -71,7 +72,13 @@ func (a *MethodAws) InitS3Command() {
 				a.OutputSignal.Status = 1
 				return
 			}
-			report := s3.ExternalEnumerateS3(cmd.Context(), bucketName, a.RootFlags.Regions)
+
+			regions := a.RootFlags.Regions
+			if len(a.RootFlags.Regions) == 0 || a.RootFlags.Regions[0] == "all" {
+				regions = utils.GetGeneralRegions()
+			}
+
+			report := s3.ExternalEnumerateS3(cmd.Context(), bucketName, regions)
 			a.OutputSignal.Content = report
 		},
 	}
