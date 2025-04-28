@@ -11,16 +11,22 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Removes one or more instances from the specified Auto Scaling group. After the
-// instances are detached, you can manage them independent of the Auto Scaling
-// group. If you do not specify the option to decrement the desired capacity,
-// Amazon EC2 Auto Scaling launches instances to replace the ones that are
-// detached. If there is a Classic Load Balancer attached to the Auto Scaling
-// group, the instances are deregistered from the load balancer. If there are
-// target groups attached to the Auto Scaling group, the instances are deregistered
-// from the target groups. For more information, see Detach EC2 instances from
-// your Auto Scaling group (https://docs.aws.amazon.com/autoscaling/ec2/userguide/detach-instance-asg.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Removes one or more instances from the specified Auto Scaling group.
+//
+// After the instances are detached, you can manage them independent of the Auto
+// Scaling group.
+//
+// If you do not specify the option to decrement the desired capacity, Amazon EC2
+// Auto Scaling launches instances to replace the ones that are detached.
+//
+// If there is a Classic Load Balancer attached to the Auto Scaling group, the
+// instances are deregistered from the load balancer. If there are target groups
+// attached to the Auto Scaling group, the instances are deregistered from the
+// target groups.
+//
+// For more information, see [Detach or attach instances] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Detach or attach instances]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-detach-attach-instances.html
 func (c *Client) DetachInstances(ctx context.Context, params *DetachInstancesInput, optFns ...func(*Options)) (*DetachInstancesOutput, error) {
 	if params == nil {
 		params = &DetachInstancesInput{}
@@ -109,6 +115,9 @@ func (c *Client) addOperationDetachInstancesMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +128,15 @@ func (c *Client) addOperationDetachInstancesMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachInstancesValidationMiddleware(stack); err != nil {
@@ -140,6 +158,18 @@ func (c *Client) addOperationDetachInstancesMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

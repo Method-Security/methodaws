@@ -14,15 +14,19 @@ import (
 // Creates or updates a warm pool for the specified Auto Scaling group. A warm
 // pool is a pool of pre-initialized EC2 instances that sits alongside the Auto
 // Scaling group. Whenever your application needs to scale out, the Auto Scaling
-// group can draw on the warm pool to meet its new desired capacity. For more
-// information and example configurations, see Warm pools for Amazon EC2 Auto
-// Scaling (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html)
-// in the Amazon EC2 Auto Scaling User Guide. This operation must be called from
-// the Region in which the Auto Scaling group was created. This operation cannot be
-// called on an Auto Scaling group that has a mixed instances policy or a launch
-// template or launch configuration that requests Spot Instances. You can view the
-// instances in the warm pool using the DescribeWarmPool API call. If you are no
-// longer using a warm pool, you can delete it by calling the DeleteWarmPool API.
+// group can draw on the warm pool to meet its new desired capacity.
+//
+// This operation must be called from the Region in which the Auto Scaling group
+// was created.
+//
+// You can view the instances in the warm pool using the [DescribeWarmPool] API call. If you are no
+// longer using a warm pool, you can delete it by calling the [DeleteWarmPool]API.
+//
+// For more information, see [Warm pools for Amazon EC2 Auto Scaling] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [DeleteWarmPool]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DeleteWarmPool.html
+// [DescribeWarmPool]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeWarmPool.html
+// [Warm pools for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html
 func (c *Client) PutWarmPool(ctx context.Context, params *PutWarmPoolInput, optFns ...func(*Options)) (*PutWarmPoolOutput, error) {
 	if params == nil {
 		params = &PutWarmPoolInput{}
@@ -54,17 +58,21 @@ type PutWarmPoolInput struct {
 	// pool or in any state except Terminated for the Auto Scaling group. This is an
 	// optional property. Specify it only if you do not want the warm pool size to be
 	// determined by the difference between the group's maximum capacity and its
-	// desired capacity. If a value for MaxGroupPreparedCapacity is not specified,
-	// Amazon EC2 Auto Scaling launches and maintains the difference between the
-	// group's maximum capacity and its desired capacity. If you specify a value for
+	// desired capacity.
+	//
+	// If a value for MaxGroupPreparedCapacity is not specified, Amazon EC2 Auto
+	// Scaling launches and maintains the difference between the group's maximum
+	// capacity and its desired capacity. If you specify a value for
 	// MaxGroupPreparedCapacity , Amazon EC2 Auto Scaling uses the difference between
-	// the MaxGroupPreparedCapacity and the desired capacity instead. The size of the
-	// warm pool is dynamic. Only when MaxGroupPreparedCapacity and MinSize are set to
-	// the same value does the warm pool have an absolute size. If the desired capacity
-	// of the Auto Scaling group is higher than the MaxGroupPreparedCapacity , the
-	// capacity of the warm pool is 0, unless you specify a value for MinSize . To
-	// remove a value that you previously set, include the property but specify -1 for
-	// the value.
+	// the MaxGroupPreparedCapacity and the desired capacity instead.
+	//
+	// The size of the warm pool is dynamic. Only when MaxGroupPreparedCapacity and
+	// MinSize are set to the same value does the warm pool have an absolute size.
+	//
+	// If the desired capacity of the Auto Scaling group is higher than the
+	// MaxGroupPreparedCapacity , the capacity of the warm pool is 0, unless you
+	// specify a value for MinSize . To remove a value that you previously set, include
+	// the property but specify -1 for the value.
 	MaxGroupPreparedCapacity *int32
 
 	// Specifies the minimum number of instances to maintain in the warm pool. This
@@ -129,6 +137,9 @@ func (c *Client) addOperationPutWarmPoolMiddlewares(stack *middleware.Stack, opt
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -139,6 +150,15 @@ func (c *Client) addOperationPutWarmPoolMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutWarmPoolValidationMiddleware(stack); err != nil {
@@ -160,6 +180,18 @@ func (c *Client) addOperationPutWarmPoolMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

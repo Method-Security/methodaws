@@ -11,11 +11,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates or updates tags for the specified Auto Scaling group. When you specify
-// a tag with a key that already exists, the operation overwrites the previous tag
-// definition, and you do not get an error message. For more information, see Tag
-// Auto Scaling groups and instances (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-tagging.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Creates or updates tags for the specified Auto Scaling group.
+//
+// When you specify a tag with a key that already exists, the operation overwrites
+// the previous tag definition, and you do not get an error message.
+//
+// For more information, see [Tag Auto Scaling groups and instances] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Tag Auto Scaling groups and instances]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-tagging.html
 func (c *Client) CreateOrUpdateTags(ctx context.Context, params *CreateOrUpdateTagsInput, optFns ...func(*Options)) (*CreateOrUpdateTagsOutput, error) {
 	if params == nil {
 		params = &CreateOrUpdateTagsInput{}
@@ -91,6 +94,9 @@ func (c *Client) addOperationCreateOrUpdateTagsMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -101,6 +107,15 @@ func (c *Client) addOperationCreateOrUpdateTagsMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateOrUpdateTagsValidationMiddleware(stack); err != nil {
@@ -122,6 +137,18 @@ func (c *Client) addOperationCreateOrUpdateTagsMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

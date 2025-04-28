@@ -31,7 +31,9 @@ type DescribeAutoScalingInstancesInput struct {
 
 	// The IDs of the instances. If you omit this property, all Auto Scaling instances
 	// are described. If you specify an ID that does not exist, it is ignored with no
-	// error. Array Members: Maximum number of 50 items.
+	// error.
+	//
+	// Array Members: Maximum number of 50 items.
 	InstanceIds []string
 
 	// The maximum number of items to return with this call. The default value is 50
@@ -105,6 +107,9 @@ func (c *Client) addOperationDescribeAutoScalingInstancesMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +120,15 @@ func (c *Client) addOperationDescribeAutoScalingInstancesMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAutoScalingInstances(options.Region), middleware.Before); err != nil {
@@ -135,16 +149,20 @@ func (c *Client) addOperationDescribeAutoScalingInstancesMiddlewares(stack *midd
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeAutoScalingInstancesAPIClient is a client that implements the
-// DescribeAutoScalingInstances operation.
-type DescribeAutoScalingInstancesAPIClient interface {
-	DescribeAutoScalingInstances(context.Context, *DescribeAutoScalingInstancesInput, ...func(*Options)) (*DescribeAutoScalingInstancesOutput, error)
-}
-
-var _ DescribeAutoScalingInstancesAPIClient = (*Client)(nil)
 
 // DescribeAutoScalingInstancesPaginatorOptions is the paginator options for
 // DescribeAutoScalingInstances
@@ -213,6 +231,9 @@ func (p *DescribeAutoScalingInstancesPaginator) NextPage(ctx context.Context, op
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeAutoScalingInstances(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -231,6 +252,14 @@ func (p *DescribeAutoScalingInstancesPaginator) NextPage(ctx context.Context, op
 
 	return result, nil
 }
+
+// DescribeAutoScalingInstancesAPIClient is a client that implements the
+// DescribeAutoScalingInstances operation.
+type DescribeAutoScalingInstancesAPIClient interface {
+	DescribeAutoScalingInstances(context.Context, *DescribeAutoScalingInstancesInput, ...func(*Options)) (*DescribeAutoScalingInstancesOutput, error)
+}
+
+var _ DescribeAutoScalingInstancesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeAutoScalingInstances(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

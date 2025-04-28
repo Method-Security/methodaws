@@ -106,6 +106,9 @@ func (c *Client) addOperationDescribeNotificationConfigurationsMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,6 +119,15 @@ func (c *Client) addOperationDescribeNotificationConfigurationsMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeNotificationConfigurations(options.Region), middleware.Before); err != nil {
@@ -136,16 +148,20 @@ func (c *Client) addOperationDescribeNotificationConfigurationsMiddlewares(stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeNotificationConfigurationsAPIClient is a client that implements the
-// DescribeNotificationConfigurations operation.
-type DescribeNotificationConfigurationsAPIClient interface {
-	DescribeNotificationConfigurations(context.Context, *DescribeNotificationConfigurationsInput, ...func(*Options)) (*DescribeNotificationConfigurationsOutput, error)
-}
-
-var _ DescribeNotificationConfigurationsAPIClient = (*Client)(nil)
 
 // DescribeNotificationConfigurationsPaginatorOptions is the paginator options for
 // DescribeNotificationConfigurations
@@ -214,6 +230,9 @@ func (p *DescribeNotificationConfigurationsPaginator) NextPage(ctx context.Conte
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeNotificationConfigurations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -232,6 +251,14 @@ func (p *DescribeNotificationConfigurationsPaginator) NextPage(ctx context.Conte
 
 	return result, nil
 }
+
+// DescribeNotificationConfigurationsAPIClient is a client that implements the
+// DescribeNotificationConfigurations operation.
+type DescribeNotificationConfigurationsAPIClient interface {
+	DescribeNotificationConfigurations(context.Context, *DescribeNotificationConfigurationsInput, ...func(*Options)) (*DescribeNotificationConfigurationsOutput, error)
+}
+
+var _ DescribeNotificationConfigurationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeNotificationConfigurations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

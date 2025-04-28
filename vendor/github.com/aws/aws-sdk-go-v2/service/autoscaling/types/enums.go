@@ -13,8 +13,9 @@ const (
 )
 
 // Values returns all known values for AcceleratorManufacturer. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (AcceleratorManufacturer) Values() []AcceleratorManufacturer {
 	return []AcceleratorManufacturer{
 		"nvidia",
@@ -38,8 +39,9 @@ const (
 )
 
 // Values returns all known values for AcceleratorName. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (AcceleratorName) Values() []AcceleratorName {
 	return []AcceleratorName{
 		"a100",
@@ -62,8 +64,9 @@ const (
 )
 
 // Values returns all known values for AcceleratorType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (AcceleratorType) Values() []AcceleratorType {
 	return []AcceleratorType{
 		"gpu",
@@ -82,8 +85,9 @@ const (
 )
 
 // Values returns all known values for BareMetal. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (BareMetal) Values() []BareMetal {
 	return []BareMetal{
 		"included",
@@ -102,13 +106,58 @@ const (
 )
 
 // Values returns all known values for BurstablePerformance. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (BurstablePerformance) Values() []BurstablePerformance {
 	return []BurstablePerformance{
 		"included",
 		"excluded",
 		"required",
+	}
+}
+
+type CapacityDistributionStrategy string
+
+// Enum values for CapacityDistributionStrategy
+const (
+	CapacityDistributionStrategyBalancedOnly       CapacityDistributionStrategy = "balanced-only"
+	CapacityDistributionStrategyBalancedBestEffort CapacityDistributionStrategy = "balanced-best-effort"
+)
+
+// Values returns all known values for CapacityDistributionStrategy. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityDistributionStrategy) Values() []CapacityDistributionStrategy {
+	return []CapacityDistributionStrategy{
+		"balanced-only",
+		"balanced-best-effort",
+	}
+}
+
+type CapacityReservationPreference string
+
+// Enum values for CapacityReservationPreference
+const (
+	CapacityReservationPreferenceCapacityReservationsOnly  CapacityReservationPreference = "capacity-reservations-only"
+	CapacityReservationPreferenceCapacityReservationsFirst CapacityReservationPreference = "capacity-reservations-first"
+	CapacityReservationPreferenceNone                      CapacityReservationPreference = "none"
+	CapacityReservationPreferenceDefault                   CapacityReservationPreference = "default"
+)
+
+// Values returns all known values for CapacityReservationPreference. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityReservationPreference) Values() []CapacityReservationPreference {
+	return []CapacityReservationPreference{
+		"capacity-reservations-only",
+		"capacity-reservations-first",
+		"none",
+		"default",
 	}
 }
 
@@ -122,13 +171,34 @@ const (
 )
 
 // Values returns all known values for CpuManufacturer. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (CpuManufacturer) Values() []CpuManufacturer {
 	return []CpuManufacturer{
 		"intel",
 		"amd",
 		"amazon-web-services",
+	}
+}
+
+type ImpairedZoneHealthCheckBehavior string
+
+// Enum values for ImpairedZoneHealthCheckBehavior
+const (
+	ImpairedZoneHealthCheckBehaviorReplaceUnhealthy ImpairedZoneHealthCheckBehavior = "ReplaceUnhealthy"
+	ImpairedZoneHealthCheckBehaviorIgnoreUnhealthy  ImpairedZoneHealthCheckBehavior = "IgnoreUnhealthy"
+)
+
+// Values returns all known values for ImpairedZoneHealthCheckBehavior. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImpairedZoneHealthCheckBehavior) Values() []ImpairedZoneHealthCheckBehavior {
+	return []ImpairedZoneHealthCheckBehavior{
+		"ReplaceUnhealthy",
+		"IgnoreUnhealthy",
 	}
 }
 
@@ -141,8 +211,9 @@ const (
 )
 
 // Values returns all known values for InstanceGeneration. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (InstanceGeneration) Values() []InstanceGeneration {
 	return []InstanceGeneration{
 		"current",
@@ -160,8 +231,9 @@ const (
 
 // Values returns all known values for InstanceMetadataEndpointState. Note that
 // this can be expanded in the future, and so it is only as up to date as the
-// client. The ordering of this slice is not guaranteed to be stable across
-// updates.
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (InstanceMetadataEndpointState) Values() []InstanceMetadataEndpointState {
 	return []InstanceMetadataEndpointState{
 		"disabled",
@@ -179,8 +251,9 @@ const (
 
 // Values returns all known values for InstanceMetadataHttpTokensState. Note that
 // this can be expanded in the future, and so it is only as up to date as the
-// client. The ordering of this slice is not guaranteed to be stable across
-// updates.
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (InstanceMetadataHttpTokensState) Values() []InstanceMetadataHttpTokensState {
 	return []InstanceMetadataHttpTokensState{
 		"optional",
@@ -201,11 +274,13 @@ const (
 	InstanceRefreshStatusRollbackInProgress InstanceRefreshStatus = "RollbackInProgress"
 	InstanceRefreshStatusRollbackFailed     InstanceRefreshStatus = "RollbackFailed"
 	InstanceRefreshStatusRollbackSuccessful InstanceRefreshStatus = "RollbackSuccessful"
+	InstanceRefreshStatusBaking             InstanceRefreshStatus = "Baking"
 )
 
 // Values returns all known values for InstanceRefreshStatus. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (InstanceRefreshStatus) Values() []InstanceRefreshStatus {
 	return []InstanceRefreshStatus{
 		"Pending",
@@ -217,6 +292,7 @@ func (InstanceRefreshStatus) Values() []InstanceRefreshStatus {
 		"RollbackInProgress",
 		"RollbackFailed",
 		"RollbackSuccessful",
+		"Baking",
 	}
 }
 
@@ -250,8 +326,9 @@ const (
 )
 
 // Values returns all known values for LifecycleState. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (LifecycleState) Values() []LifecycleState {
 	return []LifecycleState{
 		"Pending",
@@ -290,8 +367,9 @@ const (
 )
 
 // Values returns all known values for LocalStorage. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (LocalStorage) Values() []LocalStorage {
 	return []LocalStorage{
 		"included",
@@ -309,8 +387,9 @@ const (
 )
 
 // Values returns all known values for LocalStorageType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (LocalStorageType) Values() []LocalStorageType {
 	return []LocalStorageType{
 		"hdd",
@@ -330,8 +409,9 @@ const (
 )
 
 // Values returns all known values for MetricStatistic. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (MetricStatistic) Values() []MetricStatistic {
 	return []MetricStatistic{
 		"Average",
@@ -353,8 +433,9 @@ const (
 )
 
 // Values returns all known values for MetricType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (MetricType) Values() []MetricType {
 	return []MetricType{
 		"ASGAverageCPUUtilization",
@@ -376,6 +457,7 @@ const (
 
 // Values returns all known values for PredefinedLoadMetricType. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
+//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (PredefinedLoadMetricType) Values() []PredefinedLoadMetricType {
 	return []PredefinedLoadMetricType{
@@ -398,6 +480,7 @@ const (
 
 // Values returns all known values for PredefinedMetricPairType. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
+//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (PredefinedMetricPairType) Values() []PredefinedMetricPairType {
 	return []PredefinedMetricPairType{
@@ -420,6 +503,7 @@ const (
 
 // Values returns all known values for PredefinedScalingMetricType. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
+//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (PredefinedScalingMetricType) Values() []PredefinedScalingMetricType {
 	return []PredefinedScalingMetricType{
@@ -440,8 +524,9 @@ const (
 
 // Values returns all known values for PredictiveScalingMaxCapacityBreachBehavior.
 // Note that this can be expanded in the future, and so it is only as up to date as
-// the client. The ordering of this slice is not guaranteed to be stable across
-// updates.
+// the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (PredictiveScalingMaxCapacityBreachBehavior) Values() []PredictiveScalingMaxCapacityBreachBehavior {
 	return []PredictiveScalingMaxCapacityBreachBehavior{
 		"HonorMaxCapacity",
@@ -458,8 +543,9 @@ const (
 )
 
 // Values returns all known values for PredictiveScalingMode. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (PredictiveScalingMode) Values() []PredictiveScalingMode {
 	return []PredictiveScalingMode{
 		"ForecastAndScale",
@@ -475,8 +561,9 @@ const (
 )
 
 // Values returns all known values for RefreshStrategy. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (RefreshStrategy) Values() []RefreshStrategy {
 	return []RefreshStrategy{
 		"Rolling",
@@ -494,6 +581,7 @@ const (
 
 // Values returns all known values for ScaleInProtectedInstances. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
+//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (ScaleInProtectedInstances) Values() []ScaleInProtectedInstances {
 	return []ScaleInProtectedInstances{
@@ -524,6 +612,7 @@ const (
 
 // Values returns all known values for ScalingActivityStatusCode. Note that this
 // can be expanded in the future, and so it is only as up to date as the client.
+//
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (ScalingActivityStatusCode) Values() []ScalingActivityStatusCode {
 	return []ScalingActivityStatusCode{
@@ -553,8 +642,9 @@ const (
 )
 
 // Values returns all known values for StandbyInstances. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (StandbyInstances) Values() []StandbyInstances {
 	return []StandbyInstances{
 		"Terminate",
@@ -573,8 +663,9 @@ const (
 )
 
 // Values returns all known values for WarmPoolState. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (WarmPoolState) Values() []WarmPoolState {
 	return []WarmPoolState{
 		"Stopped",
@@ -591,8 +682,9 @@ const (
 )
 
 // Values returns all known values for WarmPoolStatus. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (WarmPoolStatus) Values() []WarmPoolStatus {
 	return []WarmPoolStatus{
 		"PendingDelete",

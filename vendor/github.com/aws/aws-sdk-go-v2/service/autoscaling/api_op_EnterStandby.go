@@ -11,15 +11,20 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Moves the specified instances into the standby state. If you choose to
-// decrement the desired capacity of the Auto Scaling group, the instances can
-// enter standby as long as the desired capacity of the Auto Scaling group after
-// the instances are placed into standby is equal to or greater than the minimum
-// capacity of the group. If you choose not to decrement the desired capacity of
-// the Auto Scaling group, the Auto Scaling group launches new instances to replace
-// the instances on standby. For more information, see Temporarily removing
-// instances from your Auto Scaling group (https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-enter-exit-standby.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Moves the specified instances into the standby state.
+//
+// If you choose to decrement the desired capacity of the Auto Scaling group, the
+// instances can enter standby as long as the desired capacity of the Auto Scaling
+// group after the instances are placed into standby is equal to or greater than
+// the minimum capacity of the group.
+//
+// If you choose not to decrement the desired capacity of the Auto Scaling group,
+// the Auto Scaling group launches new instances to replace the instances on
+// standby.
+//
+// For more information, see [Temporarily removing instances from your Auto Scaling group] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Temporarily removing instances from your Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-enter-exit-standby.html
 func (c *Client) EnterStandby(ctx context.Context, params *EnterStandbyInput, optFns ...func(*Options)) (*EnterStandbyOutput, error) {
 	if params == nil {
 		params = &EnterStandbyInput{}
@@ -108,6 +113,9 @@ func (c *Client) addOperationEnterStandbyMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +126,15 @@ func (c *Client) addOperationEnterStandbyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnterStandbyValidationMiddleware(stack); err != nil {
@@ -139,6 +156,18 @@ func (c *Client) addOperationEnterStandbyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

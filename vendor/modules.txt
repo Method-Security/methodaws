@@ -115,8 +115,8 @@ github.com/aws/aws-sdk-go-v2/service/apigateway
 github.com/aws/aws-sdk-go-v2/service/apigateway/internal/customizations
 github.com/aws/aws-sdk-go-v2/service/apigateway/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/apigateway/types
-# github.com/aws/aws-sdk-go-v2/service/autoscaling v1.40.5
-## explicit; go 1.20
+# github.com/aws/aws-sdk-go-v2/service/autoscaling v1.52.4
+## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/service/autoscaling
 github.com/aws/aws-sdk-go-v2/service/autoscaling/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/autoscaling/types

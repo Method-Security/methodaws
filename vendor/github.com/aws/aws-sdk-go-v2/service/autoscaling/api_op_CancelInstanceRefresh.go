@@ -12,11 +12,17 @@ import (
 
 // Cancels an instance refresh or rollback that is in progress. If an instance
 // refresh or rollback is not in progress, an ActiveInstanceRefreshNotFound error
-// occurs. This operation is part of the instance refresh feature (https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html)
-// in Amazon EC2 Auto Scaling, which helps you update instances in your Auto
-// Scaling group after you make configuration changes. When you cancel an instance
-// refresh, this does not roll back any changes that it made. Use the
-// RollbackInstanceRefresh API to roll back instead.
+// occurs.
+//
+// This operation is part of the [instance refresh feature] in Amazon EC2 Auto Scaling, which helps you
+// update instances in your Auto Scaling group after you make configuration
+// changes.
+//
+// When you cancel an instance refresh, this does not roll back any changes that
+// it made. Use the [RollbackInstanceRefresh]API to roll back instead.
+//
+// [instance refresh feature]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html
+// [RollbackInstanceRefresh]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_RollbackInstanceRefresh.html
 func (c *Client) CancelInstanceRefresh(ctx context.Context, params *CancelInstanceRefreshInput, optFns ...func(*Options)) (*CancelInstanceRefreshOutput, error) {
 	if params == nil {
 		params = &CancelInstanceRefreshInput{}
@@ -97,6 +103,9 @@ func (c *Client) addOperationCancelInstanceRefreshMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -107,6 +116,15 @@ func (c *Client) addOperationCancelInstanceRefreshMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCancelInstanceRefreshValidationMiddleware(stack); err != nil {
@@ -128,6 +146,18 @@ func (c *Client) addOperationCancelInstanceRefreshMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

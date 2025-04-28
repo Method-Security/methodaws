@@ -10,9 +10,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the specified lifecycle hook. If there are any outstanding lifecycle
-// actions, they are completed first ( ABANDON for launching instances, CONTINUE
-// for terminating instances).
+// Deletes the specified lifecycle hook.
+//
+// If there are any outstanding lifecycle actions, they are completed first (
+// ABANDON for launching instances, CONTINUE for terminating instances).
 func (c *Client) DeleteLifecycleHook(ctx context.Context, params *DeleteLifecycleHookInput, optFns ...func(*Options)) (*DeleteLifecycleHookOutput, error) {
 	if params == nil {
 		params = &DeleteLifecycleHookInput{}
@@ -93,6 +94,9 @@ func (c *Client) addOperationDeleteLifecycleHookMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -103,6 +107,15 @@ func (c *Client) addOperationDeleteLifecycleHookMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteLifecycleHookValidationMiddleware(stack); err != nil {
@@ -124,6 +137,18 @@ func (c *Client) addOperationDeleteLifecycleHookMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

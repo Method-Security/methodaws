@@ -37,24 +37,30 @@ type ExecutePolicyInput struct {
 	// The name of the Auto Scaling group.
 	AutoScalingGroupName *string
 
-	// The breach threshold for the alarm. Required if the policy type is StepScaling
-	// and not supported otherwise.
+	// The breach threshold for the alarm.
+	//
+	// Required if the policy type is StepScaling and not supported otherwise.
 	BreachThreshold *float64
 
 	// Indicates whether Amazon EC2 Auto Scaling waits for the cooldown period to
-	// complete before executing the policy. Valid only if the policy type is
-	// SimpleScaling . For more information, see Scaling cooldowns for Amazon EC2 Auto
-	// Scaling (https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html) in
+	// complete before executing the policy.
+	//
+	// Valid only if the policy type is SimpleScaling . For more information, see [Scaling cooldowns for Amazon EC2 Auto Scaling] in
 	// the Amazon EC2 Auto Scaling User Guide.
+	//
+	// [Scaling cooldowns for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-cooldowns.html
 	HonorCooldown *bool
 
 	// The metric value to compare to BreachThreshold . This enables you to execute a
 	// policy of type StepScaling and determine which step adjustment to use. For
 	// example, if the breach threshold is 50 and you want to use a step adjustment
 	// with a lower bound of 0 and an upper bound of 10, you can set the metric value
-	// to 59. If you specify a metric value that doesn't correspond to a step
-	// adjustment for the policy, the call returns an error. Required if the policy
-	// type is StepScaling and not supported otherwise.
+	// to 59.
+	//
+	// If you specify a metric value that doesn't correspond to a step adjustment for
+	// the policy, the call returns an error.
+	//
+	// Required if the policy type is StepScaling and not supported otherwise.
 	MetricValue *float64
 
 	noSmithyDocumentSerde
@@ -110,6 +116,9 @@ func (c *Client) addOperationExecutePolicyMiddlewares(stack *middleware.Stack, o
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +129,15 @@ func (c *Client) addOperationExecutePolicyMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpExecutePolicyValidationMiddleware(stack); err != nil {
@@ -141,6 +159,18 @@ func (c *Client) addOperationExecutePolicyMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

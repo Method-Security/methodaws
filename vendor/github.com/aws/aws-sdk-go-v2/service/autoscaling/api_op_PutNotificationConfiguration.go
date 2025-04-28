@@ -12,11 +12,16 @@ import (
 
 // Configures an Auto Scaling group to send notifications when specified events
 // take place. Subscribers to the specified topic can have messages delivered to an
-// endpoint such as a web server or an email address. This configuration overwrites
-// any existing configuration. For more information, see Getting Amazon SNS
-// notifications when your Auto Scaling group scales (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ASGettingNotifications.html)
-// in the Amazon EC2 Auto Scaling User Guide. If you exceed your maximum limit of
-// SNS topics, which is 10 per Auto Scaling group, the call fails.
+// endpoint such as a web server or an email address.
+//
+// This configuration overwrites any existing configuration.
+//
+// For more information, see [Amazon SNS notification options for Amazon EC2 Auto Scaling] in the Amazon EC2 Auto Scaling User Guide.
+//
+// If you exceed your maximum limit of SNS topics, which is 10 per Auto Scaling
+// group, the call fails.
+//
+// [Amazon SNS notification options for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-sns-notifications.html
 func (c *Client) PutNotificationConfiguration(ctx context.Context, params *PutNotificationConfigurationInput, optFns ...func(*Options)) (*PutNotificationConfigurationOutput, error) {
 	if params == nil {
 		params = &PutNotificationConfigurationInput{}
@@ -40,8 +45,9 @@ type PutNotificationConfigurationInput struct {
 	AutoScalingGroupName *string
 
 	// The type of event that causes the notification to be sent. To query the
-	// notification types supported by Amazon EC2 Auto Scaling, call the
-	// DescribeAutoScalingNotificationTypes API.
+	// notification types supported by Amazon EC2 Auto Scaling, call the [DescribeAutoScalingNotificationTypes]API.
+	//
+	// [DescribeAutoScalingNotificationTypes]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingNotificationTypes.html
 	//
 	// This member is required.
 	NotificationTypes []string
@@ -104,6 +110,9 @@ func (c *Client) addOperationPutNotificationConfigurationMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +123,15 @@ func (c *Client) addOperationPutNotificationConfigurationMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutNotificationConfigurationValidationMiddleware(stack); err != nil {
@@ -135,6 +153,18 @@ func (c *Client) addOperationPutNotificationConfigurationMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

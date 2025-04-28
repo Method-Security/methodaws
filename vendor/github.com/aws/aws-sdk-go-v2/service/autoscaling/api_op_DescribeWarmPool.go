@@ -11,9 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Gets information about a warm pool and its instances. For more information, see
-// Warm pools for Amazon EC2 Auto Scaling (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Gets information about a warm pool and its instances.
+//
+// For more information, see [Warm pools for Amazon EC2 Auto Scaling] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Warm pools for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-warm-pools.html
 func (c *Client) DescribeWarmPool(ctx context.Context, params *DescribeWarmPoolInput, optFns ...func(*Options)) (*DescribeWarmPoolOutput, error) {
 	if params == nil {
 		params = &DescribeWarmPoolInput{}
@@ -110,6 +112,9 @@ func (c *Client) addOperationDescribeWarmPoolMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,6 +125,15 @@ func (c *Client) addOperationDescribeWarmPoolMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeWarmPoolValidationMiddleware(stack); err != nil {
@@ -143,16 +157,20 @@ func (c *Client) addOperationDescribeWarmPoolMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeWarmPoolAPIClient is a client that implements the DescribeWarmPool
-// operation.
-type DescribeWarmPoolAPIClient interface {
-	DescribeWarmPool(context.Context, *DescribeWarmPoolInput, ...func(*Options)) (*DescribeWarmPoolOutput, error)
-}
-
-var _ DescribeWarmPoolAPIClient = (*Client)(nil)
 
 // DescribeWarmPoolPaginatorOptions is the paginator options for DescribeWarmPool
 type DescribeWarmPoolPaginatorOptions struct {
@@ -218,6 +236,9 @@ func (p *DescribeWarmPoolPaginator) NextPage(ctx context.Context, optFns ...func
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeWarmPool(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -236,6 +257,14 @@ func (p *DescribeWarmPoolPaginator) NextPage(ctx context.Context, optFns ...func
 
 	return result, nil
 }
+
+// DescribeWarmPoolAPIClient is a client that implements the DescribeWarmPool
+// operation.
+type DescribeWarmPoolAPIClient interface {
+	DescribeWarmPool(context.Context, *DescribeWarmPoolInput, ...func(*Options)) (*DescribeWarmPoolOutput, error)
+}
+
+var _ DescribeWarmPoolAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeWarmPool(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -42,8 +42,9 @@ type DescribePoliciesInput struct {
 
 	// The names of one or more policies. If you omit this property, all policies are
 	// described. If a group name is provided, the results are limited to that group.
-	// If you specify an unknown policy name, it is ignored with no error. Array
-	// Members: Maximum number of 50 items.
+	// If you specify an unknown policy name, it is ignored with no error.
+	//
+	// Array Members: Maximum number of 50 items.
 	PolicyNames []string
 
 	// One or more policy types. The valid values are SimpleScaling , StepScaling ,
@@ -113,6 +114,9 @@ func (c *Client) addOperationDescribePoliciesMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +127,15 @@ func (c *Client) addOperationDescribePoliciesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribePolicies(options.Region), middleware.Before); err != nil {
@@ -143,16 +156,20 @@ func (c *Client) addOperationDescribePoliciesMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribePoliciesAPIClient is a client that implements the DescribePolicies
-// operation.
-type DescribePoliciesAPIClient interface {
-	DescribePolicies(context.Context, *DescribePoliciesInput, ...func(*Options)) (*DescribePoliciesOutput, error)
-}
-
-var _ DescribePoliciesAPIClient = (*Client)(nil)
 
 // DescribePoliciesPaginatorOptions is the paginator options for DescribePolicies
 type DescribePoliciesPaginatorOptions struct {
@@ -218,6 +235,9 @@ func (p *DescribePoliciesPaginator) NextPage(ctx context.Context, optFns ...func
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribePolicies(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -236,6 +256,14 @@ func (p *DescribePoliciesPaginator) NextPage(ctx context.Context, optFns ...func
 
 	return result, nil
 }
+
+// DescribePoliciesAPIClient is a client that implements the DescribePolicies
+// operation.
+type DescribePoliciesAPIClient interface {
+	DescribePolicies(context.Context, *DescribePoliciesInput, ...func(*Options)) (*DescribePoliciesOutput, error)
+}
+
+var _ DescribePoliciesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribePolicies(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

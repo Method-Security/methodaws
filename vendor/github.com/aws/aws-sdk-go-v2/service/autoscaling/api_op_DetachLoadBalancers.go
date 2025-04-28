@@ -10,18 +10,27 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This API operation is superseded by DetachTrafficSources , which can detach
-// multiple traffic sources types. We recommend using DetachTrafficSources to
-// simplify how you manage traffic sources. However, we continue to support
-// DetachLoadBalancers . You can use both the original DetachLoadBalancers API
-// operation and DetachTrafficSources on the same Auto Scaling group. Detaches one
-// or more Classic Load Balancers from the specified Auto Scaling group. This
-// operation detaches only Classic Load Balancers. If you have Application Load
-// Balancers, Network Load Balancers, or Gateway Load Balancers, use the
-// DetachLoadBalancerTargetGroups API instead. When you detach a load balancer, it
-// enters the Removing state while deregistering the instances in the group. When
-// all instances are deregistered, then you can no longer describe the load
-// balancer using the DescribeLoadBalancers API call. The instances remain running.
+// This API operation is superseded by [DetachTrafficSources], which can detach multiple traffic sources
+// types. We recommend using DetachTrafficSources to simplify how you manage
+// traffic sources. However, we continue to support DetachLoadBalancers . You can
+// use both the original DetachLoadBalancers API operation and DetachTrafficSources
+// on the same Auto Scaling group.
+//
+// Detaches one or more Classic Load Balancers from the specified Auto Scaling
+// group.
+//
+// This operation detaches only Classic Load Balancers. If you have Application
+// Load Balancers, Network Load Balancers, or Gateway Load Balancers, use the [DetachLoadBalancerTargetGroups]API
+// instead.
+//
+// When you detach a load balancer, it enters the Removing state while
+// deregistering the instances in the group. When all instances are deregistered,
+// then you can no longer describe the load balancer using the [DescribeLoadBalancers]API call. The
+// instances remain running.
+//
+// [DetachLoadBalancerTargetGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DetachLoadBalancerTargetGroups.html
+// [DescribeLoadBalancers]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeLoadBalancers.html
+// [DetachTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DetachTrafficSources.html
 func (c *Client) DetachLoadBalancers(ctx context.Context, params *DetachLoadBalancersInput, optFns ...func(*Options)) (*DetachLoadBalancersOutput, error) {
 	if params == nil {
 		params = &DetachLoadBalancersInput{}
@@ -102,6 +111,9 @@ func (c *Client) addOperationDetachLoadBalancersMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +124,15 @@ func (c *Client) addOperationDetachLoadBalancersMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachLoadBalancersValidationMiddleware(stack); err != nil {
@@ -133,6 +154,18 @@ func (c *Client) addOperationDetachLoadBalancersMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

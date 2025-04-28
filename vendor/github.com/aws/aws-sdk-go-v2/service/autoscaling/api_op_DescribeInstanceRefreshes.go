@@ -12,17 +12,21 @@ import (
 )
 
 // Gets information about the instance refreshes for the specified Auto Scaling
-// group from the previous six weeks. This operation is part of the instance
-// refresh feature (https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html)
-// in Amazon EC2 Auto Scaling, which helps you update instances in your Auto
-// Scaling group after you make configuration changes. To help you determine the
-// status of an instance refresh, Amazon EC2 Auto Scaling returns information about
-// the instance refreshes you previously initiated, including their status, start
-// time, end time, the percentage of the instance refresh that is complete, and the
-// number of instances remaining to update before the instance refresh is complete.
-// If a rollback is initiated while an instance refresh is in progress, Amazon EC2
-// Auto Scaling also returns information about the rollback of the instance
-// refresh.
+// group from the previous six weeks.
+//
+// This operation is part of the [instance refresh feature] in Amazon EC2 Auto Scaling, which helps you
+// update instances in your Auto Scaling group after you make configuration
+// changes.
+//
+// To help you determine the status of an instance refresh, Amazon EC2 Auto
+// Scaling returns information about the instance refreshes you previously
+// initiated, including their status, start time, end time, the percentage of the
+// instance refresh that is complete, and the number of instances remaining to
+// update before the instance refresh is complete. If a rollback is initiated while
+// an instance refresh is in progress, Amazon EC2 Auto Scaling also returns
+// information about the rollback of the instance refresh.
+//
+// [instance refresh feature]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html
 func (c *Client) DescribeInstanceRefreshes(ctx context.Context, params *DescribeInstanceRefreshesInput, optFns ...func(*Options)) (*DescribeInstanceRefreshesOutput, error) {
 	if params == nil {
 		params = &DescribeInstanceRefreshesInput{}
@@ -120,6 +124,9 @@ func (c *Client) addOperationDescribeInstanceRefreshesMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,6 +137,15 @@ func (c *Client) addOperationDescribeInstanceRefreshesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeInstanceRefreshesValidationMiddleware(stack); err != nil {
@@ -153,16 +169,20 @@ func (c *Client) addOperationDescribeInstanceRefreshesMiddlewares(stack *middlew
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeInstanceRefreshesAPIClient is a client that implements the
-// DescribeInstanceRefreshes operation.
-type DescribeInstanceRefreshesAPIClient interface {
-	DescribeInstanceRefreshes(context.Context, *DescribeInstanceRefreshesInput, ...func(*Options)) (*DescribeInstanceRefreshesOutput, error)
-}
-
-var _ DescribeInstanceRefreshesAPIClient = (*Client)(nil)
 
 // DescribeInstanceRefreshesPaginatorOptions is the paginator options for
 // DescribeInstanceRefreshes
@@ -230,6 +250,9 @@ func (p *DescribeInstanceRefreshesPaginator) NextPage(ctx context.Context, optFn
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeInstanceRefreshes(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -248,6 +271,14 @@ func (p *DescribeInstanceRefreshesPaginator) NextPage(ctx context.Context, optFn
 
 	return result, nil
 }
+
+// DescribeInstanceRefreshesAPIClient is a client that implements the
+// DescribeInstanceRefreshes operation.
+type DescribeInstanceRefreshesAPIClient interface {
+	DescribeInstanceRefreshes(context.Context, *DescribeInstanceRefreshesInput, ...func(*Options)) (*DescribeInstanceRefreshesOutput, error)
+}
+
+var _ DescribeInstanceRefreshesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeInstanceRefreshes(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{
