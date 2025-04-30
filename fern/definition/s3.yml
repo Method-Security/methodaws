@@ -67,6 +67,8 @@ types:
       allowAnonymousRead: boolean
       policy: optional<string>
       acls: optional<list<S3BucketACL>>
+      ownerID: optional<string>
+      ownerName: optional<string>
   ExternalS3Report:
     properties:
       externalBuckets: optional<list<ExternalBucket>>
