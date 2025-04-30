@@ -65,7 +65,7 @@ func (a *MethodAws) InitS3Command() {
 			return a.setupCommonConfig(cmd, outputFormat, outputFile, false)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			bucketName, err := cmd.Flags().GetString("name")
+			bucketURL, err := cmd.Flags().GetString("url")
 			if err != nil {
 				errorMessage := err.Error()
 				a.OutputSignal.ErrorMessage = &errorMessage
@@ -74,16 +74,17 @@ func (a *MethodAws) InitS3Command() {
 			}
 
 			regions := a.RootFlags.Regions
-			if len(a.RootFlags.Regions) == 0 || a.RootFlags.Regions[0] == "all" {
+			if len(regions) == 0 || regions[0] == "all" {
 				regions = utils.GetGeneralRegions()
 			}
 
-			report := s3.ExternalEnumerateS3(cmd.Context(), bucketName, regions)
+			report := s3.ExternalEnumerateS3(cmd.Context(), bucketURL, regions)
 			a.OutputSignal.Content = report
 		},
 	}
 
-	externalEnumerateCmd.Flags().String("name", "", "Name of the S3 bucket")
+	externalEnumerateCmd.Flags().String("url", "", "URL of the S3 bucket")
+	_ = externalEnumerateCmd.MarkFlagRequired("url")
 
 	s3Cmd.AddCommand(enumerateCmd)
 	s3Cmd.AddCommand(lsCmd)
