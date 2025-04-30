@@ -12,6 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
+// isNonStandardS3URL checks if the URL follows standard S3 URL patterns
+func isNonStandardS3URL(url string) bool {
+	return !strings.Contains(url, "amazonaws.com") || !strings.Contains(url, "s3")
+}
+
 // parseBucketURL extracts bucket name and potentially region from S3 URL
 // Handles formats like:
 // - https://bucket-name.s3.region.amazonaws.com
@@ -22,8 +27,8 @@ func parseBucketURL(bucketURL string) (bucketName string, region string) {
 	bucketURL = strings.TrimPrefix(bucketURL, "https://")
 	bucketURL = strings.TrimPrefix(bucketURL, "http://")
 
-	// Handle non-standard URLs (e.g., https://image-api.fox.com)
-	if !strings.Contains(bucketURL, "amazonaws.com") {
+	// Handle non-standard URLs
+	if isNonStandardS3URL(bucketURL) {
 		return bucketURL, ""
 	}
 
@@ -268,7 +273,7 @@ func ExternalEnumerateS3(ctx context.Context, bucketURL string, regions []string
 	}
 
 	// For non-standard URLs, try the default region first
-	if !strings.Contains(bucketURL, "amazonaws.com") {
+	if isNonStandardS3URL(bucketURL) {
 		regionsToCheck = append([]string{"us-east-1"}, regionsToCheck...)
 	}
 
