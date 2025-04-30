@@ -68,18 +68,17 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 	// Create an S3 client
 	client := s3.NewFromConfig(cfg)
 
-	// Try ListObjectsV2 with max keys 0 to check existence
-	_, err = client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucketName),
-		MaxKeys: aws.Int32(0),
+	// Try HeadBucket to check existence
+	_, err = client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
 	})
 
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
-			case "NoSuchBucket", "NotFound":
+			case "NotFound", "NoSuchBucket":
 				return false, nil
-			case "AccessDenied", "Forbidden":
+			case "Forbidden", "AccessDenied":
 				return true, nil // Bucket exists but we don't have access
 			default:
 				return false, fmt.Errorf("error checking bucket: %v", err)
@@ -97,8 +96,9 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 	directoryContents := []*methodaws.S3ObjectDetails{}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucketName),
-		MaxKeys: &maxKeys,
+		Bucket:     aws.String(bucketName),
+		MaxKeys:    &maxKeys,
+		FetchOwner: aws.Bool(true),
 	})
 
 	// Get first page only to avoid overwhelming the API
@@ -112,19 +112,19 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 		if object.Size != nil {
 			size = int(*object.Size)
 		}
-		var ownerID string
-		var ownerName string
-		if object.Owner != nil {
-			ownerID = *object.Owner.ID
-			ownerName = *object.Owner.DisplayName
-		}
-		directoryContents = append(directoryContents, &methodaws.S3ObjectDetails{
+
+		details := &methodaws.S3ObjectDetails{
 			Key:          *object.Key,
 			LastModified: object.LastModified,
 			Size:         &size,
-			OwnerId:      &ownerID,
-			OwnerName:    &ownerName,
-		})
+		}
+
+		if object.Owner != nil {
+			details.OwnerId = object.Owner.ID
+			details.OwnerName = object.Owner.DisplayName
+		}
+
+		directoryContents = append(directoryContents, details)
 	}
 
 	return directoryContents, nil
@@ -134,8 +134,9 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 func checkListingAllowed(ctx context.Context, client *s3.Client, bucketName string) bool {
 	maxKeys := int32(1)
 	_, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucketName),
-		MaxKeys: &maxKeys,
+		Bucket:     aws.String(bucketName),
+		MaxKeys:    &maxKeys,
+		FetchOwner: aws.Bool(true),
 	})
 	return err == nil
 }
@@ -163,27 +164,34 @@ func checkPolicy(ctx context.Context, client *s3.Client, bucketName string) (str
 	return "", fmt.Errorf("error getting bucket policy: %v", err)
 }
 
-// checkAcl checks the bucket ACL
-func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3BucketAcl, error) {
-	aclOutput, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
+// checkACL checks the bucket ACL
+func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3BucketAcl, *string, *string, error) {
+	acls := []*methodaws.S3BucketAcl{}
+
+	output, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
 		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error getting bucket ACL: %v", err)
+		return nil, nil, nil, err
 	}
 
-	acls := []*methodaws.S3BucketAcl{}
-	for _, grant := range aclOutput.Grants {
+	// Extract owner information
+	var ownerID, ownerName *string
+	if output.Owner != nil {
+		ownerID = output.Owner.ID
+		ownerName = output.Owner.DisplayName
+	}
+
+	for _, grant := range output.Grants {
 		if grant.Grantee.URI != nil {
-			acl := &methodaws.S3BucketAcl{
+			acls = append(acls, &methodaws.S3BucketAcl{
 				GranteeUri: *grant.Grantee.URI,
 				Permission: string(grant.Permission),
-			}
-			acls = append(acls, acl)
+			})
 		}
 	}
 
-	return acls, nil
+	return acls, ownerID, ownerName, nil
 }
 
 // ExternalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region
@@ -229,10 +237,12 @@ func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket policy: %v", err))
 	}
 
-	// Check bucket ACL
-	acls, err := checkACL(ctx, client, bucketName)
+	// Check bucket ACL and get owner information
+	acls, ownerID, ownerName, err := checkACL(ctx, client, bucketName)
 	if err == nil {
 		externalBucket.Acls = acls
+		externalBucket.OwnerId = ownerID
+		externalBucket.OwnerName = ownerName
 	} else {
 		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
 	}

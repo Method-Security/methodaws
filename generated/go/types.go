@@ -1523,6 +1523,8 @@ type ExternalBucket struct {
 	AllowAnonymousRead    bool               `json:"allowAnonymousRead" url:"allowAnonymousRead"`
 	Policy                *string            `json:"policy,omitempty" url:"policy,omitempty"`
 	Acls                  []*S3BucketAcl     `json:"acls,omitempty" url:"acls,omitempty"`
+	OwnerId               *string            `json:"ownerID,omitempty" url:"ownerID,omitempty"`
+	OwnerName             *string            `json:"ownerName,omitempty" url:"ownerName,omitempty"`
 
 	extraProperties map[string]interface{}
 }
