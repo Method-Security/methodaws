@@ -41,3 +41,7 @@ generated/*
 # IDE
 .idea/
 .vscode/
+
+# For Release Artifacts
+/artifacts/**
+/output/**
