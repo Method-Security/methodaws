@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
+  # S3 Bucket Fern
   S3BucketACL:
     properties:
       granteeURI: string
@@ -50,6 +51,11 @@ types:
       accountId: string
       s3Buckets: optional<list<Bucket>>
       errors: optional<list<string>>
+# External S3 Bucket Fern
+  ExternalS3BucketConfig:
+    properties:
+      bucketURL: string
+      regions: list<string>
   S3ObjectDetails:
     properties:
       key: string
@@ -69,7 +75,11 @@ types:
       acls: optional<list<S3BucketACL>>
       ownerID: optional<string>
       ownerName: optional<string>
-  ExternalS3Report:
+  ExternalS3BucketResult:
     properties:
       externalBuckets: optional<list<ExternalBucket>>
+  ExternalS3Report:
+    properties:
+      result: ExternalS3BucketResult
       errors: optional<list<string>>
+      config: ExternalS3BucketConfig

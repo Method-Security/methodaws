@@ -4,6 +4,8 @@ import (
 	"github.com/Method-Security/methodaws/internal/s3"
 	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
+
+	methodaws "github.com/Method-Security/methodaws/generated/go"
 )
 
 // InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
@@ -78,7 +80,8 @@ func (a *MethodAws) InitS3Command() {
 				regions = utils.GetGeneralRegions()
 			}
 
-			report := s3.ExternalEnumerateS3(cmd.Context(), bucketURL, regions)
+			config := getExternalS3BucketConfig(regions, bucketURL)
+			report := s3.ExternalEnumerateS3(cmd.Context(), config)
 			a.OutputSignal.Content = report
 		},
 	}
@@ -90,4 +93,12 @@ func (a *MethodAws) InitS3Command() {
 	s3Cmd.AddCommand(lsCmd)
 	s3Cmd.AddCommand(externalEnumerateCmd)
 	a.RootCmd.AddCommand(s3Cmd)
+}
+
+// getExternalS3BucketConfig returns a methodaws.ExternalS3BucketConfig with the given regions and bucket URL
+func getExternalS3BucketConfig(regions []string, bucketURL string) methodaws.ExternalS3BucketConfig {
+	return methodaws.ExternalS3BucketConfig{
+		BucketUrl: bucketURL,
+		Regions:   regions,
+	}
 }
