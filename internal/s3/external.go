@@ -23,9 +23,11 @@ func isNonStandardS3URL(url string) bool {
 // - https://s3.region.amazonaws.com/bucket-name
 // - bucket-name.s3.region.amazonaws.com
 func parseBucketURL(bucketURL string) (bucketName string, region string) {
+	// Clean Bucket URL
 	// Remove protocol if present
 	bucketURL = strings.TrimPrefix(bucketURL, "https://")
 	bucketURL = strings.TrimPrefix(bucketURL, "http://")
+	bucketURL = strings.Split(bucketURL, ":")[0]
 
 	// Handle non-standard URLs
 	if isNonStandardS3URL(bucketURL) {
@@ -200,33 +202,35 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*met
 }
 
 // ExternalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region
-func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3Report, bucketName string, region string) methodaws.ExternalS3Report {
+func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName string, region string) (*methodaws.ExternalS3BucketResult, []string) {
+	// Initialize variables
+	report := methodaws.ExternalS3BucketResult{}
+	externalBucket := methodaws.ExternalBucket{
+		Name:   bucketName,
+		Region: region,
+		Url:    bucketURL,
+	}
+	errors := []string{}
+
 	// Create a custom AWS config with anonymous credentials
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(region),
 		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	)
 	if err != nil {
-		report.Errors = append(report.Errors, fmt.Sprintf("error loading AWS config: %v", err))
-		return report
+		errors = append(errors, fmt.Sprintf("error loading AWS config: %v", err))
+		return nil, errors
 	}
 
 	// Create an S3 client
 	client := s3.NewFromConfig(cfg)
-
-	// Initialize bucket info
-	externalBucket := methodaws.ExternalBucket{
-		Name:   bucketName,
-		Region: region,
-		Url:    fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucketName, region),
-	}
 
 	// Check if listing is allowed and get directory contents
 	externalBucket.AllowDirectoryListing = checkListingAllowed(ctx, client, bucketName)
 	if externalBucket.AllowDirectoryListing {
 		directoryContents, err := listBucketContents(ctx, client, bucketName)
 		if err != nil {
-			report.Errors = append(report.Errors, fmt.Sprintf("error listing bucket contents: %v", err))
+			errors = append(errors, fmt.Sprintf("error listing bucket contents: %v", err))
 		} else {
 			externalBucket.DirectoryContents = directoryContents
 			// Check anonymous read access if we found any objects
@@ -239,7 +243,7 @@ func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 	if err == nil {
 		externalBucket.Policy = &policy
 	} else {
-		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket policy: %v", err))
+		errors = append(errors, fmt.Sprintf("Error getting bucket policy: %v", err))
 	}
 
 	// Check bucket ACL and get owner information
@@ -249,31 +253,29 @@ func ExternalEnumerateS3Region(ctx context.Context, report methodaws.ExternalS3R
 		externalBucket.OwnerId = ownerID
 		externalBucket.OwnerName = ownerName
 	} else {
-		report.Errors = append(report.Errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
+		errors = append(errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
 	}
 
 	report.ExternalBuckets = append(report.ExternalBuckets, &externalBucket)
-	return report
+	return &report, errors
 }
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
-func ExternalEnumerateS3(ctx context.Context, bucketURL string, regions []string) methodaws.ExternalS3Report {
-	report := methodaws.ExternalS3Report{
-		ExternalBuckets: []*methodaws.ExternalBucket{},
-		Errors:          []string{},
-	}
+func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketConfig) methodaws.ExternalS3Report {
+	result := methodaws.ExternalS3Report{Config: &config}
+	errors := []string{}
 
 	// Parse the bucket URL to get name and potentially region
-	bucketName, urlRegion := parseBucketURL(bucketURL)
+	bucketName, urlRegion := parseBucketURL(config.BucketUrl)
 
 	// If we got a region from the URL, only check that region
-	regionsToCheck := regions
+	regionsToCheck := config.Regions
 	if urlRegion != "" {
 		regionsToCheck = []string{urlRegion}
 	}
 
 	// For non-standard URLs, try the default region first
-	if isNonStandardS3URL(bucketURL) {
+	if isNonStandardS3URL(config.BucketUrl) {
 		regionsToCheck = append([]string{"us-east-1"}, regionsToCheck...)
 	}
 
@@ -281,19 +283,22 @@ func ExternalEnumerateS3(ctx context.Context, bucketURL string, regions []string
 	for _, region := range regionsToCheck {
 		exists, err := bucketExists(ctx, region, bucketName)
 		if err != nil {
-			report.Errors = append(report.Errors, fmt.Sprintf("Error checking bucket in region %s: %v", region, err))
+			errors = append(errors, fmt.Sprintf("Error checking bucket in region %s: %v", region, err))
 			continue
 		}
 		if exists {
-			report = ExternalEnumerateS3Region(ctx, report, bucketName, region)
+			report, errors := externalEnumerateS3Region(ctx, config.BucketUrl, bucketName, region)
+			result.Result = report
+			result.Errors = append(result.Errors, errors...)
 			bucketFound = true
 			break
 		}
 	}
 
 	if !bucketFound {
-		report.Errors = append(report.Errors, "Bucket not found in any of the specified regions")
+		errors = append(errors, "Bucket not found in any of the specified regions")
 	}
 
-	return report
+	result.Errors = errors
+	return result
 }
