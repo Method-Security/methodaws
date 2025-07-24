@@ -262,7 +262,8 @@ func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
 func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketConfig) methodaws.ExternalS3Report {
-	result := methodaws.ExternalS3Report{Config: &config}
+	report := methodaws.ExternalS3Report{Config: &config}
+	result := methodaws.ExternalS3BucketResult{}
 	errors := []string{}
 
 	// Parse the bucket URL to get name and potentially region
@@ -287,9 +288,11 @@ func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketC
 			continue
 		}
 		if exists {
-			report, errors := externalEnumerateS3Region(ctx, config.BucketUrl, bucketName, region)
-			result.Result = report
-			result.Errors = append(result.Errors, errors...)
+			functionResult, functionErrors := externalEnumerateS3Region(ctx, config.BucketUrl, bucketName, region)
+			if functionResult != nil {
+				result = *functionResult
+			}
+			errors = append(errors, functionErrors...)
 			bucketFound = true
 			break
 		}
@@ -299,6 +302,7 @@ func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketC
 		errors = append(errors, "Bucket not found in any of the specified regions")
 	}
 
-	result.Errors = errors
-	return result
+	report.Result = &result
+	report.Errors = errors
+	return report
 }
