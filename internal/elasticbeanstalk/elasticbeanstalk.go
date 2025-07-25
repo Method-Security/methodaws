@@ -13,7 +13,7 @@ import (
 func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkCreateEnvironmentInput) *methodaws.ElasticBeanstalkCreateEnvironmentResult {
 	// Update the region in the config
 	awsConfig.Region = input.Region
-	
+
 	client := elasticbeanstalk.NewFromConfig(awsConfig)
 
 	createInput := &elasticbeanstalk.CreateEnvironmentInput{
@@ -57,7 +57,7 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 			environment.Status = &status
 		}
 	}
-	
+
 	if result.Health != "" {
 		if health, err := methodaws.NewElasticBeanstalkEnvironmentHealthFromString(string(result.Health)); err == nil {
 			environment.Health = &health
@@ -66,5 +66,33 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 
 	return &methodaws.ElasticBeanstalkCreateEnvironmentResult{
 		Environment: environment,
+	}
+}
+
+// CheckDNSAvailability checks if a CNAME prefix is available for use
+func CheckDNSAvailability(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkDnsAvailabilityInput) *methodaws.ElasticBeanstalkDnsAvailabilityResult {
+	// Update the region in the config
+	awsConfig.Region = input.Region
+	
+	client := elasticbeanstalk.NewFromConfig(awsConfig)
+
+	checkInput := &elasticbeanstalk.CheckDNSAvailabilityInput{
+		CNAMEPrefix: aws.String(input.CnamePrefix),
+	}
+
+	result, err := client.CheckDNSAvailability(ctx, checkInput)
+	if err != nil {
+		errorMsg := err.Error()
+		return &methodaws.ElasticBeanstalkDnsAvailabilityResult{
+			Available: false,
+			Region:    input.Region,
+			Error:     &errorMsg,
+		}
+	}
+
+	return &methodaws.ElasticBeanstalkDnsAvailabilityResult{
+		Available:            result.Available != nil && *result.Available,
+		FullyQualifiedCname:  result.FullyQualifiedCNAME,
+		Region:               input.Region,
 	}
 }

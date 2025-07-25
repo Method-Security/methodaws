@@ -1,11 +1,10 @@
 package cmd
 
 import (
+	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/Method-Security/methodaws/internal/s3"
 	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
-
-	methodaws "github.com/Method-Security/methodaws/generated/go"
 )
 
 // InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
