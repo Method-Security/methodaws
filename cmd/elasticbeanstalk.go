@@ -36,6 +36,27 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			}
 			targetRegion := a.RootFlags.Regions[0]
 
+			// First check if the CNAME prefix is available
+			dnsInput := &methodaws.ElasticBeanstalkDnsAvailabilityInput{
+				CnamePrefix: cnamePrefix,
+				Region:      targetRegion,
+			}
+
+			dnsResult := elasticbeanstalk.CheckDNSAvailability(cmd.Context(), *a.AwsConfig, dnsInput)
+			if dnsResult.Error != nil {
+				a.OutputSignal.ErrorMessage = dnsResult.Error
+				a.OutputSignal.Status = 1
+				return
+			}
+
+			if !dnsResult.Available {
+				errorMsg := "CNAME prefix '" + cnamePrefix + "' is not available. The fully qualified CNAME would be: " + aws.ToString(dnsResult.FullyQualifiedCname)
+				a.OutputSignal.ErrorMessage = &errorMsg
+				a.OutputSignal.Status = 1
+				return
+			}
+
+			// CNAME is available, proceed with environment creation
 			input := &methodaws.ElasticBeanstalkCreateEnvironmentInput{
 				ApplicationName:    applicationName,
 				EnvironmentName:    environmentName,
@@ -63,6 +84,40 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 	// Mark required flags
 	_ = createEnvCmd.MarkFlagRequired("cname-prefix")
 
+	checkDnsCmd := &cobra.Command{
+		Use:   "check-dns-availability",
+		Short: "Check if a CNAME prefix is available for ElasticBeanstalk",
+		Long:  `Check if a CNAME prefix is available for use with ElasticBeanstalk environments`,
+		Run: func(cmd *cobra.Command, args []string) {
+			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
+
+			// Use the first region from global flags (already validated in PersistentPreRunE)
+			if len(a.RootFlags.Regions) == 0 {
+				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
+				a.OutputSignal.Status = 1
+				return
+			}
+			targetRegion := a.RootFlags.Regions[0]
+
+			input := &methodaws.ElasticBeanstalkDnsAvailabilityInput{
+				CnamePrefix: cnamePrefix,
+				Region:      targetRegion,
+			}
+
+			result := elasticbeanstalk.CheckDNSAvailability(cmd.Context(), *a.AwsConfig, input)
+			if result.Error != nil {
+				a.OutputSignal.ErrorMessage = result.Error
+				a.OutputSignal.Status = 1
+			}
+			a.OutputSignal.Content = result
+		},
+	}
+
+	// Add flags for the check-dns-availability command
+	checkDnsCmd.Flags().String("cname-prefix", "", "CNAME prefix to check availability for (required)")
+	_ = checkDnsCmd.MarkFlagRequired("cname-prefix")
+
 	ebCmd.AddCommand(createEnvCmd)
+	ebCmd.AddCommand(checkDnsCmd)
 	a.RootCmd.AddCommand(ebCmd)
 }

@@ -17,6 +17,16 @@ types:
       - Yellow
       - Red
       - Grey
+  ElasticBeanstalkDnsAvailabilityInput:
+    properties:
+      cnamePrefix: string
+      region: string
+  ElasticBeanstalkDnsAvailabilityResult:
+    properties:
+      available: boolean
+      fullyQualifiedCname: optional<string>
+      region: string
+      error: optional<string>
   ElasticBeanstalkEnvironment:
     properties:
       environmentId: optional<string>
