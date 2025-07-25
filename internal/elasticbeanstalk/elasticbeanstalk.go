@@ -7,10 +7,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk"
 	"github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk/types"
+	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 // CreateEnvironment creates a new ElasticBeanstalk environment
 func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkCreateEnvironmentInput) *methodaws.ElasticBeanstalkCreateEnvironmentReport {
+	log := svc1log.FromContext(ctx)
+	
+	log.Info("Starting ElasticBeanstalk environment creation",
+		svc1log.SafeParam("environmentName", input.EnvironmentName),
+		svc1log.SafeParam("applicationName", input.ApplicationName),
+		svc1log.SafeParam("cnamePrefix", input.CnamePrefix),
+		svc1log.SafeParam("region", input.Region))
+	
 	// Update the region in the config
 	awsConfig.Region = input.Region
 
@@ -46,6 +55,10 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 
 	result, err := client.CreateEnvironment(ctx, createInput)
 	if err != nil {
+		log.Error("Failed to create ElasticBeanstalk environment",
+			svc1log.SafeParam("error", err.Error()),
+			svc1log.SafeParam("environmentName", input.EnvironmentName),
+			svc1log.SafeParam("region", input.Region))
 		errorMsg := err.Error()
 		return &methodaws.ElasticBeanstalkCreateEnvironmentReport{
 			Result: &methodaws.ElasticBeanstalkCreateEnvironmentResult{},
@@ -53,6 +66,11 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 			Config: config,
 		}
 	}
+
+	log.Info("Successfully created ElasticBeanstalk environment",
+		svc1log.SafeParam("environmentId", aws.ToString(result.EnvironmentId)),
+		svc1log.SafeParam("environmentName", aws.ToString(result.EnvironmentName)),
+		svc1log.SafeParam("cname", aws.ToString(result.CNAME)))
 
 	// Convert AWS SDK result to Fern struct
 	environment := &methodaws.ElasticBeanstalkEnvironment{
@@ -86,6 +104,12 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 
 // CheckDNSAvailability checks if a CNAME prefix is available for use
 func CheckDNSAvailability(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkDnsAvailabilityInput) *methodaws.ElasticBeanstalkDnsAvailabilityResult {
+	log := svc1log.FromContext(ctx)
+	
+	log.Info("Checking ElasticBeanstalk DNS availability",
+		svc1log.SafeParam("cnamePrefix", input.CnamePrefix),
+		svc1log.SafeParam("region", input.Region))
+	
 	// Update the region in the config
 	awsConfig.Region = input.Region
 	
@@ -97,6 +121,10 @@ func CheckDNSAvailability(ctx context.Context, awsConfig aws.Config, input *meth
 
 	result, err := client.CheckDNSAvailability(ctx, checkInput)
 	if err != nil {
+		log.Error("Failed to check DNS availability",
+			svc1log.SafeParam("error", err.Error()),
+			svc1log.SafeParam("cnamePrefix", input.CnamePrefix),
+			svc1log.SafeParam("region", input.Region))
 		errorMsg := err.Error()
 		return &methodaws.ElasticBeanstalkDnsAvailabilityResult{
 			Available: false,
@@ -105,8 +133,14 @@ func CheckDNSAvailability(ctx context.Context, awsConfig aws.Config, input *meth
 		}
 	}
 
+	available := result.Available != nil && *result.Available
+	log.Info("DNS availability check completed",
+		svc1log.SafeParam("cnamePrefix", input.CnamePrefix),
+		svc1log.SafeParam("available", available),
+		svc1log.SafeParam("fullyQualifiedCname", aws.ToString(result.FullyQualifiedCNAME)))
+
 	return &methodaws.ElasticBeanstalkDnsAvailabilityResult{
-		Available:            result.Available != nil && *result.Available,
+		Available:            available,
 		FullyQualifiedCname:  result.FullyQualifiedCNAME,
 		Region:               input.Region,
 	}

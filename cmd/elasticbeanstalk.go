@@ -5,6 +5,7 @@ import (
 	"github.com/Method-Security/methodaws/internal/elasticbeanstalk"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/cobra"
+	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 // InitElasticBeanstalkCommand initializes the `methodaws elasticbeanstalk` subcommand
@@ -50,6 +51,10 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			}
 
 			if !dnsResult.Available {
+				log := svc1log.FromContext(cmd.Context())
+				log.Warn("CNAME prefix is not available, aborting environment creation",
+					svc1log.SafeParam("cnamePrefix", cnamePrefix),
+					svc1log.SafeParam("fullyQualifiedCname", aws.ToString(dnsResult.FullyQualifiedCname)))
 				errorMsg := "CNAME prefix '" + cnamePrefix + "' is not available. The fully qualified CNAME would be: " + aws.ToString(dnsResult.FullyQualifiedCname)
 				a.OutputSignal.ErrorMessage = &errorMsg
 				a.OutputSignal.Status = 1
