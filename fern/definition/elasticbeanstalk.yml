@@ -44,12 +44,19 @@ types:
       iamInstanceProfile: string
       cnamePrefix: string
       region: string
+  ElasticBeanstalkCreateEnvironmentConfig:
+    properties:
+      applicationName: string
+      environmentName: string
+      solutionStackName: string
+      iamInstanceProfile: string
+      cnamePrefix: string
+      region: string
   ElasticBeanstalkCreateEnvironmentResult:
     properties:
       environment: optional<ElasticBeanstalkEnvironment>
-      error: optional<string>
-  ElasticBeanstalkReport:
+  ElasticBeanstalkCreateEnvironmentReport:
     properties:
-      accountId: string
-      environments: optional<list<ElasticBeanstalkEnvironment>>
+      result: ElasticBeanstalkCreateEnvironmentResult
       errors: optional<list<string>>
+      config: ElasticBeanstalkCreateEnvironmentConfig

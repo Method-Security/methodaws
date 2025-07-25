@@ -67,8 +67,9 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			}
 
 			result := elasticbeanstalk.CreateEnvironment(cmd.Context(), *a.AwsConfig, input)
-			if result.Error != nil {
-				a.OutputSignal.ErrorMessage = result.Error
+			if len(result.Errors) > 0 {
+				errorMsg := result.Errors[0] // Use first error
+				a.OutputSignal.ErrorMessage = &errorMsg
 				a.OutputSignal.Status = 1
 			}
 			a.OutputSignal.Content = result
