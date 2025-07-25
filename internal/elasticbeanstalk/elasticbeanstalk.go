@@ -10,7 +10,7 @@ import (
 )
 
 // CreateEnvironment creates a new ElasticBeanstalk environment
-func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkCreateEnvironmentInput) *methodaws.ElasticBeanstalkCreateEnvironmentResult {
+func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methodaws.ElasticBeanstalkCreateEnvironmentInput) *methodaws.ElasticBeanstalkCreateEnvironmentReport {
 	// Update the region in the config
 	awsConfig.Region = input.Region
 
@@ -34,11 +34,23 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 		}
 	}
 
+	// Create config struct for reporting
+	config := &methodaws.ElasticBeanstalkCreateEnvironmentConfig{
+		ApplicationName:    input.ApplicationName,
+		EnvironmentName:    input.EnvironmentName,
+		SolutionStackName:  input.SolutionStackName,
+		IamInstanceProfile: input.IamInstanceProfile,
+		CnamePrefix:        input.CnamePrefix,
+		Region:             input.Region,
+	}
+
 	result, err := client.CreateEnvironment(ctx, createInput)
 	if err != nil {
 		errorMsg := err.Error()
-		return &methodaws.ElasticBeanstalkCreateEnvironmentResult{
-			Error: &errorMsg,
+		return &methodaws.ElasticBeanstalkCreateEnvironmentReport{
+			Result: &methodaws.ElasticBeanstalkCreateEnvironmentResult{},
+			Errors: []string{errorMsg},
+			Config: config,
 		}
 	}
 
@@ -64,8 +76,11 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 		}
 	}
 
-	return &methodaws.ElasticBeanstalkCreateEnvironmentResult{
-		Environment: environment,
+	return &methodaws.ElasticBeanstalkCreateEnvironmentReport{
+		Result: &methodaws.ElasticBeanstalkCreateEnvironmentResult{
+			Environment: environment,
+		},
+		Config: config,
 	}
 }
 
