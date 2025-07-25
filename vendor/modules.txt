@@ -47,7 +47,7 @@ github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/ssooidc
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
-# github.com/aws/aws-sdk-go-v2 v1.36.3
+# github.com/aws/aws-sdk-go-v2 v1.36.6
 ## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/aws
 github.com/aws/aws-sdk-go-v2/aws/arn
@@ -95,10 +95,10 @@ github.com/aws/aws-sdk-go-v2/credentials/stscreds
 ## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds/internal/config
-# github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34
+# github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.37
 ## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/internal/configsources
-# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34
+# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.37
 ## explicit; go 1.22
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 # github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0
@@ -135,6 +135,11 @@ github.com/aws/aws-sdk-go-v2/service/ec2/types
 github.com/aws/aws-sdk-go-v2/service/eks
 github.com/aws/aws-sdk-go-v2/service/eks/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/eks/types
+# github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk v1.29.6
+## explicit; go 1.22
+github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk
+github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk/internal/endpoints
+github.com/aws/aws-sdk-go-v2/service/elasticbeanstalk/types
 # github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.26.1
 ## explicit; go 1.20
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing
@@ -207,7 +212,7 @@ github.com/aws/aws-sdk-go-v2/service/sts/types
 github.com/aws/aws-sdk-go-v2/service/wafv2
 github.com/aws/aws-sdk-go-v2/service/wafv2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/wafv2/types
-# github.com/aws/smithy-go v1.22.3
+# github.com/aws/smithy-go v1.22.4
 ## explicit; go 1.22
 github.com/aws/smithy-go
 github.com/aws/smithy-go/auth

@@ -30,6 +30,7 @@ func main() {
 	methodaws.InitVPCCommand()
 	methodaws.InitWAFCommand()
 	methodaws.InitCloudFrontCommand()
+	methodaws.InitElasticBeanstalkCommand()
 
 	if err := methodaws.RootCmd.Execute(); err != nil {
 		os.Exit(1)

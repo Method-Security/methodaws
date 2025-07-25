@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  ElasticBeanstalkEnvironmentStatus:
+    enum:
+      - Aborting
+      - Launching
+      - Updating
+      - LinkingFrom
+      - LinkingTo
+      - Ready
+      - Terminating
+      - Terminated
+  ElasticBeanstalkEnvironmentHealth:
+    enum:
+      - Green
+      - Yellow
+      - Red
+      - Grey
+  ElasticBeanstalkEnvironment:
+    properties:
+      environmentId: optional<string>
+      environmentName: optional<string>
+      applicationName: optional<string>
+      cname: optional<string>
+      status: optional<ElasticBeanstalkEnvironmentStatus>
+      health: optional<ElasticBeanstalkEnvironmentHealth>
+      region: string
+  ElasticBeanstalkCreateEnvironmentInput:
+    properties:
+      applicationName: string
+      environmentName: string
+      solutionStackName: string
+      iamInstanceProfile: string
+      cnamePrefix: string
+      region: string
+  ElasticBeanstalkCreateEnvironmentResult:
+    properties:
+      environment: optional<ElasticBeanstalkEnvironment>
+      error: optional<string>
+  ElasticBeanstalkReport:
+    properties:
+      accountId: string
+      environments: optional<list<ElasticBeanstalkEnvironment>>
+      errors: optional<list<string>>
