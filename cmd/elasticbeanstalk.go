@@ -30,11 +30,6 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			environmentName := cnamePrefix + "-env"
 
 			// Use the first region from global flags (already validated in PersistentPreRunE)
-			if len(a.RootFlags.Regions) == 0 {
-				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
-				a.OutputSignal.Status = 1
-				return
-			}
 			targetRegion := a.RootFlags.Regions[0]
 
 			// First check if the CNAME prefix is available
@@ -98,11 +93,6 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
 
 			// Use the first region from global flags (already validated in PersistentPreRunE)
-			if len(a.RootFlags.Regions) == 0 {
-				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
-				a.OutputSignal.Status = 1
-				return
-			}
 			targetRegion := a.RootFlags.Regions[0]
 
 			input := &methodaws.ElasticBeanstalkDnsAvailabilityInput{
