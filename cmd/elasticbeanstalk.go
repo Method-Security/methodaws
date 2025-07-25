@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+
 	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/Method-Security/methodaws/internal/elasticbeanstalk"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/spf13/cobra"
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
+	"github.com/spf13/cobra"
 )
 
 // InitElasticBeanstalkCommand initializes the `methodaws elasticbeanstalk` subcommand
@@ -29,14 +30,14 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			// Manually validate required flags
 			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
 			region, _ := cmd.Flags().GetString("region")
-			
+
 			if cnamePrefix == "" {
 				return fmt.Errorf("required flag \"cname-prefix\" not set")
 			}
 			if region == "" {
 				return fmt.Errorf("required flag \"region\" not set")
 			}
-			
+
 			outputFormat, err := cmd.Flags().GetString("output")
 			if err != nil {
 				return err
@@ -112,7 +113,7 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 
 	// Required flags are manually validated in PreRunE
 
-	checkDnsCmd := &cobra.Command{
+	checkDNSCmd := &cobra.Command{
 		Use:   "check-dns-availability",
 		Short: "Check if a CNAME prefix is available for ElasticBeanstalk",
 		Long:  `Check if a CNAME prefix is available for use with ElasticBeanstalk environments`,
@@ -120,14 +121,14 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 			// Manually validate required flags
 			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
 			region, _ := cmd.Flags().GetString("region")
-			
+
 			if cnamePrefix == "" {
 				return fmt.Errorf("required flag \"cname-prefix\" not set")
 			}
 			if region == "" {
 				return fmt.Errorf("required flag \"region\" not set")
 			}
-			
+
 			outputFormat, err := cmd.Flags().GetString("output")
 			if err != nil {
 				return err
@@ -159,11 +160,11 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 	}
 
 	// Add flags for the check-dns-availability command
-	checkDnsCmd.Flags().String("cname-prefix", "", "CNAME prefix to check availability for (required)")
-	checkDnsCmd.Flags().String("region", "", "AWS region to check availability in (required)")
+	checkDNSCmd.Flags().String("cname-prefix", "", "CNAME prefix to check availability for (required)")
+	checkDNSCmd.Flags().String("region", "", "AWS region to check availability in (required)")
 	// Required flags are manually validated in PreRunE
 
 	ebCmd.AddCommand(createEnvCmd)
-	ebCmd.AddCommand(checkDnsCmd)
+	ebCmd.AddCommand(checkDNSCmd)
 	a.RootCmd.AddCommand(ebCmd)
 }
