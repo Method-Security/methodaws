@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	methodaws "github.com/Method-Security/methodaws/generated/go"
 	"github.com/Method-Security/methodaws/internal/elasticbeanstalk"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,28 +15,54 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 		Use:   "elasticbeanstalk",
 		Short: "Manage ElasticBeanstalk applications and environments",
 		Long:  `Manage ElasticBeanstalk applications and environments`,
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// Override root command's PersistentPreRunE to prevent region validation
+			return nil
+		},
 	}
 
 	createEnvCmd := &cobra.Command{
 		Use:   "create-environment",
 		Short: "Create a new ElasticBeanstalk environment",
 		Long:  `Create a new ElasticBeanstalk environment with specified configuration`,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			// Manually validate required flags
+			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
+			region, _ := cmd.Flags().GetString("region")
+			
+			if cnamePrefix == "" {
+				return fmt.Errorf("required flag \"cname-prefix\" not set")
+			}
+			if region == "" {
+				return fmt.Errorf("required flag \"region\" not set")
+			}
+			
+			outputFormat, err := cmd.Flags().GetString("output")
+			if err != nil {
+				return err
+			}
+			outputFile, err := cmd.Flags().GetString("output-file")
+			if err != nil {
+				return err
+			}
+			// Override the global regions with our local region flag
+			a.RootFlags.Regions = []string{region}
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, true)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			applicationName, _ := cmd.Flags().GetString("application-name")
 			solutionStack, _ := cmd.Flags().GetString("solution-stack")
 			iamInstanceProfile, _ := cmd.Flags().GetString("iam-instance-profile")
 			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
+			region, _ := cmd.Flags().GetString("region")
 
 			// Generate environment name from cname prefix
 			environmentName := cnamePrefix + "-env"
 
-			// Use the first region from global flags (already validated in PersistentPreRunE)
-			targetRegion := a.RootFlags.Regions[0]
-
 			// First check if the CNAME prefix is available
 			dnsInput := &methodaws.ElasticBeanstalkDnsAvailabilityInput{
 				CnamePrefix: cnamePrefix,
-				Region:      targetRegion,
+				Region:      region,
 			}
 
 			dnsResult := elasticbeanstalk.CheckDNSAvailability(cmd.Context(), *a.AwsConfig, dnsInput)
@@ -63,7 +90,7 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 				SolutionStackName:  solutionStack,
 				IamInstanceProfile: iamInstanceProfile,
 				CnamePrefix:        cnamePrefix,
-				Region:             targetRegion,
+				Region:             region,
 			}
 
 			result := elasticbeanstalk.CreateEnvironment(cmd.Context(), *a.AwsConfig, input)
@@ -81,23 +108,45 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 	createEnvCmd.Flags().String("solution-stack", "64bit Amazon Linux 2023 v4.6.1 running Python 3.13", "Solution stack name")
 	createEnvCmd.Flags().String("iam-instance-profile", "ec2-instance-role", "IAM instance profile for EC2 instances")
 	createEnvCmd.Flags().String("cname-prefix", "", "CNAME prefix for the environment (required)")
+	createEnvCmd.Flags().String("region", "", "AWS region for the environment (required)")
 
-	// Mark required flags
-	_ = createEnvCmd.MarkFlagRequired("cname-prefix")
+	// Required flags are manually validated in PreRunE
 
 	checkDnsCmd := &cobra.Command{
 		Use:   "check-dns-availability",
 		Short: "Check if a CNAME prefix is available for ElasticBeanstalk",
 		Long:  `Check if a CNAME prefix is available for use with ElasticBeanstalk environments`,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			// Manually validate required flags
+			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
+			region, _ := cmd.Flags().GetString("region")
+			
+			if cnamePrefix == "" {
+				return fmt.Errorf("required flag \"cname-prefix\" not set")
+			}
+			if region == "" {
+				return fmt.Errorf("required flag \"region\" not set")
+			}
+			
+			outputFormat, err := cmd.Flags().GetString("output")
+			if err != nil {
+				return err
+			}
+			outputFile, err := cmd.Flags().GetString("output-file")
+			if err != nil {
+				return err
+			}
+			// Override the global regions with our local region flag
+			a.RootFlags.Regions = []string{region}
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, true)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			cnamePrefix, _ := cmd.Flags().GetString("cname-prefix")
-
-			// Use the first region from global flags (already validated in PersistentPreRunE)
-			targetRegion := a.RootFlags.Regions[0]
+			region, _ := cmd.Flags().GetString("region")
 
 			input := &methodaws.ElasticBeanstalkDnsAvailabilityInput{
 				CnamePrefix: cnamePrefix,
-				Region:      targetRegion,
+				Region:      region,
 			}
 
 			result := elasticbeanstalk.CheckDNSAvailability(cmd.Context(), *a.AwsConfig, input)
@@ -111,7 +160,8 @@ func (a *MethodAws) InitElasticBeanstalkCommand() {
 
 	// Add flags for the check-dns-availability command
 	checkDnsCmd.Flags().String("cname-prefix", "", "CNAME prefix to check availability for (required)")
-	_ = checkDnsCmd.MarkFlagRequired("cname-prefix")
+	checkDnsCmd.Flags().String("region", "", "AWS region to check availability in (required)")
+	// Required flags are manually validated in PreRunE
 
 	ebCmd.AddCommand(createEnvCmd)
 	ebCmd.AddCommand(checkDnsCmd)

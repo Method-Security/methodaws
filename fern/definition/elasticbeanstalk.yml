@@ -46,10 +46,10 @@ types:
       region: string
   ElasticBeanstalkCreateEnvironmentConfig:
     properties:
-      applicationName: string
-      environmentName: string
-      solutionStackName: string
-      iamInstanceProfile: string
+      applicationName: optional<string>
+      environmentName: optional<string>
+      solutionStackName: optional<string>
+      iamInstanceProfile: optional<string>
       cnamePrefix: string
       region: string
   ElasticBeanstalkCreateEnvironmentResult:

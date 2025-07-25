@@ -45,10 +45,10 @@ func CreateEnvironment(ctx context.Context, awsConfig aws.Config, input *methoda
 
 	// Create config struct for reporting
 	config := &methodaws.ElasticBeanstalkCreateEnvironmentConfig{
-		ApplicationName:    input.ApplicationName,
-		EnvironmentName:    input.EnvironmentName,
-		SolutionStackName:  input.SolutionStackName,
-		IamInstanceProfile: input.IamInstanceProfile,
+		ApplicationName:    &input.ApplicationName,
+		EnvironmentName:    &input.EnvironmentName,
+		SolutionStackName:  &input.SolutionStackName,
+		IamInstanceProfile: &input.IamInstanceProfile,
 		CnamePrefix:        input.CnamePrefix,
 		Region:             input.Region,
 	}
