@@ -11,10 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Gets information about the traffic sources for the specified Auto Scaling
-// group. You can optionally provide a traffic source type. If you provide a
-// traffic source type, then the results only include that traffic source type. If
-// you do not provide a traffic source type, then the results include all the
+// Gets information about the traffic sources for the specified Auto Scaling group.
+//
+// You can optionally provide a traffic source type. If you provide a traffic
+// source type, then the results only include that traffic source type.
+//
+// If you do not provide a traffic source type, then the results include all the
 // traffic sources for the specified Auto Scaling group.
 func (c *Client) DescribeTrafficSources(ctx context.Context, params *DescribeTrafficSourcesInput, optFns ...func(*Options)) (*DescribeTrafficSourcesOutput, error) {
 	if params == nil {
@@ -45,11 +47,15 @@ type DescribeTrafficSourcesInput struct {
 	// previous call.)
 	NextToken *string
 
-	// The traffic source type that you want to describe. The following lists the
-	// valid values:
+	// The traffic source type that you want to describe.
+	//
+	// The following lists the valid values:
+	//
 	//   - elb if the traffic source is a Classic Load Balancer.
+	//
 	//   - elbv2 if the traffic source is a Application Load Balancer, Gateway Load
 	//   Balancer, or Network Load Balancer.
+	//
 	//   - vpc-lattice if the traffic source is VPC Lattice.
 	TrafficSourceType *string
 
@@ -116,6 +122,9 @@ func (c *Client) addOperationDescribeTrafficSourcesMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,6 +135,15 @@ func (c *Client) addOperationDescribeTrafficSourcesMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeTrafficSourcesValidationMiddleware(stack); err != nil {
@@ -149,16 +167,50 @@ func (c *Client) addOperationDescribeTrafficSourcesMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTrafficSourcesAPIClient is a client that implements the
-// DescribeTrafficSources operation.
-type DescribeTrafficSourcesAPIClient interface {
-	DescribeTrafficSources(context.Context, *DescribeTrafficSourcesInput, ...func(*Options)) (*DescribeTrafficSourcesOutput, error)
-}
-
-var _ DescribeTrafficSourcesAPIClient = (*Client)(nil)
 
 // DescribeTrafficSourcesPaginatorOptions is the paginator options for
 // DescribeTrafficSources
@@ -224,6 +276,9 @@ func (p *DescribeTrafficSourcesPaginator) NextPage(ctx context.Context, optFns .
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTrafficSources(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -242,6 +297,14 @@ func (p *DescribeTrafficSourcesPaginator) NextPage(ctx context.Context, optFns .
 
 	return result, nil
 }
+
+// DescribeTrafficSourcesAPIClient is a client that implements the
+// DescribeTrafficSources operation.
+type DescribeTrafficSourcesAPIClient interface {
+	DescribeTrafficSources(context.Context, *DescribeTrafficSourcesInput, ...func(*Options)) (*DescribeTrafficSourcesOutput, error)
+}
+
+var _ DescribeTrafficSourcesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTrafficSources(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

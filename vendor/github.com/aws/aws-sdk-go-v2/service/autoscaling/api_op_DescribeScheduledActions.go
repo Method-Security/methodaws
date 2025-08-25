@@ -13,8 +13,12 @@ import (
 )
 
 // Gets information about the scheduled actions that haven't run or that have not
-// reached their end time. To describe the scaling activities for scheduled actions
-// that have already run, call the DescribeScalingActivities API.
+// reached their end time.
+//
+// To describe the scaling activities for scheduled actions that have already run,
+// call the [DescribeScalingActivities]API.
+//
+// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
 func (c *Client) DescribeScheduledActions(ctx context.Context, params *DescribeScheduledActionsInput, optFns ...func(*Options)) (*DescribeScheduledActionsOutput, error) {
 	if params == nil {
 		params = &DescribeScheduledActionsInput{}
@@ -49,7 +53,9 @@ type DescribeScheduledActionsInput struct {
 
 	// The names of one or more scheduled actions. If you omit this property, all
 	// scheduled actions are described. If you specify an unknown scheduled action, it
-	// is ignored with no error. Array Members: Maximum number of 50 actions.
+	// is ignored with no error.
+	//
+	// Array Members: Maximum number of 50 actions.
 	ScheduledActionNames []string
 
 	// The earliest scheduled start time to return. If scheduled action names are
@@ -119,6 +125,9 @@ func (c *Client) addOperationDescribeScheduledActionsMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -129,6 +138,15 @@ func (c *Client) addOperationDescribeScheduledActionsMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeScheduledActions(options.Region), middleware.Before); err != nil {
@@ -149,16 +167,50 @@ func (c *Client) addOperationDescribeScheduledActionsMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeScheduledActionsAPIClient is a client that implements the
-// DescribeScheduledActions operation.
-type DescribeScheduledActionsAPIClient interface {
-	DescribeScheduledActions(context.Context, *DescribeScheduledActionsInput, ...func(*Options)) (*DescribeScheduledActionsOutput, error)
-}
-
-var _ DescribeScheduledActionsAPIClient = (*Client)(nil)
 
 // DescribeScheduledActionsPaginatorOptions is the paginator options for
 // DescribeScheduledActions
@@ -226,6 +278,9 @@ func (p *DescribeScheduledActionsPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeScheduledActions(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -244,6 +299,14 @@ func (p *DescribeScheduledActionsPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// DescribeScheduledActionsAPIClient is a client that implements the
+// DescribeScheduledActions operation.
+type DescribeScheduledActionsAPIClient interface {
+	DescribeScheduledActions(context.Context, *DescribeScheduledActionsInput, ...func(*Options)) (*DescribeScheduledActionsOutput, error)
+}
+
+var _ DescribeScheduledActionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeScheduledActions(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

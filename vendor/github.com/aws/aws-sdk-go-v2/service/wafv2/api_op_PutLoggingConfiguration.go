@@ -14,6 +14,9 @@ import (
 // Enables the specified LoggingConfiguration, to start logging from a web ACL, according to the
 // configuration provided.
 //
+// If you configure data protection for the web ACL, the protection applies to the
+// data that WAF sends to the logs.
+//
 // This operation completely replaces any mutable specifications that you already
 // have for a logging configuration with the ones that you provide to this call.
 //
@@ -158,6 +161,9 @@ func (c *Client) addOperationPutLoggingConfigurationMiddlewares(stack *middlewar
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpPutLoggingConfigurationValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -177,6 +183,36 @@ func (c *Client) addOperationPutLoggingConfigurationMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

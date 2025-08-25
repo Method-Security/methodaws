@@ -47,16 +47,16 @@ type CreateDBShardGroupInput struct {
 	// This member is required.
 	MaxACU *float64
 
-	// Specifies whether to create standby DB shard groups for the DB shard group.
-	// Valid values are the following:
+	// Specifies whether to create standby standby DB data access shard for the DB
+	// shard group. Valid values are the following:
 	//
-	//   - 0 - Creates a DB shard group without a standby DB shard group. This is the
-	//   default value.
+	//   - 0 - Creates a DB shard group without a standby DB data access shard. This
+	//   is the default value.
 	//
-	//   - 1 - Creates a DB shard group with a standby DB shard group in a different
-	//   Availability Zone (AZ).
+	//   - 1 - Creates a DB shard group with a standby DB data access shard in a
+	//   different Availability Zone (AZ).
 	//
-	//   - 2 - Creates a DB shard group with two standby DB shard groups in two
+	//   - 2 - Creates a DB shard group with two standby DB data access shard in two
 	//   different AZs.
 	ComputeRedundancy *int32
 
@@ -268,6 +268,36 @@ func (c *Client) addOperationCreateDBShardGroupMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

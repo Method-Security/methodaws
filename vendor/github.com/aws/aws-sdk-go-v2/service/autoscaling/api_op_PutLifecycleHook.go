@@ -11,32 +11,49 @@ import (
 )
 
 // Creates or updates a lifecycle hook for the specified Auto Scaling group.
+//
 // Lifecycle hooks let you create solutions that are aware of events in the Auto
 // Scaling instance lifecycle, and then perform a custom action on instances when
-// the corresponding lifecycle event occurs. This step is a part of the procedure
-// for adding a lifecycle hook to an Auto Scaling group:
+// the corresponding lifecycle event occurs.
+//
+// This step is a part of the procedure for adding a lifecycle hook to an Auto
+// Scaling group:
+//
 //   - (Optional) Create a launch template or launch configuration with a user
 //     data script that runs while an instance is in a wait state due to a lifecycle
 //     hook.
+//
 //   - (Optional) Create a Lambda function and a rule that allows Amazon
 //     EventBridge to invoke your Lambda function when an instance is put into a wait
 //     state due to a lifecycle hook.
+//
 //   - (Optional) Create a notification target and an IAM role. The target can be
 //     either an Amazon SQS queue or an Amazon SNS topic. The role allows Amazon EC2
 //     Auto Scaling to publish lifecycle notifications to the target.
+//
 //   - Create the lifecycle hook. Specify whether the hook is used when the
 //     instances launch or terminate.
-//   - If you need more time, record the lifecycle action heartbeat to keep the
-//     instance in a wait state using the RecordLifecycleActionHeartbeat API call.
-//   - If you finish before the timeout period ends, send a callback by using the
-//     CompleteLifecycleAction API call.
 //
-// For more information, see Amazon EC2 Auto Scaling lifecycle hooks (https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html)
-// in the Amazon EC2 Auto Scaling User Guide. If you exceed your maximum limit of
-// lifecycle hooks, which by default is 50 per Auto Scaling group, the call fails.
-// You can view the lifecycle hooks for an Auto Scaling group using the
-// DescribeLifecycleHooks API call. If you are no longer using a lifecycle hook,
-// you can delete it by calling the DeleteLifecycleHook API.
+//   - If you need more time, record the lifecycle action heartbeat to keep the
+//     instance in a wait state using the [RecordLifecycleActionHeartbeat]API call.
+//
+//   - If you finish before the timeout period ends, send a callback by using the [CompleteLifecycleAction]
+//     API call.
+//
+// For more information, see [Amazon EC2 Auto Scaling lifecycle hooks] in the Amazon EC2 Auto Scaling User Guide.
+//
+// If you exceed your maximum limit of lifecycle hooks, which by default is 50 per
+// Auto Scaling group, the call fails.
+//
+// You can view the lifecycle hooks for an Auto Scaling group using the [DescribeLifecycleHooks] API call.
+// If you are no longer using a lifecycle hook, you can delete it by calling the [DeleteLifecycleHook]
+// API.
+//
+// [RecordLifecycleActionHeartbeat]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_RecordLifecycleActionHeartbeat.html
+// [CompleteLifecycleAction]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CompleteLifecycleAction.html
+// [Amazon EC2 Auto Scaling lifecycle hooks]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/lifecycle-hooks.html
+// [DescribeLifecycleHooks]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeLifecycleHooks.html
+// [DeleteLifecycleHook]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DeleteLifecycleHook.html
 func (c *Client) PutLifecycleHook(ctx context.Context, params *PutLifecycleHookInput, optFns ...func(*Options)) (*PutLifecycleHookOutput, error) {
 	if params == nil {
 		params = &PutLifecycleHookInput{}
@@ -65,8 +82,9 @@ type PutLifecycleHookInput struct {
 	LifecycleHookName *string
 
 	// The action the Auto Scaling group takes when the lifecycle hook timeout elapses
-	// or if an unexpected failure occurs. The default value is ABANDON . Valid values:
-	// CONTINUE | ABANDON
+	// or if an unexpected failure occurs. The default value is ABANDON .
+	//
+	// Valid values: CONTINUE | ABANDON
 	DefaultResult *string
 
 	// The maximum time, in seconds, that can elapse before the lifecycle hook times
@@ -76,10 +94,13 @@ type PutLifecycleHookInput struct {
 
 	// The lifecycle transition. For Auto Scaling groups, there are two major
 	// lifecycle transitions.
+	//
 	//   - To create a lifecycle hook for scale-out events, specify
 	//   autoscaling:EC2_INSTANCE_LAUNCHING .
+	//
 	//   - To create a lifecycle hook for scale-in events, specify
 	//   autoscaling:EC2_INSTANCE_TERMINATING .
+	//
 	// Required for new lifecycle hooks, but optional when updating existing hooks.
 	LifecycleTransition *string
 
@@ -89,19 +110,25 @@ type PutLifecycleHookInput struct {
 
 	// The Amazon Resource Name (ARN) of the notification target that Amazon EC2 Auto
 	// Scaling uses to notify you when an instance is in a wait state for the lifecycle
-	// hook. You can specify either an Amazon SNS topic or an Amazon SQS queue. If you
-	// specify an empty string, this overrides the current ARN. This operation uses the
-	// JSON format when sending notifications to an Amazon SQS queue, and an email
-	// key-value pair format when sending notifications to an Amazon SNS topic. When
-	// you specify a notification target, Amazon EC2 Auto Scaling sends it a test
+	// hook. You can specify either an Amazon SNS topic or an Amazon SQS queue.
+	//
+	// If you specify an empty string, this overrides the current ARN.
+	//
+	// This operation uses the JSON format when sending notifications to an Amazon SQS
+	// queue, and an email key-value pair format when sending notifications to an
+	// Amazon SNS topic.
+	//
+	// When you specify a notification target, Amazon EC2 Auto Scaling sends it a test
 	// message. Test messages contain the following additional key-value pair:
 	// "Event": "autoscaling:TEST_NOTIFICATION" .
 	NotificationTargetARN *string
 
 	// The ARN of the IAM role that allows the Auto Scaling group to publish to the
-	// specified notification target. Valid only if the notification target is an
-	// Amazon SNS topic or an Amazon SQS queue. Required for new lifecycle hooks, but
-	// optional when updating existing hooks.
+	// specified notification target.
+	//
+	// Valid only if the notification target is an Amazon SNS topic or an Amazon SQS
+	// queue. Required for new lifecycle hooks, but optional when updating existing
+	// hooks.
 	RoleARN *string
 
 	noSmithyDocumentSerde
@@ -157,6 +184,9 @@ func (c *Client) addOperationPutLifecycleHookMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -167,6 +197,15 @@ func (c *Client) addOperationPutLifecycleHookMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpPutLifecycleHookValidationMiddleware(stack); err != nil {
@@ -188,6 +227,48 @@ func (c *Client) addOperationPutLifecycleHookMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

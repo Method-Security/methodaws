@@ -1,0 +1,60 @@
+types:
+# Config
+  S3EnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Report structs
+  S3BucketACL:
+    properties:
+      granteeURI: string
+      permission: string
+  BucketVersioningStatus:
+    enum:
+      - Enabled
+      - Suspended
+  S3MFADeleteStatus:
+    enum:
+      - Enabled
+      - Disabled
+  S3ServerSideEncryption:
+    enum:
+      - name: "AES256"
+        value: "AES256"
+      - name: "awskms"
+        value: "aws:kms"
+      - name: "awskmsdsse"
+        value: "aws:kms:dsse"
+  S3PublicAccessBlockConfiguration:
+    properties:
+      blockPublicAcls: boolean
+      ignorePublicAcls: boolean
+      blockPublicPolicy: boolean
+      restrictPublicBuckets: boolean
+  EncryptionRule:
+    properties:
+      sseAlgorithm: optional<S3ServerSideEncryption>
+      kmsMasterKeyID: optional<string>
+  S3Bucket:
+    properties:
+      name: string
+      arn: string
+      url: string
+      region: string
+      creationDate: datetime
+      ownerID: string
+      ownerName: string
+      publicAccessConfig: optional<S3PublicAccessBlockConfiguration>
+      policy: optional<string>
+      bucketVersioning: optional<BucketVersioningStatus>
+      mfaDelete: optional<S3MFADeleteStatus>
+      encryptionRules: optional<list<EncryptionRule>>
+  S3EnumerateResult:
+    properties:
+      s3Buckets: optional<list<S3Bucket>>
+# Report
+  S3EnumerateReport:
+    properties:
+      result: S3EnumerateResult
+      config: S3EnumerateConfig
+      errors: optional<list<string>>

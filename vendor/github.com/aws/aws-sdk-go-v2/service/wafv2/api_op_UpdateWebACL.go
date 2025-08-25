@@ -31,10 +31,11 @@ import (
 // the web ACL, you assign a default action to take (allow, block) for any request
 // that does not match any of the rules. The rules in a web ACL can be a
 // combination of the types Rule, RuleGroup, and managed rule group. You can associate a web
-// ACL with one or more Amazon Web Services resources to protect. The resources can
-// be an Amazon CloudFront distribution, an Amazon API Gateway REST API, an
-// Application Load Balancer, an AppSync GraphQL API, an Amazon Cognito user pool,
-// an App Runner service, or an Amazon Web Services Verified Access instance.
+// ACL with one or more Amazon Web Services resources to protect. The resource
+// types include Amazon CloudFront distribution, Amazon API Gateway REST API,
+// Application Load Balancer, AppSync GraphQL API, Amazon Cognito user pool, App
+// Runner service, Amplify application, and Amazon Web Services Verified Access
+// instance.
 //
 // # Temporary inconsistencies during updates
 //
@@ -101,11 +102,8 @@ type UpdateWebACLInput struct {
 	// This member is required.
 	Name *string
 
-	// Specifies whether this is for an Amazon CloudFront distribution or for a
-	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, an Amazon Cognito
-	// user pool, an App Runner service, or an Amazon Web Services Verified Access
-	// instance.
+	// Specifies whether this is for a global resource type, such as a Amazon
+	// CloudFront distribution. For an Amplify application, use CLOUDFRONT .
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -166,8 +164,25 @@ type UpdateWebACLInput struct {
 	// [Customizing web requests and responses in WAF]: https://docs.aws.amazon.com/waf/latest/developerguide/waf-custom-request-response.html
 	CustomResponseBodies map[string]types.CustomResponseBody
 
+	// Specifies data protection to apply to the web request data for the web ACL.
+	// This is a web ACL level data protection option.
+	//
+	// The data protection that you configure for the web ACL alters the data that's
+	// available for any other data collection activity, including your WAF logging
+	// destinations, web ACL request sampling, and Amazon Security Lake data collection
+	// and management. Your other option for data protection is in the logging
+	// configuration, which only affects logging.
+	DataProtectionConfig *types.DataProtectionConfig
+
 	// A description of the web ACL that helps with identification.
 	Description *string
+
+	// Specifies the type of DDoS protection to apply to web request data for a web
+	// ACL. For most scenarios, it is recommended to use the default protection level,
+	// ACTIVE_UNDER_DDOS . If a web ACL is associated with multiple Application Load
+	// Balancers, the changes you make to DDoS protection in that web ACL will apply to
+	// all associated Application Load Balancers.
+	OnSourceDDoSProtectionConfig *types.OnSourceDDoSProtectionConfig
 
 	// The Rule statements used to identify the web requests that you want to manage. Each
 	// rule includes one top-level statement that WAF uses to identify matching web
@@ -267,6 +282,9 @@ func (c *Client) addOperationUpdateWebACLMiddlewares(stack *middleware.Stack, op
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpUpdateWebACLValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -286,6 +304,36 @@ func (c *Client) addOperationUpdateWebACLMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

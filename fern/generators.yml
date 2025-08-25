@@ -2,8 +2,8 @@ default-group: local
 groups:
   local:
     generators:
-      - name: fernapi/fern-go-model
-        version: 0.23.5
+      - name: fernapi/fern-go-sdk
+        version: 0.38.0
         config:
           importpath: github.com/Method-Security/methodaws/generated/go
         output:

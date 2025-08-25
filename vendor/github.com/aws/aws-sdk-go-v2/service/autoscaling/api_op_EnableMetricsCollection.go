@@ -10,12 +10,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Enables group metrics collection for the specified Auto Scaling group. You can
-// use these metrics to track changes in an Auto Scaling group and to set alarms on
-// threshold values. You can view group metrics using the Amazon EC2 Auto Scaling
-// console or the CloudWatch console. For more information, see Monitor CloudWatch
-// metrics for your Auto Scaling groups and instances (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-cloudwatch-monitoring.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Enables group metrics collection for the specified Auto Scaling group.
+//
+// You can use these metrics to track changes in an Auto Scaling group and to set
+// alarms on threshold values. You can view group metrics using the Amazon EC2 Auto
+// Scaling console or the CloudWatch console. For more information, see [Monitor CloudWatch metrics for your Auto Scaling groups and instances]in the
+// Amazon EC2 Auto Scaling User Guide.
+//
+// [Monitor CloudWatch metrics for your Auto Scaling groups and instances]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-cloudwatch-monitoring.html
 func (c *Client) EnableMetricsCollection(ctx context.Context, params *EnableMetricsCollectionInput, optFns ...func(*Options)) (*EnableMetricsCollectionOutput, error) {
 	if params == nil {
 		params = &EnableMetricsCollectionInput{}
@@ -44,31 +46,56 @@ type EnableMetricsCollectionInput struct {
 	// This member is required.
 	Granularity *string
 
-	// Identifies the metrics to enable. You can specify one or more of the following
-	// metrics:
+	// Identifies the metrics to enable.
+	//
+	// You can specify one or more of the following metrics:
+	//
 	//   - GroupMinSize
+	//
 	//   - GroupMaxSize
+	//
 	//   - GroupDesiredCapacity
+	//
 	//   - GroupInServiceInstances
+	//
 	//   - GroupPendingInstances
+	//
 	//   - GroupStandbyInstances
+	//
 	//   - GroupTerminatingInstances
+	//
 	//   - GroupTotalInstances
+	//
 	//   - GroupInServiceCapacity
+	//
 	//   - GroupPendingCapacity
+	//
 	//   - GroupStandbyCapacity
+	//
 	//   - GroupTerminatingCapacity
+	//
 	//   - GroupTotalCapacity
+	//
 	//   - WarmPoolDesiredCapacity
+	//
 	//   - WarmPoolWarmedCapacity
+	//
 	//   - WarmPoolPendingCapacity
+	//
 	//   - WarmPoolTerminatingCapacity
+	//
 	//   - WarmPoolTotalCapacity
+	//
 	//   - GroupAndWarmPoolDesiredCapacity
+	//
 	//   - GroupAndWarmPoolTotalCapacity
+	//
 	// If you specify Granularity and don't specify any metrics, all metrics are
-	// enabled. For more information, see Auto Scaling group metrics (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-cloudwatch-monitoring.html#as-group-metrics)
-	// in the Amazon EC2 Auto Scaling User Guide.
+	// enabled.
+	//
+	// For more information, see [Amazon CloudWatch metrics for Amazon EC2 Auto Scaling] in the Amazon EC2 Auto Scaling User Guide.
+	//
+	// [Amazon CloudWatch metrics for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-metrics.html
 	Metrics []string
 
 	noSmithyDocumentSerde
@@ -124,6 +151,9 @@ func (c *Client) addOperationEnableMetricsCollectionMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -134,6 +164,15 @@ func (c *Client) addOperationEnableMetricsCollectionMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableMetricsCollectionValidationMiddleware(stack); err != nil {
@@ -155,6 +194,48 @@ func (c *Client) addOperationEnableMetricsCollectionMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

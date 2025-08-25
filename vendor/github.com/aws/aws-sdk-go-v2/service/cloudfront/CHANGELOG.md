@@ -1,3 +1,65 @@
+# v1.53.0 (2025-08-21)
+
+* **Feature**: Remove incorrect endpoint tests
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.52.1 (2025-08-20)
+
+* **Bug Fix**: Remove unused deserialization code.
+
+# v1.52.0 (2025-08-11)
+
+* **Feature**: Add support for configuring per-service Options via callback on global config.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.51.0 (2025-08-07)
+
+* **Feature**: Added new viewer security policy, TLSv1.3_2025, for CloudFront.
+
+# v1.50.0 (2025-08-04)
+
+* **Feature**: Support configurable auth scheme preferences in service clients via AWS_AUTH_SCHEME_PREFERENCE in the environment, auth_scheme_preference in the config file, and through in-code settings on LoadDefaultConfig and client constructor methods.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.49.0 (2025-07-30)
+
+* **Feature**: This release adds new origin timeout options: 1) ResponseCompletionTimeout and 2) OriginReadTimeout (for S3 origins)
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.48.0 (2025-07-28)
+
+* **Feature**: Add support for HTTP interceptors.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.47.0 (2025-07-21)
+
+* **Feature**: Add dualstack endpoint support
+
+# v1.46.5 (2025-07-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.46.4 (2025-07-17)
+
+* **Documentation**: Doc only update for CloudFront that fixes some customer-reported issues
+
+# v1.46.3 (2025-06-17)
+
+* **Dependency Update**: Update to smithy-go v1.22.4.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.46.2 (2025-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.46.1 (2025-05-08)
+
+* **Documentation**: Doc-only update for CloudFront. These changes include customer-reported issues.
+
+# v1.46.0 (2025-04-28)
+
+* **Feature**: Add distribution tenant, connection group, and multi-tenant distribution APIs to the CloudFront SDK.
+
 # v1.45.3 (2025-04-03)
 
 * No change notes available for this release.

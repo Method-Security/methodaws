@@ -385,7 +385,7 @@ type DomainName struct {
 	// The custom domain name as an API host name, for example, my-api.example.com .
 	DomainName *string
 
-	// The ARN of the domain name. Supported only for private custom domain names.
+	// The ARN of the domain name.
 	DomainNameArn *string
 
 	// The identifier for the domain name resource. Supported only for private custom
@@ -446,6 +446,10 @@ type DomainName struct {
 	// For more information, see Set up a Regional Custom Domain Name and AWS Regions
 	// and Endpoints for API Gateway.
 	RegionalHostedZoneId *string
+
+	// The routing mode for this domain name. The routing mode determines how API
+	// Gateway sends traffic from your custom domain name to your private APIs.
+	RoutingMode RoutingMode
 
 	// The Transport Layer Security (TLS) version + cipher suite for this DomainName.
 	// The valid values are TLS_1_0 and TLS_1_2 .
@@ -615,7 +619,8 @@ type Integration struct {
 	RequestTemplates map[string]string
 
 	// Custom timeout between 50 and 29,000 milliseconds. The default value is 29,000
-	// milliseconds or 29 seconds.
+	// milliseconds or 29 seconds. You can increase the default value to longer than 29
+	// seconds for Regional or private APIs only.
 	TimeoutInMillis int32
 
 	// Specifies the TLS configuration for an integration.

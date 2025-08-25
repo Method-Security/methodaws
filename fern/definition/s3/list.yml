@@ -1,0 +1,25 @@
+types:
+  # Config
+  ListS3BucketConfig:
+    properties:
+      accountId: string
+      regions: optional<list<string>>
+      bucketName: string
+  # Report structs
+  BucketObject:
+    properties:
+      name: string
+      size: integer
+  ListResources:
+    properties:
+      name: optional<string>
+      objects: list<BucketObject>
+  ListResult:
+    properties:
+      resources: optional<ListResources>
+  # Report
+  S3ListReport:
+    properties:
+      result: optional<ListResult>
+      config: ListS3BucketConfig
+      errors: optional<list<string>>

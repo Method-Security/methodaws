@@ -11,33 +11,43 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This API operation is superseded by DescribeTrafficSources , which can describe
-// multiple traffic sources types. We recommend using DescribeTrafficSources to
-// simplify how you manage traffic sources. However, we continue to support
-// DescribeLoadBalancers . You can use both the original DescribeLoadBalancers API
-// operation and DescribeTrafficSources on the same Auto Scaling group. Gets
-// information about the load balancers for the specified Auto Scaling group. This
-// operation describes only Classic Load Balancers. If you have Application Load
-// Balancers, Network Load Balancers, or Gateway Load Balancers, use the
-// DescribeLoadBalancerTargetGroups API instead. To determine the attachment status
-// of the load balancer, use the State element in the response. When you attach a
-// load balancer to an Auto Scaling group, the initial State value is Adding . The
-// state transitions to Added after all Auto Scaling instances are registered with
-// the load balancer. If Elastic Load Balancing health checks are enabled for the
-// Auto Scaling group, the state transitions to InService after at least one Auto
-// Scaling instance passes the health check. When the load balancer is in the
-// InService state, Amazon EC2 Auto Scaling can terminate and replace any instances
-// that are reported as unhealthy. If no registered instances pass the health
-// checks, the load balancer doesn't enter the InService state. Load balancers
-// also have an InService state if you attach them in the CreateAutoScalingGroup
-// API call. If your load balancer state is InService , but it is not working
-// properly, check the scaling activities by calling DescribeScalingActivities and
-// take any corrective actions necessary. For help with failed health checks, see
-// Troubleshooting Amazon EC2 Auto Scaling: Health checks (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ts-as-healthchecks.html)
-// in the Amazon EC2 Auto Scaling User Guide. For more information, see Use
-// Elastic Load Balancing to distribute traffic across the instances in your Auto
-// Scaling group (https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// This API operation is superseded by [DescribeTrafficSources], which can describe multiple traffic
+// sources types. We recommend using DescribeTrafficSources to simplify how you
+// manage traffic sources. However, we continue to support DescribeLoadBalancers .
+// You can use both the original DescribeLoadBalancers API operation and
+// DescribeTrafficSources on the same Auto Scaling group.
+//
+// Gets information about the load balancers for the specified Auto Scaling group.
+//
+// This operation describes only Classic Load Balancers. If you have Application
+// Load Balancers, Network Load Balancers, or Gateway Load Balancers, use the [DescribeLoadBalancerTargetGroups]API
+// instead.
+//
+// To determine the attachment status of the load balancer, use the State element
+// in the response. When you attach a load balancer to an Auto Scaling group, the
+// initial State value is Adding . The state transitions to Added after all Auto
+// Scaling instances are registered with the load balancer. If Elastic Load
+// Balancing health checks are enabled for the Auto Scaling group, the state
+// transitions to InService after at least one Auto Scaling instance passes the
+// health check. When the load balancer is in the InService state, Amazon EC2 Auto
+// Scaling can terminate and replace any instances that are reported as unhealthy.
+// If no registered instances pass the health checks, the load balancer doesn't
+// enter the InService state.
+//
+// Load balancers also have an InService state if you attach them in the [CreateAutoScalingGroup] API
+// call. If your load balancer state is InService , but it is not working properly,
+// check the scaling activities by calling [DescribeScalingActivities]and take any corrective actions
+// necessary.
+//
+// For help with failed health checks, see [Troubleshooting Amazon EC2 Auto Scaling: Health checks] in the Amazon EC2 Auto Scaling User
+// Guide. For more information, see [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group]in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Troubleshooting Amazon EC2 Auto Scaling: Health checks]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ts-as-healthchecks.html
+// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
+// [DescribeLoadBalancerTargetGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeLoadBalancerTargetGroups.html
+// [CreateAutoScalingGroup]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CreateAutoScalingGroup.html
+// [DescribeTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeTrafficSources.html
+// [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html
 func (c *Client) DescribeLoadBalancers(ctx context.Context, params *DescribeLoadBalancersInput, optFns ...func(*Options)) (*DescribeLoadBalancersOutput, error) {
 	if params == nil {
 		params = &DescribeLoadBalancersInput{}
@@ -131,6 +141,9 @@ func (c *Client) addOperationDescribeLoadBalancersMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -141,6 +154,15 @@ func (c *Client) addOperationDescribeLoadBalancersMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeLoadBalancersValidationMiddleware(stack); err != nil {
@@ -164,16 +186,50 @@ func (c *Client) addOperationDescribeLoadBalancersMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLoadBalancersAPIClient is a client that implements the
-// DescribeLoadBalancers operation.
-type DescribeLoadBalancersAPIClient interface {
-	DescribeLoadBalancers(context.Context, *DescribeLoadBalancersInput, ...func(*Options)) (*DescribeLoadBalancersOutput, error)
-}
-
-var _ DescribeLoadBalancersAPIClient = (*Client)(nil)
 
 // DescribeLoadBalancersPaginatorOptions is the paginator options for
 // DescribeLoadBalancers
@@ -240,6 +296,9 @@ func (p *DescribeLoadBalancersPaginator) NextPage(ctx context.Context, optFns ..
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLoadBalancers(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -258,6 +317,14 @@ func (p *DescribeLoadBalancersPaginator) NextPage(ctx context.Context, optFns ..
 
 	return result, nil
 }
+
+// DescribeLoadBalancersAPIClient is a client that implements the
+// DescribeLoadBalancers operation.
+type DescribeLoadBalancersAPIClient interface {
+	DescribeLoadBalancers(context.Context, *DescribeLoadBalancersInput, ...func(*Options)) (*DescribeLoadBalancersOutput, error)
+}
+
+var _ DescribeLoadBalancersAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLoadBalancers(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

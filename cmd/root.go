@@ -58,24 +58,8 @@ func NewMethodAws(version string) *MethodAws {
 func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, outputFile string, authed bool) error {
 	var err error
 
-	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
-	if authed {
-		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
-		if err != nil {
-			return err
-		}
-		a.AwsConfig = &awsConfig
-		a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
-		if err != nil || len(a.RootFlags.Regions) == 0 {
-			a.OutputSignal.Status = 401
-			a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
-			return nil
-		}
-		a.AwsConfig.Region = a.RootFlags.Regions[0]
-	} else {
-		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
-	}
-
+	// Set up output configuration FIRST - before anything that might fail
+	// This ensures we get properly formatted error output even if AWS auth fails
 	format, err := validateOutputFormat(outputFormat)
 	if err != nil {
 		return err
@@ -87,6 +71,23 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 		outputFilePointer = nil
 	}
 	a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
+
+	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
+	if authed {
+		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
+		if err != nil {
+			return err
+		}
+		a.AwsConfig = &awsConfig
+		a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+		if err != nil || len(a.RootFlags.Regions) == 0 {
+			a.OutputSignal.Status = 1
+			a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
+			return nil
+		}
+	} else {
+		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
+	}
 
 	return nil
 }
@@ -107,6 +108,7 @@ func (a *MethodAws) InitRootCommand() {
 		Long:         "Audit AWS resources",
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// Use the variables directly - Cobra automatically updates them when flags are parsed
 			return a.setupCommonConfig(cmd, outputFormat, outputFile, true)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, _ []string) error {
@@ -125,7 +127,7 @@ func (a *MethodAws) InitRootCommand() {
 
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Quiet, "quiet", "q", false, "Suppress output")
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Verbose, "verbose", "v", false, "Verbose output")
-	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "region", "r", []string{}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
+	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "regions", "r", []string{"us-east-1"}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "f", "", "Path to output file. If blank, will output to STDOUT")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "signal", "Output format (signal, json, yaml). Default value is signal")
 

@@ -11,28 +11,37 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Starts an instance refresh. This operation is part of the instance refresh
-// feature (https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html)
-// in Amazon EC2 Auto Scaling, which helps you update instances in your Auto
-// Scaling group. This feature is helpful, for example, when you have a new AMI or
-// a new user data script. You just need to create a new launch template that
-// specifies the new AMI or user data script. Then start an instance refresh to
-// immediately begin the process of updating instances in the group. If successful,
-// the request's response contains a unique ID that you can use to track the
-// progress of the instance refresh. To query its status, call the
-// DescribeInstanceRefreshes API. To describe the instance refreshes that have
-// already run, call the DescribeInstanceRefreshes API. To cancel an instance
-// refresh that is in progress, use the CancelInstanceRefresh API. An instance
-// refresh might fail for several reasons, such as EC2 launch failures,
-// misconfigured health checks, or not ignoring or allowing the termination of
-// instances that are in Standby state or protected from scale in. You can monitor
-// for failed EC2 launches using the scaling activities. To find the scaling
-// activities, call the DescribeScalingActivities API. If you enable auto
-// rollback, your Auto Scaling group will be rolled back automatically when the
-// instance refresh fails. You can enable this feature before starting an instance
-// refresh by specifying the AutoRollback property in the instance refresh
-// preferences. Otherwise, to roll back an instance refresh before it finishes, use
-// the RollbackInstanceRefresh API.
+// Starts an instance refresh.
+//
+// This operation is part of the [instance refresh feature] in Amazon EC2 Auto Scaling, which helps you
+// update instances in your Auto Scaling group. This feature is helpful, for
+// example, when you have a new AMI or a new user data script. You just need to
+// create a new launch template that specifies the new AMI or user data script.
+// Then start an instance refresh to immediately begin the process of updating
+// instances in the group.
+//
+// If successful, the request's response contains a unique ID that you can use to
+// track the progress of the instance refresh. To query its status, call the [DescribeInstanceRefreshes]API.
+// To describe the instance refreshes that have already run, call the [DescribeInstanceRefreshes]API. To
+// cancel an instance refresh that is in progress, use the [CancelInstanceRefresh]API.
+//
+// An instance refresh might fail for several reasons, such as EC2 launch
+// failures, misconfigured health checks, or not ignoring or allowing the
+// termination of instances that are in Standby state or protected from scale in.
+// You can monitor for failed EC2 launches using the scaling activities. To find
+// the scaling activities, call the [DescribeScalingActivities]API.
+//
+// If you enable auto rollback, your Auto Scaling group will be rolled back
+// automatically when the instance refresh fails. You can enable this feature
+// before starting an instance refresh by specifying the AutoRollback property in
+// the instance refresh preferences. Otherwise, to roll back an instance refresh
+// before it finishes, use the [RollbackInstanceRefresh]API.
+//
+// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
+// [instance refresh feature]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html
+// [DescribeInstanceRefreshes]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeInstanceRefreshes.html
+// [CancelInstanceRefresh]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CancelInstanceRefresh.html
+// [RollbackInstanceRefresh]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_RollbackInstanceRefresh.html
 func (c *Client) StartInstanceRefresh(ctx context.Context, params *StartInstanceRefreshInput, optFns ...func(*Options)) (*StartInstanceRefreshOutput, error) {
 	if params == nil {
 		params = &StartInstanceRefreshInput{}
@@ -56,14 +65,17 @@ type StartInstanceRefreshInput struct {
 	AutoScalingGroupName *string
 
 	// The desired configuration. For example, the desired configuration can specify a
-	// new launch template or a new version of the current launch template. Once the
-	// instance refresh succeeds, Amazon EC2 Auto Scaling updates the settings of the
-	// Auto Scaling group to reflect the new desired configuration. When you specify a
-	// new launch template or a new version of the current launch template for your
-	// desired configuration, consider enabling the SkipMatching property in
-	// preferences. If it's enabled, Amazon EC2 Auto Scaling skips replacing instances
-	// that already use the specified launch template and instance types. This can help
-	// you reduce the number of replacements that are required to apply updates.
+	// new launch template or a new version of the current launch template.
+	//
+	// Once the instance refresh succeeds, Amazon EC2 Auto Scaling updates the
+	// settings of the Auto Scaling group to reflect the new desired configuration.
+	//
+	// When you specify a new launch template or a new version of the current launch
+	// template for your desired configuration, consider enabling the SkipMatching
+	// property in preferences. If it's enabled, Amazon EC2 Auto Scaling skips
+	// replacing instances that already use the specified launch template and instance
+	// types. This can help you reduce the number of replacements that are required to
+	// apply updates.
 	DesiredConfiguration *types.DesiredConfiguration
 
 	// Sets your preferences for the instance refresh so that it performs as expected
@@ -73,9 +85,14 @@ type StartInstanceRefreshInput struct {
 	// found. You can also choose to enable additional features, such as the following:
 	//
 	//   - Auto rollback
+	//
 	//   - Checkpoints
+	//
 	//   - CloudWatch alarms
+	//
 	//   - Skip matching
+	//
+	//   - Bake time
 	Preferences *types.RefreshPreferences
 
 	// The strategy to use for the instance refresh. The only valid value is Rolling .
@@ -138,6 +155,9 @@ func (c *Client) addOperationStartInstanceRefreshMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -148,6 +168,15 @@ func (c *Client) addOperationStartInstanceRefreshMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpStartInstanceRefreshValidationMiddleware(stack); err != nil {
@@ -169,6 +198,48 @@ func (c *Client) addOperationStartInstanceRefreshMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

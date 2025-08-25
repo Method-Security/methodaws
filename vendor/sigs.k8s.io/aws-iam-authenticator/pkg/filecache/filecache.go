@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gofrs/flock"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
@@ -124,7 +124,7 @@ func WithFileLockerCreator(f func(string) FileLocker) FileCacheOpt {
 	}
 }
 
-// FileCacheProvider is a credentials.Provider implementation that wraps an underlying Provider
+// FileCacheProvider is a aws.CredentialsProvider implementation that wraps an underlying Provider
 // (contained in Credentials) and provides caching support for credentials for the
 // specified clusterID, profile, and roleARN (contained in cacheKey)
 type FileCacheProvider struct {
@@ -136,7 +136,7 @@ type FileCacheProvider struct {
 	cachedCredential aws.Credentials         // the cached credential, if it exists
 }
 
-var _ credentials.Provider = &FileCacheProvider{}
+var _ aws.CredentialsProvider = &FileCacheProvider{}
 
 // NewFileCacheProvider creates a new Provider implementation that wraps a provided Credentials,
 // and works with an on disk cache to speed up credential usage when the cached copy is not expired.
@@ -191,7 +191,7 @@ func NewFileCacheProvider(clusterID, profile, roleARN string, provider aws.Crede
 	} else {
 		if errors.Is(err, fs.ErrNotExist) {
 			// cache file is missing.  maybe this is the very first run?  continue to use cache.
-			_, _ = fmt.Fprintf(os.Stderr, "Cache file %s does not exist.\n", resp.filename)
+			logrus.Warnf("Cache file %s does not exist.", resp.filename)
 		} else {
 			return nil, fmt.Errorf("couldn't stat cache file: %w", err)
 		}
@@ -203,23 +203,16 @@ func NewFileCacheProvider(clusterID, profile, roleARN string, provider aws.Crede
 // Retrieve() implements the Provider interface, returning the cached credential if is not expired,
 // otherwise fetching the credential from the underlying Provider and caching the results on disk
 // with an expiration time.
-func (f *FileCacheProvider) Retrieve() (credentials.Value, error) {
-	return f.RetrieveWithContext(context.Background())
-}
-
-// Retrieve() implements the Provider interface, returning the cached credential if is not expired,
-// otherwise fetching the credential from the underlying Provider and caching the results on disk
-// with an expiration time.
-func (f *FileCacheProvider) RetrieveWithContext(ctx context.Context) (credentials.Value, error) {
+func (f *FileCacheProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	if !f.cachedCredential.Expired() && f.cachedCredential.HasKeys() {
 		// use the cached credential
-		return V2CredentialToV1Value(f.cachedCredential), nil
+		return f.cachedCredential, nil
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "No cached credential available.  Refreshing...\n")
+		logrus.Debug("No cached credential available. Refreshing...")
 		// fetch the credentials from the underlying Provider
 		credential, err := f.provider.Retrieve(ctx)
 		if err != nil {
-			return V2CredentialToV1Value(credential), err
+			return credential, err
 		}
 
 		if credential.CanExpire {
@@ -234,8 +227,8 @@ func (f *FileCacheProvider) RetrieveWithContext(ctx context.Context) (credential
 			ok, err := lock.TryLockContext(ctx, 250*time.Millisecond) // try to lock every 1/4 second
 			if !ok {
 				// can't get write lock to create/update cache, but still return the credential
-				_, _ = fmt.Fprintf(os.Stderr, "Unable to write lock file %s: %v\n", f.filename, err)
-				return V2CredentialToV1Value(credential), nil
+				logrus.Warnf("Unable to write lock file %s: %v", f.filename, err)
+				return credential, nil
 			}
 			f.cachedCredential = credential
 			// don't really care about read error.  Either read the cache, or we create a new cache.
@@ -244,16 +237,16 @@ func (f *FileCacheProvider) RetrieveWithContext(ctx context.Context) (credential
 			err = writeCacheWhileLocked(f.fs, f.filename, cache)
 			if err != nil {
 				// can't write cache, but still return the credential
-				_, _ = fmt.Fprintf(os.Stderr, "Unable to update credential cache %s: %v\n", f.filename, err)
+				logrus.Warnf("Unable to update credential cache %s: %v", f.filename, err)
 				err = nil
 			} else {
-				_, _ = fmt.Fprintf(os.Stderr, "Updated cached credential\n")
+				logrus.Debug("Updated cached credential")
 			}
 		} else {
 			// credential doesn't support expiration time, so can't cache, but still return the credential
-			_, _ = fmt.Fprint(os.Stderr, "Unable to cache credential: credential doesn't support expiration\n")
+			logrus.Warn("Unable to cache credential: credential doesn't support expiration")
 		}
-		return V2CredentialToV1Value(credential), err
+		return credential, err
 	}
 }
 

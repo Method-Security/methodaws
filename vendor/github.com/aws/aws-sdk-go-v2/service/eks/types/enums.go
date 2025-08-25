@@ -187,6 +187,7 @@ type Category string
 // Enum values for Category
 const (
 	CategoryUpgradeReadiness Category = "UPGRADE_READINESS"
+	CategoryMisconfiguration Category = "MISCONFIGURATION"
 )
 
 // Values returns all known values for Category. Note that this can be expanded in
@@ -196,6 +197,7 @@ const (
 func (Category) Values() []Category {
 	return []Category{
 		"UPGRADE_READINESS",
+		"MISCONFIGURATION",
 	}
 }
 
@@ -818,6 +820,7 @@ const (
 	UpdateParamTypeStorageConfig            UpdateParamType = "StorageConfig"
 	UpdateParamTypeKubernetesNetworkConfig  UpdateParamType = "KubernetesNetworkConfig"
 	UpdateParamTypeRemoteNetworkConfig      UpdateParamType = "RemoteNetworkConfig"
+	UpdateParamTypeDeletionProtection       UpdateParamType = "DeletionProtection"
 )
 
 // Values returns all known values for UpdateParamType. Note that this can be
@@ -862,6 +865,7 @@ func (UpdateParamType) Values() []UpdateParamType {
 		"StorageConfig",
 		"KubernetesNetworkConfig",
 		"RemoteNetworkConfig",
+		"DeletionProtection",
 	}
 }
 
@@ -906,6 +910,7 @@ const (
 	UpdateTypeZonalShiftConfigUpdate             UpdateType = "ZonalShiftConfigUpdate"
 	UpdateTypeAutoModeUpdate                     UpdateType = "AutoModeUpdate"
 	UpdateTypeRemoteNetworkConfigUpdate          UpdateType = "RemoteNetworkConfigUpdate"
+	UpdateTypeDeletionProtectionUpdate           UpdateType = "DeletionProtectionUpdate"
 )
 
 // Values returns all known values for UpdateType. Note that this can be expanded
@@ -928,6 +933,7 @@ func (UpdateType) Values() []UpdateType {
 		"ZonalShiftConfigUpdate",
 		"AutoModeUpdate",
 		"RemoteNetworkConfigUpdate",
+		"DeletionProtectionUpdate",
 	}
 }
 
