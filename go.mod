@@ -2,8 +2,6 @@ module github.com/Method-Security/methodaws
 
 go 1.24.4
 
-toolchain go1.24.6
-
 require (
 	github.com/Method-Security/pkg v0.0.6
 	github.com/aws/aws-sdk-go v1.55.8
