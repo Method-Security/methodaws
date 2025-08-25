@@ -8,10 +8,8 @@ import (
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
-
 	// Internal
 	"github.com/Method-Security/methodaws/internal/sts"
-
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"

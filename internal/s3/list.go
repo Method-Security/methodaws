@@ -3,20 +3,17 @@ package s3
 import (
 	// Standard
 	"context"
-
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
-
 	// Internal
 	"github.com/Method-Security/methodaws/internal/sts"
-
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-// LsS3Bucket retrieves the objects stored in an S3 bucket and returns an LsResourceReport struct
+// ListS3Bucket retrieves the objects stored in an S3 bucket and returns an LsResourceReport struct
 func ListS3Bucket(ctx context.Context, awscfg aws.Config, config s3fern.ListS3BucketConfig) (*s3fern.S3ListReport, error) {
 	// Initialize logger
 	log := svc1log.FromContext(ctx)
