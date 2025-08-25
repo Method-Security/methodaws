@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+# Config
+  Route53EnumerateConfig:
+    properties:
+      accountId: string
+  # DNS Record Types Enum
+  RRType:
+    enum:
+      - A
+      - AAAA
+      - CAA
+      - CNAME
+      - DS
+      - MX
+      - NAPTR
+      - NS
+      - PTR
+      - SOA
+      - SPF
+      - SRV
+      - TXT
+      - TLSA
+      - SSHFP
+      - SVCB
+      - HTTPS
+# Report Structs
+  HostedZone:
+    properties:
+      comment: optional<string>
+      privateZone: boolean
+  LinkedService:
+    properties:
+      servicePrincipal: optional<string>
+      description: optional<string>
+  ResourceRecord:
+    properties:
+      value: string
+  AliasTarget:
+    properties:
+      dnsName: string
+      hostedZoneId: string
+      evaluateTargetHealth: boolean
+  GeoLocation:
+    properties:
+      continentCode: optional<string>
+      countryCode: optional<string>
+      subdivisionCode: optional<string>
+  # CIDR Routing struct
+  CidrRouting:
+    properties:
+      collectionId: string
+      locationName: string
+  ResourceRecordSet:
+    properties:
+      name: string
+      type: RRType
+      aliasTarget: optional<AliasTarget>
+      cidrRouting: optional<CidrRouting>
+      failover: optional<string>
+      geoLocation: optional<GeoLocation>
+      healthCheckId: optional<string>
+      multiValueAnswer: optional<boolean>
+      region: optional<string>
+      resourceRecords: optional<list<ResourceRecord>>
+      setIdentifier: optional<string>
+      ttl: optional<integer>
+      weight: optional<integer>
+  HostedZoneDetails:
+    properties:
+      callerReference: string
+      id: string
+      name: string
+      hostedZone: optional<HostedZone>
+      linkedService: optional<LinkedService>
+      resourceRecordSetCount: optional<integer>
+  EnrichedHostedZone:
+    properties:
+      zoneDetails: HostedZoneDetails
+      resourceRecordSets: list<ResourceRecordSet>
+  Route53Resources:
+    properties:
+      hostedZones: optional<list<EnrichedHostedZone>>
+  # Route53 Enumeration Report
+  Route53EnumerateReport:
+    properties:
+      resources: Route53Resources
+      config: Route53EnumerateConfig
+      errors: optional<list<string>>
