@@ -20,6 +20,6 @@ types:
   # Report
   S3ListReport:
     properties:
-      result: optional<ListResult>
+      result: ListResult
       config: ListS3BucketConfig
       errors: optional<list<string>>
