@@ -33,31 +33,55 @@ type DisableMetricsCollectionInput struct {
 	// This member is required.
 	AutoScalingGroupName *string
 
-	// Identifies the metrics to disable. You can specify one or more of the following
-	// metrics:
+	// Identifies the metrics to disable.
+	//
+	// You can specify one or more of the following metrics:
+	//
 	//   - GroupMinSize
+	//
 	//   - GroupMaxSize
+	//
 	//   - GroupDesiredCapacity
+	//
 	//   - GroupInServiceInstances
+	//
 	//   - GroupPendingInstances
+	//
 	//   - GroupStandbyInstances
+	//
 	//   - GroupTerminatingInstances
+	//
 	//   - GroupTotalInstances
+	//
 	//   - GroupInServiceCapacity
+	//
 	//   - GroupPendingCapacity
+	//
 	//   - GroupStandbyCapacity
+	//
 	//   - GroupTerminatingCapacity
+	//
 	//   - GroupTotalCapacity
+	//
 	//   - WarmPoolDesiredCapacity
+	//
 	//   - WarmPoolWarmedCapacity
+	//
 	//   - WarmPoolPendingCapacity
+	//
 	//   - WarmPoolTerminatingCapacity
+	//
 	//   - WarmPoolTotalCapacity
+	//
 	//   - GroupAndWarmPoolDesiredCapacity
+	//
 	//   - GroupAndWarmPoolTotalCapacity
-	// If you omit this property, all metrics are disabled. For more information, see
-	// Auto Scaling group metrics (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-cloudwatch-monitoring.html#as-group-metrics)
-	// in the Amazon EC2 Auto Scaling User Guide.
+	//
+	// If you omit this property, all metrics are disabled.
+	//
+	// For more information, see [Amazon CloudWatch metrics for Amazon EC2 Auto Scaling] in the Amazon EC2 Auto Scaling User Guide.
+	//
+	// [Amazon CloudWatch metrics for Amazon EC2 Auto Scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-metrics.html
 	Metrics []string
 
 	noSmithyDocumentSerde
@@ -113,6 +137,9 @@ func (c *Client) addOperationDisableMetricsCollectionMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +150,15 @@ func (c *Client) addOperationDisableMetricsCollectionMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisableMetricsCollectionValidationMiddleware(stack); err != nil {
@@ -144,6 +180,48 @@ func (c *Client) addOperationDisableMetricsCollectionMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

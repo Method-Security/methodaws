@@ -10,10 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes all rule groups that are managed by Firewall Manager for the specified
-// web ACL.
+// Deletes all rule groups that are managed by Firewall Manager from the specified WebACL
+// .
 //
-// You can only use this if ManagedByFirewallManager is false in the specified WebACL.
+// You can only use this if ManagedByFirewallManager and
+// RetrofittedByFirewallManager are both false in the web ACL.
 func (c *Client) DeleteFirewallManagerRuleGroups(ctx context.Context, params *DeleteFirewallManagerRuleGroupsInput, optFns ...func(*Options)) (*DeleteFirewallManagerRuleGroupsOutput, error) {
 	if params == nil {
 		params = &DeleteFirewallManagerRuleGroupsInput{}
@@ -131,6 +132,9 @@ func (c *Client) addOperationDeleteFirewallManagerRuleGroupsMiddlewares(stack *m
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDeleteFirewallManagerRuleGroupsValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -150,6 +154,36 @@ func (c *Client) addOperationDeleteFirewallManagerRuleGroupsMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

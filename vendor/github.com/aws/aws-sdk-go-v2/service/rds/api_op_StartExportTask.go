@@ -85,23 +85,9 @@ type StartExportTaskInput struct {
 	// authorized to run the following operations. These can be set in the Amazon Web
 	// Services KMS key policy:
 	//
-	//   - kms:Encrypt
-	//
-	//   - kms:Decrypt
-	//
-	//   - kms:GenerateDataKey
-	//
-	//   - kms:GenerateDataKeyWithoutPlaintext
-	//
-	//   - kms:ReEncryptFrom
-	//
-	//   - kms:ReEncryptTo
-	//
 	//   - kms:CreateGrant
 	//
 	//   - kms:DescribeKey
-	//
-	//   - kms:RetireGrant
 	//
 	// This member is required.
 	KmsKeyId *string
@@ -317,6 +303,36 @@ func (c *Client) addOperationStartExportTaskMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

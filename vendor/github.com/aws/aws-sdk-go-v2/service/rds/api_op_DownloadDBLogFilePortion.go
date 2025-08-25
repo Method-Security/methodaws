@@ -13,6 +13,13 @@ import (
 // Downloads all or a portion of the specified log file, up to 1 MB in size.
 //
 // This command doesn't apply to RDS Custom.
+//
+// This operation uses resources on database instances. Because of this, we
+// recommend publishing database logs to CloudWatch and then using the GetLogEvents
+// operation. For more information, see [GetLogEvents]in the Amazon CloudWatch Logs API
+// Reference.
+//
+// [GetLogEvents]: https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetLogEvents.html
 func (c *Client) DownloadDBLogFilePortion(ctx context.Context, params *DownloadDBLogFilePortionInput, optFns ...func(*Options)) (*DownloadDBLogFilePortionOutput, error) {
 	if params == nil {
 		params = &DownloadDBLogFilePortionInput{}
@@ -181,6 +188,36 @@ func (c *Client) addOperationDownloadDBLogFilePortionMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

@@ -1,3 +1,79 @@
+# v1.103.2 (2025-08-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.103.1 (2025-08-20)
+
+* **Bug Fix**: Remove unused deserialization code.
+
+# v1.103.0 (2025-08-11)
+
+* **Feature**: Add support for configuring per-service Options via callback on global config.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.102.0 (2025-08-05)
+
+* **Feature**: Adds a new Aurora Serverless v2 attribute to the DBCluster resource to expose the platform version. Also updates the attribute to be part of both the engine version and platform version descriptions.
+
+# v1.101.0 (2025-08-04)
+
+* **Feature**: Support configurable auth scheme preferences in service clients via AWS_AUTH_SCHEME_PREFERENCE in the environment, auth_scheme_preference in the config file, and through in-code settings on LoadDefaultConfig and client constructor methods.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.100.1 (2025-07-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.100.0 (2025-07-28)
+
+* **Feature**: Add support for HTTP interceptors.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.99.2 (2025-07-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.99.1 (2025-07-01)
+
+* **Documentation**: Amazon RDS Custom for Oracle now supports multi-AZ database instances.
+
+# v1.99.0 (2025-06-27)
+
+* **Feature**: StartDBCluster and StopDBCluster can now throw InvalidDBShardGroupStateFault.
+
+# v1.98.0 (2025-06-24)
+
+* **Feature**: Adding support for RDS on Dedicated Local Zones, including local backup target, snapshot availability zone and snapshot target
+
+# v1.97.3 (2025-06-17)
+
+* **Dependency Update**: Update to smithy-go v1.22.4.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.97.2 (2025-06-11)
+
+* **Documentation**: Updates Amazon RDS documentation for Amazon RDS for Db2 cross-Region replicas in standby mode.
+
+# v1.97.1 (2025-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.97.0 (2025-06-06)
+
+* **Feature**: Include Global Cluster Identifier in DBCluster if the DBCluster is a Global Cluster Member.
+
+# v1.96.0 (2025-05-20)
+
+* **Feature**: This release introduces the new DescribeDBMajorEngineVersions API for describing the properties of specific major versions of database engines.
+
+# v1.95.0 (2025-04-24)
+
+* **Feature**: This Amazon RDS release adds support for managed master user passwords for Oracle CDBs.
+
+# v1.94.4 (2025-04-10)
+
+* No change notes available for this release.
+
 # v1.94.3 (2025-04-03)
 
 * No change notes available for this release.

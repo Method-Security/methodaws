@@ -1,3 +1,156 @@
+# v1.66.2 (2025-08-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.66.1 (2025-08-20)
+
+* **Bug Fix**: Remove unused deserialization code.
+
+# v1.66.0 (2025-08-11)
+
+* **Feature**: Add support for configuring per-service Options via callback on global config.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.65.0 (2025-08-04)
+
+* **Feature**: Support configurable auth scheme preferences in service clients via AWS_AUTH_SCHEME_PREFERENCE in the environment, auth_scheme_preference in the config file, and through in-code settings on LoadDefaultConfig and client constructor methods.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.1 (2025-07-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.0 (2025-07-28)
+
+* **Feature**: Add support for HTTP interceptors.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.63.2 (2025-07-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.63.1 (2025-07-03)
+
+* No change notes available for this release.
+
+# v1.63.0 (2025-06-17)
+
+* **Feature**: AWS WAF can now suggest protection packs for you based on the application information you provide when you create a webACL.
+* **Dependency Update**: Update to smithy-go v1.22.4.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.62.0 (2025-06-11)
+
+* **Feature**: WAF now provides two DDoS protection options: resource-level monitoring for Application Load Balancers and the AWSManagedRulesAntiDDoSRuleSet managed rule group for CloudFront distributions.
+
+# v1.61.1 (2025-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.61.0 (2025-06-05)
+
+* **Feature**: AWS WAF adds support for ASN-based traffic filtering and support for ASN-based rate limiting.
+
+# v1.60.1 (2025-04-03)
+
+* No change notes available for this release.
+
+# v1.60.0 (2025-03-26)
+
+* **Feature**: This release adds the ability to associate an AWS WAF v2 web ACL with an AWS Amplify App.
+
+# v1.59.0 (2025-03-17)
+
+* **Feature**: AWS WAF now lets you inspect fragments of request URIs. You can specify the scope of the URI to inspect and narrow the set of URI fragments.
+
+# v1.58.0 (2025-03-06)
+
+* **Feature**: You can now perform an exact match or rate limit aggregation against the web request's JA4 fingerprint.
+
+# v1.57.2 (2025-03-05)
+
+* No change notes available for this release.
+
+# v1.57.1 (2025-03-04.2)
+
+* **Bug Fix**: Add assurance test for operation order.
+
+# v1.57.0 (2025-02-27)
+
+* **Feature**: Track credential providers via User-Agent Feature ids
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.56.1 (2025-02-18)
+
+* **Bug Fix**: Bump go version to 1.22
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.56.0 (2025-02-14)
+
+* **Feature**: The WAFv2 API now supports configuring data protection in webACLs.
+
+# v1.55.14 (2025-02-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.13 (2025-01-31)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.12 (2025-01-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.11 (2025-01-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.22.2.
+
+# v1.55.10 (2025-01-17)
+
+* **Bug Fix**: Fix bug where credentials weren't refreshed during retry loop.
+
+# v1.55.9 (2025-01-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.8 (2025-01-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.7 (2024-12-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.6 (2024-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.5 (2024-11-18)
+
+* **Dependency Update**: Update to smithy-go v1.22.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.4 (2024-11-07)
+
+* **Bug Fix**: Adds case-insensitive handling of error message fields in service responses
+
+# v1.55.3 (2024-11-06)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.2 (2024-10-31)
+
+* No change notes available for this release.
+
+# v1.55.1 (2024-10-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.0 (2024-10-21)
+
+* **Feature**: Add a property to WebACL to indicate whether it's been retrofitted by Firewall Manager.
+
 # v1.54.2 (2024-10-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions

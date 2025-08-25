@@ -1,71 +1,87 @@
 package cmd
 
 import (
+	// Internal
 	"github.com/Method-Security/methodaws/internal/s3"
 	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
 
-	methodaws "github.com/Method-Security/methodaws/generated/go"
+	// Generated
+	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
 )
 
 // InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
+
 func (a *MethodAws) InitS3Command() {
+
+	// S3 Command
+	// Subcommands:
+	// - enumerate: Enumerate all S3 buckets in your AWS account.
+	// - list: List all objects in a single S3 bucket.
+	// - external: Enumerate a single public facing S3 bucket from an external prespective.
 	s3Cmd := &cobra.Command{
 		Use:   "s3",
-		Short: "Audit and manage S3 services",
-		Long:  `Audit and manage S3 services`,
+		Short: "Audit and manage S3 services.",
+		Long:  `Audit and manage S3 services.`,
 	}
 
+	// Enumerate Command
 	enumerateCmd := &cobra.Command{
 		Use:   "enumerate",
 		Short: "Enumerate all S3 buckets",
 		Long:  `Enumerate all S3 buckets in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+			// Get Config
+			cfg := a.getS3EnumerateConfig(a.AwsConfig.Region, a.RootFlags.Regions)
+
+			// Get Report
+			report, err := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, cfg)
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
 			a.OutputSignal.Content = report
 		},
 	}
+	s3Cmd.AddCommand(enumerateCmd)
 
-	lsCmd := &cobra.Command{
-		Use:   "ls",
+	// List Command
+	listCmd := &cobra.Command{
+		Use:   "list",
 		Short: "List all objects in a single S3 bucket",
 		Long:  `List all objects in a single S3 bucket.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			// Config  Flags
 			bucketName, err := cmd.Flags().GetString("name")
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
 				return
 			}
 
-			report, err := s3.LsS3Bucket(cmd.Context(), *a.AwsConfig, bucketName)
+			// Get Config
+			config := a.getS3ListConfig(a.RootFlags.Regions, bucketName)
+
+			// Return report
+			report, err := s3.ListS3Bucket(cmd.Context(), *a.AwsConfig, config)
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
+				return
 			}
 			a.OutputSignal.Content = report
 		},
 	}
 
-	lsCmd.Flags().String("name", "", "Name of the S3 bucket")
+	// Flags
+	listCmd.Flags().String("name", "", "Name of the S3 bucket")
 
+	// Add Command to S3 Command
+	s3Cmd.AddCommand(listCmd)
+
+	// External Command
 	externalEnumerateCmd := &cobra.Command{
-		Use:   "externalenumerate",
-		Short: "Enumerate a single public facing S3 bucket.",
-		Long:  `Enumerate a single public facing S3 bucket with no credentials.`,
-		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			outputFormat, err := cmd.Flags().GetString("output")
-			if err != nil {
-				return err
-			}
-			outputFile, err := cmd.Flags().GetString("output-file")
-			if err != nil {
-				return err
-			}
-			return a.setupCommonConfig(cmd, outputFormat, outputFile, false)
-		},
+		Use:   "external",
+		Short: "Enumerate a single public facing S3 bucket from an external prespective.",
+		Long:  `Enumerate a single public facing S3 bucket from an external prespective.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			bucketURL, err := cmd.Flags().GetString("url")
 			if err != nil {
@@ -86,19 +102,37 @@ func (a *MethodAws) InitS3Command() {
 		},
 	}
 
+	// Flags
 	externalEnumerateCmd.Flags().String("url", "", "URL of the S3 bucket")
+
 	_ = externalEnumerateCmd.MarkFlagRequired("url")
 
-	s3Cmd.AddCommand(enumerateCmd)
-	s3Cmd.AddCommand(lsCmd)
+	// Add Command to S3 Command
 	s3Cmd.AddCommand(externalEnumerateCmd)
+
+	// Add S3 Command to Root Command
 	a.RootCmd.AddCommand(s3Cmd)
 }
 
-// getExternalS3BucketConfig returns a methodaws.ExternalS3BucketConfig with the given regions and bucket URL
-func getExternalS3BucketConfig(regions []string, bucketURL string) methodaws.ExternalS3BucketConfig {
-	return methodaws.ExternalS3BucketConfig{
+// getS3EnumerateConfig returns a s3fern.S3EnumerateConfig with the given account ID and regions
+func (a *MethodAws) getS3EnumerateConfig(accountID string, regions []string) s3fern.S3EnumerateConfig {
+	return s3fern.S3EnumerateConfig{
+		Regions: regions,
+	}
+}
+
+// getExternalS3BucketConfig returns a s3fern.ExternalS3BucketConfig with the given regions and bucket URL
+func getExternalS3BucketConfig(regions []string, bucketURL string) s3fern.S3ExternalConfig {
+	return s3fern.S3ExternalConfig{
 		BucketUrl: bucketURL,
 		Regions:   regions,
+	}
+}
+
+// getS3ListConfig returns a s3fern.ListS3BucketConfig with the given regions, and bucket name
+func (a *MethodAws) getS3ListConfig(regions []string, bucketName string) s3fern.ListS3BucketConfig {
+	return s3fern.ListS3BucketConfig{
+		BucketName: bucketName,
+		Regions:    regions,
 	}
 }

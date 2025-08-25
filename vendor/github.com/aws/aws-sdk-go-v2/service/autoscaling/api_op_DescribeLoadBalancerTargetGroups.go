@@ -11,35 +11,44 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This API operation is superseded by DescribeTrafficSources , which can describe
-// multiple traffic sources types. We recommend using DetachTrafficSources to
-// simplify how you manage traffic sources. However, we continue to support
+// This API operation is superseded by [DescribeTrafficSources], which can describe multiple traffic
+// sources types. We recommend using DetachTrafficSources to simplify how you
+// manage traffic sources. However, we continue to support
 // DescribeLoadBalancerTargetGroups . You can use both the original
 // DescribeLoadBalancerTargetGroups API operation and DescribeTrafficSources on
-// the same Auto Scaling group. Gets information about the Elastic Load Balancing
-// target groups for the specified Auto Scaling group. To determine the attachment
-// status of the target group, use the State element in the response. When you
-// attach a target group to an Auto Scaling group, the initial State value is
-// Adding . The state transitions to Added after all Auto Scaling instances are
-// registered with the target group. If Elastic Load Balancing health checks are
-// enabled for the Auto Scaling group, the state transitions to InService after at
-// least one Auto Scaling instance passes the health check. When the target group
-// is in the InService state, Amazon EC2 Auto Scaling can terminate and replace
-// any instances that are reported as unhealthy. If no registered instances pass
-// the health checks, the target group doesn't enter the InService state. Target
-// groups also have an InService state if you attach them in the
-// CreateAutoScalingGroup API call. If your target group state is InService , but
-// it is not working properly, check the scaling activities by calling
-// DescribeScalingActivities and take any corrective actions necessary. For help
-// with failed health checks, see Troubleshooting Amazon EC2 Auto Scaling: Health
-// checks (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ts-as-healthchecks.html)
-// in the Amazon EC2 Auto Scaling User Guide. For more information, see Use
-// Elastic Load Balancing to distribute traffic across the instances in your Auto
-// Scaling group (https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html)
-// in the Amazon EC2 Auto Scaling User Guide. You can use this operation to
-// describe target groups that were attached by using
-// AttachLoadBalancerTargetGroups , but not for target groups that were attached by
-// using AttachTrafficSources .
+// the same Auto Scaling group.
+//
+// Gets information about the Elastic Load Balancing target groups for the
+// specified Auto Scaling group.
+//
+// To determine the attachment status of the target group, use the State element
+// in the response. When you attach a target group to an Auto Scaling group, the
+// initial State value is Adding . The state transitions to Added after all Auto
+// Scaling instances are registered with the target group. If Elastic Load
+// Balancing health checks are enabled for the Auto Scaling group, the state
+// transitions to InService after at least one Auto Scaling instance passes the
+// health check. When the target group is in the InService state, Amazon EC2 Auto
+// Scaling can terminate and replace any instances that are reported as unhealthy.
+// If no registered instances pass the health checks, the target group doesn't
+// enter the InService state.
+//
+// Target groups also have an InService state if you attach them in the [CreateAutoScalingGroup] API call.
+// If your target group state is InService , but it is not working properly, check
+// the scaling activities by calling [DescribeScalingActivities]and take any corrective actions necessary.
+//
+// For help with failed health checks, see [Troubleshooting Amazon EC2 Auto Scaling: Health checks] in the Amazon EC2 Auto Scaling User
+// Guide. For more information, see [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group]in the Amazon EC2 Auto Scaling User Guide.
+//
+// You can use this operation to describe target groups that were attached by
+// using [AttachLoadBalancerTargetGroups], but not for target groups that were attached by using [AttachTrafficSources].
+//
+// [Troubleshooting Amazon EC2 Auto Scaling: Health checks]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ts-as-healthchecks.html
+// [AttachLoadBalancerTargetGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_AttachLoadBalancerTargetGroups.html
+// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
+// [CreateAutoScalingGroup]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CreateAutoScalingGroup.html
+// [DescribeTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeTrafficSources.html
+// [AttachTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_AttachTrafficSources.html
+// [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html
 func (c *Client) DescribeLoadBalancerTargetGroups(ctx context.Context, params *DescribeLoadBalancerTargetGroupsInput, optFns ...func(*Options)) (*DescribeLoadBalancerTargetGroupsOutput, error) {
 	if params == nil {
 		params = &DescribeLoadBalancerTargetGroupsInput{}
@@ -133,6 +142,9 @@ func (c *Client) addOperationDescribeLoadBalancerTargetGroupsMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -143,6 +155,15 @@ func (c *Client) addOperationDescribeLoadBalancerTargetGroupsMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeLoadBalancerTargetGroupsValidationMiddleware(stack); err != nil {
@@ -166,16 +187,50 @@ func (c *Client) addOperationDescribeLoadBalancerTargetGroupsMiddlewares(stack *
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeLoadBalancerTargetGroupsAPIClient is a client that implements the
-// DescribeLoadBalancerTargetGroups operation.
-type DescribeLoadBalancerTargetGroupsAPIClient interface {
-	DescribeLoadBalancerTargetGroups(context.Context, *DescribeLoadBalancerTargetGroupsInput, ...func(*Options)) (*DescribeLoadBalancerTargetGroupsOutput, error)
-}
-
-var _ DescribeLoadBalancerTargetGroupsAPIClient = (*Client)(nil)
 
 // DescribeLoadBalancerTargetGroupsPaginatorOptions is the paginator options for
 // DescribeLoadBalancerTargetGroups
@@ -244,6 +299,9 @@ func (p *DescribeLoadBalancerTargetGroupsPaginator) NextPage(ctx context.Context
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeLoadBalancerTargetGroups(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -262,6 +320,14 @@ func (p *DescribeLoadBalancerTargetGroupsPaginator) NextPage(ctx context.Context
 
 	return result, nil
 }
+
+// DescribeLoadBalancerTargetGroupsAPIClient is a client that implements the
+// DescribeLoadBalancerTargetGroups operation.
+type DescribeLoadBalancerTargetGroupsAPIClient interface {
+	DescribeLoadBalancerTargetGroups(context.Context, *DescribeLoadBalancerTargetGroupsInput, ...func(*Options)) (*DescribeLoadBalancerTargetGroupsOutput, error)
+}
+
+var _ DescribeLoadBalancerTargetGroupsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeLoadBalancerTargetGroups(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

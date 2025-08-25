@@ -10,9 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Sets the health status of the specified instance. For more information, see
-// Health checks for Auto Scaling instances (https://docs.aws.amazon.com/autoscaling/ec2/userguide/healthcheck.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Sets the health status of the specified instance.
+//
+// For more information, see [Set up a custom health check for your Auto Scaling group] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Set up a custom health check for your Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/set-up-a-custom-health-check.html
 func (c *Client) SetInstanceHealth(ctx context.Context, params *SetInstanceHealthInput, optFns ...func(*Options)) (*SetInstanceHealthOutput, error) {
 	if params == nil {
 		params = &SetInstanceHealthInput{}
@@ -45,9 +47,12 @@ type SetInstanceHealthInput struct {
 	// If the Auto Scaling group of the specified instance has a HealthCheckGracePeriod
 	// specified for the group, by default, this call respects the grace period. Set
 	// this to False , to have the call not respect the grace period associated with
-	// the group. For more information about the health check grace period, see
-	// CreateAutoScalingGroup (https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CreateAutoScalingGroup.html)
-	// in the Amazon EC2 Auto Scaling API Reference.
+	// the group.
+	//
+	// For more information about the health check grace period, see [Set the health check grace period for an Auto Scaling group] in the Amazon
+	// EC2 Auto Scaling User Guide.
+	//
+	// [Set the health check grace period for an Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-check-grace-period.html
 	ShouldRespectGracePeriod *bool
 
 	noSmithyDocumentSerde
@@ -103,6 +108,9 @@ func (c *Client) addOperationSetInstanceHealthMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,6 +121,15 @@ func (c *Client) addOperationSetInstanceHealthMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSetInstanceHealthValidationMiddleware(stack); err != nil {
@@ -134,6 +151,48 @@ func (c *Client) addOperationSetInstanceHealthMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -13,26 +13,26 @@ import (
 
 // Deletes the specified WebACL.
 //
-// You can only use this if ManagedByFirewallManager is false in the specified WebACL.
+// You can only use this if ManagedByFirewallManager is false in the web ACL.
 //
 // Before deleting any web ACL, first disassociate it from all resources.
 //
 //   - To retrieve a list of the resources that are associated with a web ACL, use
 //     the following calls:
 //
-//   - For regional resources, call ListResourcesForWebACL.
-//
 //   - For Amazon CloudFront distributions, use the CloudFront call
 //     ListDistributionsByWebACLId . For information, see [ListDistributionsByWebACLId]in the Amazon CloudFront
 //     API Reference.
 //
-//   - To disassociate a resource from a web ACL, use the following calls:
+//   - For all other resources, call ListResourcesForWebACL.
 //
-//   - For regional resources, call DisassociateWebACL.
+//   - To disassociate a resource from a web ACL, use the following calls:
 //
 //   - For Amazon CloudFront distributions, provide an empty web ACL ID in the
 //     CloudFront call UpdateDistribution . For information, see [UpdateDistribution]in the Amazon
 //     CloudFront API Reference.
+//
+//   - For all other resources, call DisassociateWebACL.
 //
 // [ListDistributionsByWebACLId]: https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributionsByWebACLId.html
 // [UpdateDistribution]: https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_UpdateDistribution.html
@@ -76,11 +76,8 @@ type DeleteWebACLInput struct {
 	// This member is required.
 	Name *string
 
-	// Specifies whether this is for an Amazon CloudFront distribution or for a
-	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, an Amazon Cognito
-	// user pool, an App Runner service, or an Amazon Web Services Verified Access
-	// instance.
+	// Specifies whether this is for a global resource type, such as a Amazon
+	// CloudFront distribution. For an Amplify application, use CLOUDFRONT .
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -167,6 +164,9 @@ func (c *Client) addOperationDeleteWebACLMiddlewares(stack *middleware.Stack, op
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDeleteWebACLValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -186,6 +186,36 @@ func (c *Client) addOperationDeleteWebACLMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

@@ -50,7 +50,7 @@ func CredsEks(ctx context.Context, cfg aws.Config, clusterName string) (*methoda
 	opts := &token.GetTokenOptions{
 		ClusterID: aws.ToString(clusterOutput.Cluster.Name),
 	}
-	tok, err := gen.GetWithOptions(opts)
+	tok, err := gen.GetWithOptions(ctx, opts)
 	if err != nil {
 		errors = append(errors, err.Error())
 		return &methodaws.CredentialReport{

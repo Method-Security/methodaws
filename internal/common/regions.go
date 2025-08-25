@@ -17,7 +17,7 @@ import (
 )
 
 func GetAWSRegions(ctx context.Context, cfg aws.Config, selectedRegions []string) ([]string, error) {
-	logger := svc1log.New(os.Stdout, wlog.InfoLevel)
+	logger := svc1log.New(os.Stderr, wlog.InfoLevel)
 	ctx = svc1log.WithLogger(ctx, logger)
 	log := svc1log.FromContext(ctx)
 

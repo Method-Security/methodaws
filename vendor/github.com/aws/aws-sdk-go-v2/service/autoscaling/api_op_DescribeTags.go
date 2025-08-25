@@ -11,14 +11,20 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the specified tags. You can use filters to limit the results. For
-// example, you can query for the tags for a specific Auto Scaling group. You can
-// specify multiple values for a filter. A tag must match at least one of the
-// specified values for it to be included in the results. You can also specify
-// multiple filters. The result includes information for a particular tag only if
-// it matches all the filters. If there's no match, no special message is returned.
-// For more information, see Tag Auto Scaling groups and instances (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-tagging.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Describes the specified tags.
+//
+// You can use filters to limit the results. For example, you can query for the
+// tags for a specific Auto Scaling group. You can specify multiple values for a
+// filter. A tag must match at least one of the specified values for it to be
+// included in the results.
+//
+// You can also specify multiple filters. The result includes information for a
+// particular tag only if it matches all the filters. If there's no match, no
+// special message is returned.
+//
+// For more information, see [Tag Auto Scaling groups and instances] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Tag Auto Scaling groups and instances]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-tagging.html
 func (c *Client) DescribeTags(ctx context.Context, params *DescribeTagsInput, optFns ...func(*Options)) (*DescribeTagsOutput, error) {
 	if params == nil {
 		params = &DescribeTagsInput{}
@@ -111,6 +117,9 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,6 +130,15 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTags(options.Region), middleware.Before); err != nil {
@@ -141,15 +159,50 @@ func (c *Client) addOperationDescribeTagsMiddlewares(stack *middleware.Stack, op
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeTagsAPIClient is a client that implements the DescribeTags operation.
-type DescribeTagsAPIClient interface {
-	DescribeTags(context.Context, *DescribeTagsInput, ...func(*Options)) (*DescribeTagsOutput, error)
-}
-
-var _ DescribeTagsAPIClient = (*Client)(nil)
 
 // DescribeTagsPaginatorOptions is the paginator options for DescribeTags
 type DescribeTagsPaginatorOptions struct {
@@ -215,6 +268,9 @@ func (p *DescribeTagsPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 	}
 	params.MaxRecords = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeTags(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -233,6 +289,13 @@ func (p *DescribeTagsPaginator) NextPage(ctx context.Context, optFns ...func(*Op
 
 	return result, nil
 }
+
+// DescribeTagsAPIClient is a client that implements the DescribeTags operation.
+type DescribeTagsAPIClient interface {
+	DescribeTags(context.Context, *DescribeTagsInput, ...func(*Options)) (*DescribeTagsOutput, error)
+}
+
+var _ DescribeTagsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTags(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -98,7 +98,11 @@ type ModifyDBClusterInput struct {
 	// cluster during the maintenance window. By default, minor engine upgrades are
 	// applied automatically.
 	//
-	// Valid for Cluster Type: Aurora DB clusters and Multi-AZ DB clusters
+	// Valid for Cluster Type: Aurora DB clusters and Multi-AZ DB clusters.
+	//
+	// For more information about automatic minor version upgrades, see [Automatically upgrading the minor engine version].
+	//
+	// [Automatically upgrading the minor engine version]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Upgrading.html#USER_UpgradeDBInstance.Upgrading.AutoMinorVersionUpgrades
 	AutoMinorVersionUpgrade *bool
 
 	// The Amazon Resource Name (ARN) of the recovery point in Amazon Web Services
@@ -773,6 +777,36 @@ func (c *Client) addOperationModifyDBClusterMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

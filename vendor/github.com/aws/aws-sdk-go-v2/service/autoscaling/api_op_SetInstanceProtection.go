@@ -11,11 +11,14 @@ import (
 )
 
 // Updates the instance protection settings of the specified instances. This
-// operation cannot be called on instances in a warm pool. For more information
-// about preventing instances that are part of an Auto Scaling group from
-// terminating on scale in, see Using instance scale-in protection (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-instance-protection.html)
-// in the Amazon EC2 Auto Scaling User Guide. If you exceed your maximum limit of
-// instance IDs, which is 50 per Auto Scaling group, the call fails.
+// operation cannot be called on instances in a warm pool.
+//
+// For more information, see [Use instance scale-in protection] in the Amazon EC2 Auto Scaling User Guide.
+//
+// If you exceed your maximum limit of instance IDs, which is 50 per Auto Scaling
+// group, the call fails.
+//
+// [Use instance scale-in protection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-instance-protection.html
 func (c *Client) SetInstanceProtection(ctx context.Context, params *SetInstanceProtectionInput, optFns ...func(*Options)) (*SetInstanceProtectionOutput, error) {
 	if params == nil {
 		params = &SetInstanceProtectionInput{}
@@ -102,6 +105,9 @@ func (c *Client) addOperationSetInstanceProtectionMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +118,15 @@ func (c *Client) addOperationSetInstanceProtectionMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSetInstanceProtectionValidationMiddleware(stack); err != nil {
@@ -133,6 +148,48 @@ func (c *Client) addOperationSetInstanceProtectionMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

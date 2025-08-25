@@ -10,16 +10,21 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Attaches one or more EC2 instances to the specified Auto Scaling group. When
-// you attach instances, Amazon EC2 Auto Scaling increases the desired capacity of
-// the group by the number of instances being attached. If the number of instances
-// being attached plus the desired capacity of the group exceeds the maximum size
-// of the group, the operation fails. If there is a Classic Load Balancer attached
-// to your Auto Scaling group, the instances are also registered with the load
-// balancer. If there are target groups attached to your Auto Scaling group, the
-// instances are also registered with the target groups. For more information, see
-// Attach EC2 instances to your Auto Scaling group (https://docs.aws.amazon.com/autoscaling/ec2/userguide/attach-instance-asg.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Attaches one or more EC2 instances to the specified Auto Scaling group.
+//
+// When you attach instances, Amazon EC2 Auto Scaling increases the desired
+// capacity of the group by the number of instances being attached. If the number
+// of instances being attached plus the desired capacity of the group exceeds the
+// maximum size of the group, the operation fails.
+//
+// If there is a Classic Load Balancer attached to your Auto Scaling group, the
+// instances are also registered with the load balancer. If there are target groups
+// attached to your Auto Scaling group, the instances are also registered with the
+// target groups.
+//
+// For more information, see [Detach or attach instances] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Detach or attach instances]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-detach-attach-instances.html
 func (c *Client) AttachInstances(ctx context.Context, params *AttachInstancesInput, optFns ...func(*Options)) (*AttachInstancesOutput, error) {
 	if params == nil {
 		params = &AttachInstancesInput{}
@@ -98,6 +103,9 @@ func (c *Client) addOperationAttachInstancesMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -108,6 +116,15 @@ func (c *Client) addOperationAttachInstancesMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAttachInstancesValidationMiddleware(stack); err != nil {
@@ -129,6 +146,48 @@ func (c *Client) addOperationAttachInstancesMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

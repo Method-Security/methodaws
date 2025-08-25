@@ -10,11 +10,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Sets the size of the specified Auto Scaling group. If a scale-in activity
-// occurs as a result of a new DesiredCapacity value that is lower than the
-// current size of the group, the Auto Scaling group uses its termination policy to
-// determine which instances to terminate. For more information, see Manual scaling (https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-manual-scaling.html)
-// in the Amazon EC2 Auto Scaling User Guide.
+// Sets the size of the specified Auto Scaling group.
+//
+// If a scale-in activity occurs as a result of a new DesiredCapacity value that
+// is lower than the current size of the group, the Auto Scaling group uses its
+// termination policy to determine which instances to terminate.
+//
+// For more information, see [Manual scaling] in the Amazon EC2 Auto Scaling User Guide.
+//
+// [Manual scaling]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-manually.html
 func (c *Client) SetDesiredCapacity(ctx context.Context, params *SetDesiredCapacityInput, optFns ...func(*Options)) (*SetDesiredCapacityOutput, error) {
 	if params == nil {
 		params = &SetDesiredCapacityInput{}
@@ -102,6 +106,9 @@ func (c *Client) addOperationSetDesiredCapacityMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +119,15 @@ func (c *Client) addOperationSetDesiredCapacityMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSetDesiredCapacityValidationMiddleware(stack); err != nil {
@@ -133,6 +149,48 @@ func (c *Client) addOperationSetDesiredCapacityMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

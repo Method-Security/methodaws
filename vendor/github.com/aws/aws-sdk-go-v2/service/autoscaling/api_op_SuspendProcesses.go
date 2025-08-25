@@ -11,11 +11,16 @@ import (
 )
 
 // Suspends the specified auto scaling processes, or all processes, for the
-// specified Auto Scaling group. If you suspend either the Launch or Terminate
-// process types, it can prevent other process types from functioning properly. For
-// more information, see Suspending and resuming scaling processes (https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-suspend-resume-processes.html)
-// in the Amazon EC2 Auto Scaling User Guide. To resume processes that have been
-// suspended, call the ResumeProcesses API.
+// specified Auto Scaling group.
+//
+// If you suspend either the Launch or Terminate process types, it can prevent
+// other process types from functioning properly. For more information, see [Suspend and resume Amazon EC2 Auto Scaling processes]in the
+// Amazon EC2 Auto Scaling User Guide.
+//
+// To resume processes that have been suspended, call the [ResumeProcesses] API.
+//
+// [ResumeProcesses]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_ResumeProcesses.html
+// [Suspend and resume Amazon EC2 Auto Scaling processes]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-suspend-resume-processes.html
 func (c *Client) SuspendProcesses(ctx context.Context, params *SuspendProcessesInput, optFns ...func(*Options)) (*SuspendProcessesOutput, error) {
 	if params == nil {
 		params = &SuspendProcessesInput{}
@@ -39,15 +44,25 @@ type SuspendProcessesInput struct {
 	AutoScalingGroupName *string
 
 	// One or more of the following processes:
+	//
 	//   - Launch
+	//
 	//   - Terminate
+	//
 	//   - AddToLoadBalancer
+	//
 	//   - AlarmNotification
+	//
 	//   - AZRebalance
+	//
 	//   - HealthCheck
+	//
 	//   - InstanceRefresh
+	//
 	//   - ReplaceUnhealthy
+	//
 	//   - ScheduledActions
+	//
 	// If you omit this property, all processes are specified.
 	ScalingProcesses []string
 
@@ -104,6 +119,9 @@ func (c *Client) addOperationSuspendProcessesMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,6 +132,15 @@ func (c *Client) addOperationSuspendProcessesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpSuspendProcessesValidationMiddleware(stack); err != nil {
@@ -135,6 +162,48 @@ func (c *Client) addOperationSuspendProcessesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

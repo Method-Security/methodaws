@@ -160,6 +160,9 @@ var defaultPartitions = endpoints.Partitions{
 				Hostname: "lambda.ap-east-1.api.aws",
 			},
 			endpoints.EndpointKey{
+				Region: "ap-east-2",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
 				Region: "ap-northeast-1",
 			}: endpoints.Endpoint{},
 			endpoints.EndpointKey{
@@ -642,6 +645,17 @@ var defaultPartitions = endpoints.Partitions{
 		},
 		RegionRegex:    partitionRegexp.AwsIsoE,
 		IsRegionalized: true,
+		Endpoints: endpoints.Endpoints{
+			endpoints.EndpointKey{
+				Region: "eu-isoe-west-1",
+			}: endpoints.Endpoint{},
+			endpoints.EndpointKey{
+				Region:  "eu-isoe-west-1",
+				Variant: endpoints.DualStackVariant,
+			}: {
+				Hostname: "lambda.eu-isoe-west-1.api.cloud-aws.adc-e.uk",
+			},
+		},
 	},
 	{
 		ID: "aws-iso-f",

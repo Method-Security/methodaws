@@ -1,15 +1,18 @@
 package s3
 
 import (
+	// Standard
 	"context"
 	"fmt"
 	"strings"
 
-	methodaws "github.com/Method-Security/methodaws/generated/go"
+	// Generated
+	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
+	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 // isNonStandardS3URL checks if the URL follows standard S3 URL patterns
@@ -63,12 +66,18 @@ func parseBucketURL(bucketURL string) (bucketName string, region string) {
 
 // bucketExists checks if a bucket exists and is accessible
 func bucketExists(ctx context.Context, region string, bucketName string) (bool, error) {
+	log := svc1log.FromContext(ctx)
+
 	// Create a custom AWS config with anonymous credentials
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(region),
 		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	)
 	if err != nil {
+		log.Error("Failed to load AWS config for bucket existence check",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
 		return false, fmt.Errorf("error loading AWS config: %v", err)
 	}
 
@@ -81,16 +90,26 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 	})
 
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case "NotFound", "NoSuchBucket":
-				return false, nil
-			case "Forbidden", "AccessDenied":
-				return true, nil // Bucket exists but we don't have access
-			default:
-				return false, fmt.Errorf("error checking bucket: %v", err)
-			}
+		errStr := err.Error()
+
+		if strings.Contains(errStr, "NotFound") || strings.Contains(errStr, "NoSuchBucket") {
+			log.Info("Bucket not found",
+				svc1log.SafeParam("bucketName", bucketName),
+				svc1log.SafeParam("region", region))
+			return false, nil
 		}
+
+		if strings.Contains(errStr, "Forbidden") || strings.Contains(errStr, "AccessDenied") {
+			log.Warn("Bucket exists but access is denied",
+				svc1log.SafeParam("bucketName", bucketName),
+				svc1log.SafeParam("region", region))
+			return true, nil // Bucket exists but we don't have access
+		}
+
+		log.Error("Error checking bucket existence",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
 		return false, fmt.Errorf("error checking bucket: %v", err)
 	}
 
@@ -98,9 +117,10 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 }
 
 // listBucketContents attempts to list objects in the bucket
-func listBucketContents(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3ObjectDetails, error) {
+func listBucketContents(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.S3ObjectDetails, error) {
+	log := svc1log.FromContext(ctx)
 	maxKeys := int32(100) // Limit the number of objects to list
-	directoryContents := []*methodaws.S3ObjectDetails{}
+	directoryContents := []*s3fern.S3ObjectDetails{}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
 		Bucket:     aws.String(bucketName),
@@ -111,6 +131,9 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 	// Get first page only to avoid overwhelming the API
 	page, err := paginator.NextPage(ctx)
 	if err != nil {
+		log.Error("Failed to list bucket contents",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.Stacktrace(err))
 		return nil, fmt.Errorf("error listing bucket contents: %v", err)
 	}
 
@@ -120,7 +143,7 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 			size = int(*object.Size)
 		}
 
-		details := &methodaws.S3ObjectDetails{
+		details := &s3fern.S3ObjectDetails{
 			Key:          *object.Key,
 			LastModified: object.LastModified,
 			Size:         &size,
@@ -149,7 +172,7 @@ func checkListingAllowed(ctx context.Context, client *s3.Client, bucketName stri
 }
 
 // checkAnonymousReadAllowed checks if anonymous read is allowed on a bucket
-func checkAnonymousReadAllowed(ctx context.Context, client *s3.Client, bucketName string, directoryContents []*methodaws.S3ObjectDetails) bool {
+func checkAnonymousReadAllowed(ctx context.Context, client *s3.Client, bucketName string, directoryContents []*s3fern.S3ObjectDetails) bool {
 	if len(directoryContents) > 0 {
 		_, err := client.GetObject(ctx, &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
@@ -172,8 +195,8 @@ func checkPolicy(ctx context.Context, client *s3.Client, bucketName string) (str
 }
 
 // checkACL checks the bucket ACL
-func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*methodaws.S3BucketAcl, *string, *string, error) {
-	acls := []*methodaws.S3BucketAcl{}
+func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.S3BucketAcl, *string, *string, error) {
+	acls := []*s3fern.S3BucketAcl{}
 
 	output, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
 		Bucket: aws.String(bucketName),
@@ -191,7 +214,7 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*met
 
 	for _, grant := range output.Grants {
 		if grant.Grantee.URI != nil {
-			acls = append(acls, &methodaws.S3BucketAcl{
+			acls = append(acls, &s3fern.S3BucketAcl{
 				GranteeUri: *grant.Grantee.URI,
 				Permission: string(grant.Permission),
 			})
@@ -202,10 +225,16 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*met
 }
 
 // ExternalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region
-func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName string, region string) (*methodaws.ExternalS3BucketResult, []string) {
+func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName string, region string) (*s3fern.ExternalS3BucketResult, []string) {
+	log := svc1log.FromContext(ctx)
+	log.Info("Starting external S3 bucket enumeration",
+		svc1log.SafeParam("bucketName", bucketName),
+		svc1log.SafeParam("region", region),
+		svc1log.SafeParam("bucketURL", bucketURL))
+
 	// Initialize variables
-	report := methodaws.ExternalS3BucketResult{}
-	externalBucket := methodaws.ExternalBucket{
+	report := s3fern.ExternalS3BucketResult{}
+	externalBucket := s3fern.ExternalBucket{
 		Name:   bucketName,
 		Region: region,
 		Url:    bucketURL,
@@ -218,6 +247,9 @@ func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName
 		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	)
 	if err != nil {
+		log.Error("Failed to load AWS config for external enumeration",
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
 		errors = append(errors, fmt.Sprintf("error loading AWS config: %v", err))
 		return nil, errors
 	}
@@ -243,6 +275,9 @@ func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName
 	if err == nil {
 		externalBucket.Policy = &policy
 	} else {
+		log.Warn("Failed to get bucket policy",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.Stacktrace(err))
 		errors = append(errors, fmt.Sprintf("Error getting bucket policy: %v", err))
 	}
 
@@ -253,17 +288,31 @@ func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName
 		externalBucket.OwnerId = ownerID
 		externalBucket.OwnerName = ownerName
 	} else {
+		log.Warn("Failed to get bucket ACL",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.Stacktrace(err))
 		errors = append(errors, fmt.Sprintf("Error getting bucket ACL: %v", err))
 	}
 
 	report.ExternalBuckets = append(report.ExternalBuckets, &externalBucket)
+
+	log.Info("External S3 bucket enumeration completed",
+		svc1log.SafeParam("bucketName", bucketName),
+		svc1log.SafeParam("region", region),
+		svc1log.SafeParam("allowDirectoryListing", externalBucket.AllowDirectoryListing),
+		svc1log.SafeParam("allowAnonymousRead", externalBucket.AllowAnonymousRead),
+		svc1log.SafeParam("errorCount", len(errors)))
+
 	return &report, errors
 }
 
 // ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
-func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketConfig) methodaws.ExternalS3Report {
-	report := methodaws.ExternalS3Report{Config: &config}
-	result := methodaws.ExternalS3BucketResult{}
+func ExternalEnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.ExternalS3Report {
+	log := svc1log.FromContext(ctx)
+	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.BucketUrl))
+
+	report := s3fern.ExternalS3Report{Config: &config}
+	result := s3fern.ExternalS3BucketResult{}
 	errors := []string{}
 
 	// Parse the bucket URL to get name and potentially region
@@ -284,10 +333,17 @@ func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketC
 	for _, region := range regionsToCheck {
 		exists, err := bucketExists(ctx, region, bucketName)
 		if err != nil {
+			log.Warn("Error checking bucket in region",
+				svc1log.SafeParam("region", region),
+				svc1log.SafeParam("bucketName", bucketName),
+				svc1log.Stacktrace(err))
 			errors = append(errors, fmt.Sprintf("Error checking bucket in region %s: %v", region, err))
 			continue
 		}
 		if exists {
+			log.Info("Found bucket in region",
+				svc1log.SafeParam("bucketName", bucketName),
+				svc1log.SafeParam("region", region))
 			functionResult, functionErrors := externalEnumerateS3Region(ctx, config.BucketUrl, bucketName, region)
 			if functionResult != nil {
 				result = *functionResult
@@ -299,10 +355,18 @@ func ExternalEnumerateS3(ctx context.Context, config methodaws.ExternalS3BucketC
 	}
 
 	if !bucketFound {
+		log.Warn("Bucket not found in any specified regions",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.SafeParam("regionsChecked", len(regionsToCheck)))
 		errors = append(errors, "Bucket not found in any of the specified regions")
 	}
 
 	report.Result = &result
 	report.Errors = errors
+
+	log.Info("External S3 enumeration completed",
+		svc1log.SafeParam("bucketFound", bucketFound),
+		svc1log.SafeParam("totalErrors", len(errors)))
+
 	return report
 }

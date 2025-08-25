@@ -229,9 +229,9 @@ type RestoreDBClusterFromS3Input struct {
 	// version on your DB cluster past the end of standard support for that engine
 	// version. For more information, see the following sections:
 	//
-	//   - Amazon Aurora - [Using Amazon RDS Extended Support]in the Amazon Aurora User Guide
+	//   - Amazon Aurora - [Amazon RDS Extended Support with Amazon Aurora]in the Amazon Aurora User Guide
 	//
-	//   - Amazon RDS - [Using Amazon RDS Extended Support]in the Amazon RDS User Guide
+	//   - Amazon RDS - [Amazon RDS Extended Support with Amazon RDS]in the Amazon RDS User Guide
 	//
 	// Valid for Cluster Type: Aurora DB clusters and Multi-AZ DB clusters
 	//
@@ -240,7 +240,8 @@ type RestoreDBClusterFromS3Input struct {
 	//
 	// Default: open-source-rds-extended-support
 	//
-	// [Using Amazon RDS Extended Support]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html
+	// [Amazon RDS Extended Support with Amazon RDS]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html
+	// [Amazon RDS Extended Support with Amazon Aurora]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/extended-support.html
 	EngineLifecycleSupport *string
 
 	// The version number of the database engine to use.
@@ -536,6 +537,36 @@ func (c *Client) addOperationRestoreDBClusterFromS3Middlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

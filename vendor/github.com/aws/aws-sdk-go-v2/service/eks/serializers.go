@@ -563,6 +563,13 @@ func awsRestjson1_serializeOpDocumentCreateAddonInput(v *CreateAddonInput, value
 		ok.String(*v.ConfigurationValues)
 	}
 
+	if v.NamespaceConfig != nil {
+		ok := object.Key("namespaceConfig")
+		if err := awsRestjson1_serializeDocumentAddonNamespaceConfigRequest(v.NamespaceConfig, ok); err != nil {
+			return err
+		}
+	}
+
 	if v.PodIdentityAssociations != nil {
 		ok := object.Key("podIdentityAssociations")
 		if err := awsRestjson1_serializeDocumentAddonPodIdentityAssociationsList(v.PodIdentityAssociations, ok); err != nil {
@@ -685,6 +692,11 @@ func awsRestjson1_serializeOpDocumentCreateClusterInput(v *CreateClusterInput, v
 		if err := awsRestjson1_serializeDocumentComputeConfigRequest(v.ComputeConfig, ok); err != nil {
 			return err
 		}
+	}
+
+	if v.DeletionProtection != nil {
+		ok := object.Key("deletionProtection")
+		ok.Boolean(*v.DeletionProtection)
 	}
 
 	if v.EncryptionConfig != nil {
@@ -1305,6 +1317,11 @@ func awsRestjson1_serializeOpDocumentCreatePodIdentityAssociationInput(v *Create
 		ok.String(*v.ClientRequestToken)
 	}
 
+	if v.DisableSessionTags != nil {
+		ok := object.Key("disableSessionTags")
+		ok.Boolean(*v.DisableSessionTags)
+	}
+
 	if v.Namespace != nil {
 		ok := object.Key("namespace")
 		ok.String(*v.Namespace)
@@ -1325,6 +1342,11 @@ func awsRestjson1_serializeOpDocumentCreatePodIdentityAssociationInput(v *Create
 		if err := awsRestjson1_serializeDocumentTagMap(v.Tags, ok); err != nil {
 			return err
 		}
+	}
+
+	if v.TargetRoleArn != nil {
+		ok := object.Key("targetRoleArn")
+		ok.String(*v.TargetRoleArn)
 	}
 
 	return nil
@@ -4888,6 +4910,11 @@ func awsRestjson1_serializeOpDocumentUpdateClusterConfigInput(v *UpdateClusterCo
 		}
 	}
 
+	if v.DeletionProtection != nil {
+		ok := object.Key("deletionProtection")
+		ok.Boolean(*v.DeletionProtection)
+	}
+
 	if v.KubernetesNetworkConfig != nil {
 		ok := object.Key("kubernetesNetworkConfig")
 		if err := awsRestjson1_serializeDocumentKubernetesNetworkConfigRequest(v.KubernetesNetworkConfig, ok); err != nil {
@@ -5506,9 +5533,19 @@ func awsRestjson1_serializeOpDocumentUpdatePodIdentityAssociationInput(v *Update
 		ok.String(*v.ClientRequestToken)
 	}
 
+	if v.DisableSessionTags != nil {
+		ok := object.Key("disableSessionTags")
+		ok.Boolean(*v.DisableSessionTags)
+	}
+
 	if v.RoleArn != nil {
 		ok := object.Key("roleArn")
 		ok.String(*v.RoleArn)
+	}
+
+	if v.TargetRoleArn != nil {
+		ok := object.Key("targetRoleArn")
+		ok.String(*v.TargetRoleArn)
 	}
 
 	return nil
@@ -5528,6 +5565,18 @@ func awsRestjson1_serializeDocumentAccessScope(v *types.AccessScope, value smith
 	if len(v.Type) > 0 {
 		ok := object.Key("type")
 		ok.String(string(v.Type))
+	}
+
+	return nil
+}
+
+func awsRestjson1_serializeDocumentAddonNamespaceConfigRequest(v *types.AddonNamespaceConfigRequest, value smithyjson.Value) error {
+	object := value.Object()
+	defer object.Close()
+
+	if v.Namespace != nil {
+		ok := object.Key("namespace")
+		ok.String(*v.Namespace)
 	}
 
 	return nil

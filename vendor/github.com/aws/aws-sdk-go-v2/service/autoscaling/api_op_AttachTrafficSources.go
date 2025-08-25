@@ -11,19 +11,29 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Attaches one or more traffic sources to the specified Auto Scaling group. You
-// can use any of the following as traffic sources for an Auto Scaling group:
+// Attaches one or more traffic sources to the specified Auto Scaling group.
+//
+// You can use any of the following as traffic sources for an Auto Scaling group:
+//
 //   - Application Load Balancer
+//
 //   - Classic Load Balancer
+//
 //   - Gateway Load Balancer
+//
 //   - Network Load Balancer
+//
 //   - VPC Lattice
 //
 // This operation is additive and does not detach existing traffic sources from
-// the Auto Scaling group. After the operation completes, use the
-// DescribeTrafficSources API to return details about the state of the attachments
-// between traffic sources and your Auto Scaling group. To detach a traffic source
-// from the Auto Scaling group, call the DetachTrafficSources API.
+// the Auto Scaling group.
+//
+// After the operation completes, use the [DescribeTrafficSources] API to return details about the state
+// of the attachments between traffic sources and your Auto Scaling group. To
+// detach a traffic source from the Auto Scaling group, call the [DetachTrafficSources]API.
+//
+// [DescribeTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeTrafficSources.html
+// [DetachTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DetachTrafficSources.html
 func (c *Client) AttachTrafficSources(ctx context.Context, params *AttachTrafficSourcesInput, optFns ...func(*Options)) (*AttachTrafficSourcesOutput, error) {
 	if params == nil {
 		params = &AttachTrafficSourcesInput{}
@@ -51,6 +61,14 @@ type AttachTrafficSourcesInput struct {
 	//
 	// This member is required.
 	TrafficSources []types.TrafficSourceIdentifier
+
+	//  If you enable zonal shift with cross-zone disabled load balancers, capacity
+	// could become imbalanced across Availability Zones. To skip the validation,
+	// specify true . For more information, see [Auto Scaling group zonal shift] in the Amazon EC2 Auto Scaling User
+	// Guide.
+	//
+	// [Auto Scaling group zonal shift]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-zonal-shift.html
+	SkipZonalShiftValidation *bool
 
 	noSmithyDocumentSerde
 }
@@ -105,6 +123,9 @@ func (c *Client) addOperationAttachTrafficSourcesMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +136,15 @@ func (c *Client) addOperationAttachTrafficSourcesMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAttachTrafficSourcesValidationMiddleware(stack); err != nil {
@@ -136,6 +166,48 @@ func (c *Client) addOperationAttachTrafficSourcesMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

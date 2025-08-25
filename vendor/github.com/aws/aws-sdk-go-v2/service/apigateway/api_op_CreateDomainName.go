@@ -91,6 +91,10 @@ type CreateDomainNameInput struct {
 	// endpoint for this domain name.
 	RegionalCertificateName *string
 
+	//  The routing mode for this domain name. The routing mode determines how API
+	// Gateway sends traffic from your custom domain name to your private APIs.
+	RoutingMode types.RoutingMode
+
 	// The Transport Layer Security (TLS) version + cipher suite for this DomainName.
 	// The valid values are TLS_1_0 and TLS_1_2 .
 	SecurityPolicy types.SecurityPolicy
@@ -136,7 +140,7 @@ type CreateDomainNameOutput struct {
 	// The custom domain name as an API host name, for example, my-api.example.com .
 	DomainName *string
 
-	// The ARN of the domain name. Supported only for private custom domain names.
+	// The ARN of the domain name.
 	DomainNameArn *string
 
 	// The identifier for the domain name resource. Supported only for private custom
@@ -197,6 +201,10 @@ type CreateDomainNameOutput struct {
 	// For more information, see Set up a Regional Custom Domain Name and AWS Regions
 	// and Endpoints for API Gateway.
 	RegionalHostedZoneId *string
+
+	// The routing mode for this domain name. The routing mode determines how API
+	// Gateway sends traffic from your custom domain name to your private APIs.
+	RoutingMode types.RoutingMode
 
 	// The Transport Layer Security (TLS) version + cipher suite for this DomainName.
 	// The valid values are TLS_1_0 and TLS_1_2 .
@@ -300,6 +308,36 @@ func (c *Client) addOperationCreateDomainNameMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

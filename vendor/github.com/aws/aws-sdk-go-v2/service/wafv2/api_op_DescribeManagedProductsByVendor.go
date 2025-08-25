@@ -30,11 +30,8 @@ func (c *Client) DescribeManagedProductsByVendor(ctx context.Context, params *De
 
 type DescribeManagedProductsByVendorInput struct {
 
-	// Specifies whether this is for an Amazon CloudFront distribution or for a
-	// regional application. A regional application can be an Application Load Balancer
-	// (ALB), an Amazon API Gateway REST API, an AppSync GraphQL API, an Amazon Cognito
-	// user pool, an App Runner service, or an Amazon Web Services Verified Access
-	// instance.
+	// Specifies whether this is for a global resource type, such as a Amazon
+	// CloudFront distribution. For an Amplify application, use CLOUDFRONT .
 	//
 	// To work with CloudFront, you must also specify the Region US East (N. Virginia)
 	// as follows:
@@ -132,6 +129,9 @@ func (c *Client) addOperationDescribeManagedProductsByVendorMiddlewares(stack *m
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDescribeManagedProductsByVendorValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -151,6 +151,36 @@ func (c *Client) addOperationDescribeManagedProductsByVendorMiddlewares(stack *m
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

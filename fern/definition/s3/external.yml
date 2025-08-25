@@ -1,0 +1,37 @@
+imports:
+  enumerate: ./enumerate.yml
+types:
+  # Config
+  S3ExternalConfig:
+    properties:
+      bucketURL: string
+      regions: optional<list<string>>
+  # Report structs
+  S3ObjectDetails:
+    properties:
+      key: string
+      lastModified: optional<datetime>
+      size: optional<integer>
+      ownerID: optional<string>
+      ownerName: optional<string>
+  ExternalBucket:
+    properties:
+      name: string
+      url: string
+      region: string
+      directoryContents: optional<list<S3ObjectDetails>>
+      allowDirectoryListing: boolean
+      allowAnonymousRead: boolean
+      policy: optional<string>
+      acls: optional<list<enumerate.S3BucketACL>>
+      ownerID: optional<string>
+      ownerName: optional<string>
+  ExternalS3BucketResult:
+    properties:
+      externalBuckets: optional<list<ExternalBucket>>
+  # Report
+  ExternalS3Report:
+    properties:
+      result: ExternalS3BucketResult
+      config: S3ExternalConfig
+      errors: optional<list<string>>

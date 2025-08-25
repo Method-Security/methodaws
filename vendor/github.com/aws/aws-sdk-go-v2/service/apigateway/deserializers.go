@@ -20,16 +20,7 @@ import (
 	"io/ioutil"
 	"math"
 	"strings"
-	"time"
 )
-
-func deserializeS3Expires(v string) (*time.Time, error) {
-	t, err := smithytime.ParseHTTPDate(v)
-	if err != nil {
-		return nil, nil
-	}
-	return &t, nil
-}
 
 type awsRestjson1_deserializeOpCreateApiKey struct {
 }
@@ -1633,6 +1624,15 @@ func awsRestjson1_deserializeOpDocumentCreateDomainNameOutput(v **CreateDomainNa
 					return fmt.Errorf("expected String to be of type string, got %T instead", value)
 				}
 				sv.RegionalHostedZoneId = ptr.String(jtv)
+			}
+
+		case "routingMode":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected RoutingMode to be of type string, got %T instead", value)
+				}
+				sv.RoutingMode = types.RoutingMode(jtv)
 			}
 
 		case "securityPolicy":
@@ -9623,6 +9623,15 @@ func awsRestjson1_deserializeOpDocumentGetDomainNameOutput(v **GetDomainNameOutp
 					return fmt.Errorf("expected String to be of type string, got %T instead", value)
 				}
 				sv.RegionalHostedZoneId = ptr.String(jtv)
+			}
+
+		case "routingMode":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected RoutingMode to be of type string, got %T instead", value)
+				}
+				sv.RoutingMode = types.RoutingMode(jtv)
 			}
 
 		case "securityPolicy":
@@ -20331,6 +20340,15 @@ func awsRestjson1_deserializeOpDocumentUpdateDomainNameOutput(v **UpdateDomainNa
 				sv.RegionalHostedZoneId = ptr.String(jtv)
 			}
 
+		case "routingMode":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected RoutingMode to be of type string, got %T instead", value)
+				}
+				sv.RoutingMode = types.RoutingMode(jtv)
+			}
+
 		case "securityPolicy":
 			if value != nil {
 				jtv, ok := value.(string)
@@ -24714,6 +24732,15 @@ func awsRestjson1_deserializeDocumentDomainName(v **types.DomainName, value inte
 					return fmt.Errorf("expected String to be of type string, got %T instead", value)
 				}
 				sv.RegionalHostedZoneId = ptr.String(jtv)
+			}
+
+		case "routingMode":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected RoutingMode to be of type string, got %T instead", value)
+				}
+				sv.RoutingMode = types.RoutingMode(jtv)
 			}
 
 		case "securityPolicy":
