@@ -47,7 +47,6 @@ types:
       continentCode: optional<string>
       countryCode: optional<string>
       subdivisionCode: optional<string>
-  # CIDR Routing struct
   CidrRouting:
     properties:
       collectionId: string
@@ -79,12 +78,12 @@ types:
     properties:
       zoneDetails: HostedZoneDetails
       resourceRecordSets: list<ResourceRecordSet>
-  Route53Resources:
+  Route53Result:
     properties:
       hostedZones: optional<list<EnrichedHostedZone>>
   # Route53 Enumeration Report
   Route53EnumerateReport:
     properties:
-      resources: Route53Resources
+      result: Route53Result
       config: Route53EnumerateConfig
       errors: optional<list<string>>
