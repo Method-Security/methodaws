@@ -231,8 +231,8 @@ func EnumerateRoute53(ctx context.Context, awscfg aws.Config) (*route53fern.Rout
 
 	// Initialize Report
 	report := route53fern.Route53EnumerateReport{
-		Resources: &route53fern.Route53Resources{},
-		Config:    &route53fern.Route53EnumerateConfig{AccountId: *accountID},
+		Result: &route53fern.Route53Result{},
+		Config: &route53fern.Route53EnumerateConfig{AccountId: *accountID},
 	}
 	var errors []string
 
@@ -249,19 +249,19 @@ func EnumerateRoute53(ctx context.Context, awscfg aws.Config) (*route53fern.Rout
 	}
 
 	// Add hosted zones to report
-	resources := route53fern.Route53Resources{}
+	result := route53fern.Route53Result{}
 	if len(hostedZones) > 0 {
 		// Convert to slice of pointers
 		var hostedZonePointers []*route53fern.EnrichedHostedZone
 		for i := range hostedZones {
 			hostedZonePointers = append(hostedZonePointers, &hostedZones[i])
 		}
-		resources.HostedZones = hostedZonePointers
+		result.HostedZones = hostedZonePointers
 	}
 
 	// Only add hosted zones if there are any
-	if len(resources.HostedZones) > 0 {
-		report.Resources.HostedZones = resources.HostedZones
+	if len(result.HostedZones) > 0 {
+		report.Result.HostedZones = result.HostedZones
 	}
 	report.Errors = errors
 	return &report, nil
