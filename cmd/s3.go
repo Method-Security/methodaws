@@ -8,6 +8,7 @@ import (
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
+	external "github.com/Method-Security/methodaws/internal/s3/external"
 )
 
 // InitS3Command initializes the `methodaws s3` subcommand that deals with enumerating S3 buckets and their related resources.
@@ -32,7 +33,7 @@ func (a *MethodAws) InitS3Command() {
 		Long:  `Enumerate all S3 buckets in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// Get Config
-			cfg := a.getS3EnumerateConfig(a.AwsConfig.Region, a.RootFlags.Regions)
+			cfg := a.getS3EnumerateConfig(a.RootFlags.Regions)
 
 			// Get Report
 			report, err := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, cfg)
@@ -74,48 +75,66 @@ func (a *MethodAws) InitS3Command() {
 	// Flags
 	listCmd.Flags().String("name", "", "Name of the S3 bucket")
 
+	_ = listCmd.MarkFlagRequired("name")
+
 	// Add Command to S3 Command
 	s3Cmd.AddCommand(listCmd)
 
 	// External Command
-	externalEnumerateCmd := &cobra.Command{
+	externalCmd := &cobra.Command{
 		Use:   "external",
 		Short: "Enumerate a single public facing S3 bucket from an external prespective.",
 		Long:  `Enumerate a single public facing S3 bucket from an external prespective.`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Override parent's PersistentPreRunE to use authed=false since external command uses anonymous credentials
+			outputFormat, _ := cmd.Root().PersistentFlags().GetString("output")
+			outputFile, _ := cmd.Root().PersistentFlags().GetString("output-file")
+			return a.setupCommonConfig(cmd, outputFormat, outputFile, false)
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			bucketURL, err := cmd.Flags().GetString("url")
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
 				return
 			}
 
-			regions := a.RootFlags.Regions
-			if len(regions) == 0 || regions[0] == "all" {
+			// Check if specific region was provided via --region flag
+			// Override to not use the default region from the root command (us-east-1)
+			regionFlag, err := cmd.Flags().GetString("region")
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+			var regions []string
+			if regionFlag != "" {
+				// Use specific region if provided
+				regions = []string{regionFlag}
+			} else {
+				// Default to all regions for external command (override root default of us-east-1)
 				regions = utils.GetGeneralRegions()
 			}
 
 			config := getExternalS3BucketConfig(regions, bucketURL)
-			report := s3.ExternalEnumerateS3(cmd.Context(), config)
+			report := external.EnumerateS3(cmd.Context(), config)
 			a.OutputSignal.Content = report
 		},
 	}
 
 	// Flags
-	externalEnumerateCmd.Flags().String("url", "", "URL of the S3 bucket")
+	externalCmd.Flags().String("url", "", "URL of the S3 bucket")
+	externalCmd.Flags().String("region", "", "Region of the S3 bucket")
 
-	_ = externalEnumerateCmd.MarkFlagRequired("url")
+	_ = externalCmd.MarkFlagRequired("url")
 
 	// Add Command to S3 Command
-	s3Cmd.AddCommand(externalEnumerateCmd)
+	s3Cmd.AddCommand(externalCmd)
 
 	// Add S3 Command to Root Command
 	a.RootCmd.AddCommand(s3Cmd)
 }
 
-// getS3EnumerateConfig returns a s3fern.S3EnumerateConfig with the given account ID and regions
-func (a *MethodAws) getS3EnumerateConfig(accountID string, regions []string) s3fern.S3EnumerateConfig {
+// getS3EnumerateConfig returns a s3fern.S3EnumerateConfig with the given regions
+func (a *MethodAws) getS3EnumerateConfig(regions []string) s3fern.S3EnumerateConfig {
 	return s3fern.S3EnumerateConfig{
 		Regions: regions,
 	}

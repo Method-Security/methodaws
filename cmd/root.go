@@ -79,11 +79,13 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 			return err
 		}
 		a.AwsConfig = &awsConfig
-		a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
-		if err != nil || len(a.RootFlags.Regions) == 0 {
-			a.OutputSignal.Status = 1
-			a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions found or specified")
-			return nil
+		if len(a.RootFlags.Regions) != 0 {
+			a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+			if err != nil {
+				a.OutputSignal.Status = 1
+				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions specified")
+				return errors.New("no valid AWS regions specified")
+			}
 		}
 	} else {
 		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
@@ -127,7 +129,7 @@ func (a *MethodAws) InitRootCommand() {
 
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Quiet, "quiet", "q", false, "Suppress output")
 	a.RootCmd.PersistentFlags().BoolVarP(&a.RootFlags.Verbose, "verbose", "v", false, "Verbose output")
-	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "regions", "r", []string{"us-east-1"}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
+	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "regions", "r", []string{}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "f", "", "Path to output file. If blank, will output to STDOUT")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "signal", "Output format (signal, json, yaml). Default value is signal")
 
