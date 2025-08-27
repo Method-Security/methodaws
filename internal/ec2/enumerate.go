@@ -84,7 +84,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 			Instances: ec2Instances,
 		}, errors, nil
 	}
-	log.Debug("No EC2 instances found in region", svc1log.SafeParam("region", region))
+	log.Info("No EC2 instances found in region", svc1log.SafeParam("region", region))
 	return nil, errors, nil
 }
 
@@ -138,7 +138,7 @@ func extractInstanceProfileName(profileArn string) string {
 func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn string) ([]string, error) {
 	log := svc1log.FromContext(ctx)
 	instanceProfileName := extractInstanceProfileName(instanceProfileArn)
-	log.Debug("Getting IAM roles for instance profile",
+	log.Info("Getting IAM roles for instance profile",
 		svc1log.SafeParam("instanceProfileName", instanceProfileName),
 		svc1log.SafeParam("instanceProfileArn", instanceProfileArn))
 	roles := []string{}
@@ -164,7 +164,7 @@ func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn str
 			svc1log.SafeParam("instanceProfileName", instanceProfileName))
 		return roles, fmt.Errorf("no roles found in instance profile - %s", instanceProfileName)
 	}
-	log.Debug("Successfully retrieved IAM roles",
+	log.Info("Successfully retrieved IAM roles",
 		svc1log.SafeParam("instanceProfileName", instanceProfileName),
 		svc1log.SafeParam("roleCount", len(roles)))
 	return roles, nil

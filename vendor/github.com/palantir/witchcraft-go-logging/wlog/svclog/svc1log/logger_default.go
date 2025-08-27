@@ -56,7 +56,7 @@ type defaultLogger struct {
 }
 
 func (l *defaultLogger) Debug(msg string, params ...Param) {
-	if l.Enabled(wlog.DebugLevel) {
+	if l.Enabled(wlog.InfoLevel) {
 		l.logger.Debug(msg, ToParams(DebugLevelParam(), params)...)
 	}
 }

@@ -205,7 +205,7 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 	for _, region := range regionsToProcess {
 		bucketsInRegion, exists := bucketsByRegion[region]
 		if !exists {
-			log.Debug("No buckets found in region", svc1log.SafeParam("region", region))
+			log.Info("No buckets found in region", svc1log.SafeParam("region", region))
 			continue
 		}
 

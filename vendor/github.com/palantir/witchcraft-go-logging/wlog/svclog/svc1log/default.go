@@ -49,7 +49,7 @@ type warnLogger struct {
 }
 
 func (l *warnLogger) Debug(msg string, params ...Param) {
-	if l.level.Enabled(wlog.DebugLevel) {
+	if l.level.Enabled(wlog.InfoLevel) {
 		l.log(func(logger Logger) {
 			logger.Debug(msg, params...)
 		})
