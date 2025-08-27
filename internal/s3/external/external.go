@@ -260,14 +260,14 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 // EnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
 func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.ExternalS3Report {
 	log := svc1log.FromContext(ctx)
-	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.BucketUrl))
+	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.Url))
 
 	report := s3fern.ExternalS3Report{Config: &config}
 	result := s3fern.ExternalS3BucketResult{}
 	errors := []string{}
 
 	// Parse the bucket URL to get name and potentially region
-	bucketName, urlRegion := parseBucketURL(config.BucketUrl)
+	bucketName, urlRegion := parseBucketURL(config.Url)
 
 	// If we got a region from the URL, only check that region
 	// By defaults tries us-ea
@@ -291,7 +291,7 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 			log.Info("Found bucket in region",
 				svc1log.SafeParam("bucketName", bucketName),
 				svc1log.SafeParam("region", region))
-			functionResult, functionErrors := externalS3Region(ctx, config.BucketUrl, bucketName, region)
+			functionResult, functionErrors := externalS3Region(ctx, config.Url, bucketName, region)
 			if functionResult != nil {
 				result = *functionResult
 			}

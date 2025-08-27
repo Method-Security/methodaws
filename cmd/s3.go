@@ -143,8 +143,8 @@ func (a *MethodAws) getS3EnumerateConfig(regions []string) s3fern.S3EnumerateCon
 // getExternalS3BucketConfig returns a s3fern.ExternalS3BucketConfig with the given regions and bucket URL
 func getExternalS3BucketConfig(regions []string, bucketURL string) s3fern.S3ExternalConfig {
 	return s3fern.S3ExternalConfig{
-		BucketUrl: bucketURL,
-		Regions:   regions,
+		Url:     bucketURL,
+		Regions: regions,
 	}
 }
 
