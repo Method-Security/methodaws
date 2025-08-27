@@ -3,7 +3,6 @@ types:
   ListS3BucketConfig:
     properties:
       accountId: string
-      regions: optional<list<string>>
       bucketName: string
   # Report structs
   BucketObject:

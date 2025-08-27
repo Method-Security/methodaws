@@ -10,6 +10,7 @@ import (
 
 	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/config"
+	"github.com/Method-Security/methodaws/utils"
 	"github.com/Method-Security/pkg/signal"
 	"github.com/Method-Security/pkg/writer"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -86,6 +87,8 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions specified")
 				return errors.New("no valid AWS regions specified")
 			}
+		} else {
+			a.RootFlags.Regions = utils.GetGeneralRegions()
 		}
 	} else {
 		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)

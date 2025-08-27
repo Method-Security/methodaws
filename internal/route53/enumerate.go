@@ -7,7 +7,6 @@ import (
 	// Generated
 	route53fern "github.com/Method-Security/methodaws/generated/go/route53"
 	// Internal
-	"github.com/Method-Security/methodaws/internal/sts"
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
@@ -215,24 +214,17 @@ func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID s
 }
 
 // EnumerateRoute53 retrieves all Route 53 hosted zones available to the caller and returns a Route53EnumerateReport struct
-func EnumerateRoute53(ctx context.Context, awscfg aws.Config) (*route53fern.Route53EnumerateReport, error) {
+func EnumerateRoute53(ctx context.Context, awscfg aws.Config, config route53fern.Route53EnumerateConfig) *route53fern.Route53EnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting Route53 enumeration")
 
 	// Set the region to us-east-1 for since Route53 is a global resounce and ignore the region data
 	awscfg.Region = REGION
 
-	accountID, err := sts.GetAccountID(ctx, awscfg)
-	if err != nil {
-		log.Error("Failed to get account ID for Route53 enumeration", svc1log.Stacktrace(err))
-		return nil, err
-	}
-	log.Info("Starting Route53 hosted zones listing", svc1log.SafeParam("accountId", *accountID))
-
 	// Initialize Report
 	report := route53fern.Route53EnumerateReport{
 		Result: &route53fern.Route53Result{},
-		Config: &route53fern.Route53EnumerateConfig{AccountId: *accountID},
+		Config: &config,
 	}
 	var errors []string
 
@@ -264,5 +256,5 @@ func EnumerateRoute53(ctx context.Context, awscfg aws.Config) (*route53fern.Rout
 		report.Result.HostedZones = result.HostedZones
 	}
 	report.Errors = errors
-	return &report, nil
+	return &report
 }

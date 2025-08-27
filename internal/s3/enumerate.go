@@ -9,7 +9,6 @@ import (
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
 	// Internal
-	"github.com/Method-Security/methodaws/internal/sts"
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
@@ -119,22 +118,13 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Buc
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
 
-func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3EnumerateConfig) (*s3fern.S3EnumerateReport, error) {
+func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3EnumerateConfig) *s3fern.S3EnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting S3 enumeration", svc1log.SafeParam("regionsCount", len(config.Regions)))
 
 	// Initialize report
-	accountID, err := sts.GetAccountID(ctx, awscfg)
-	if err != nil {
-		log.Error("Failed to get account ID for S3 listing", svc1log.Stacktrace(err))
-		return nil, err
-	}
-
 	report := &s3fern.S3EnumerateReport{
-		Config: &s3fern.S3EnumerateConfig{
-			AccountId: aws.ToString(accountID),
-			Regions:   config.Regions,
-		},
+		Config: &config,
 		Result: &s3fern.S3EnumerateResult{},
 	}
 	errors := []string{}
@@ -157,13 +147,13 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 	// regardless of whether the LocationConstraint is empty or not.
 	client := s3.NewFromConfig(awscfg)
 
-	log.Info("Listing S3 buckets", svc1log.SafeParam("accountId", aws.ToString(accountID)))
+	log.Info("Listing S3 buckets", svc1log.SafeParam("accountId", aws.ToString(&config.AccountId)))
 	listBucketsOutput, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
 		log.Error("Failed to list S3 buckets", svc1log.Stacktrace(err))
 		errors = append(errors, err.Error())
 		report.Errors = errors
-		return report, nil
+		return report
 	}
 
 	// Create a map of buckets by region for efficient processing
@@ -269,5 +259,5 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 		report.Result.S3Buckets = s3Buckets
 	}
 	report.Errors = errorMessages
-	return report, nil
+	return report
 }

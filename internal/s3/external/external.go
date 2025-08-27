@@ -8,6 +8,8 @@ import (
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
+	"github.com/Method-Security/methodaws/utils"
+
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -270,10 +272,14 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 	bucketName, urlRegion := parseBucketURL(config.Url)
 
 	// If we got a region from the URL, only check that region
-	// By defaults tries us-ea
-	regionsToCheck := config.Regions
-	if urlRegion != "" {
+	// First try user input, then URL region, then all regions if no input or URL region
+	var regionsToCheck []string
+	if len(config.Regions) > 0 {
+		regionsToCheck = config.Regions
+	} else if urlRegion != "" {
 		regionsToCheck = []string{urlRegion}
+	} else {
+		regionsToCheck = utils.GetGeneralRegions()
 	}
 
 	bucketFound := false
