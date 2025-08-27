@@ -4,7 +4,7 @@ types:
   # Config
   S3ExternalConfig:
     properties:
-      bucketURL: string
+      url: string
       regions: optional<list<string>>
   # Report structs
   S3ObjectDetails:

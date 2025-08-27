@@ -189,6 +189,7 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 			continue
 		}
 
+		// If the region is empty, set it to us-east-1
 		s3Bucket.Region = string(regionOutput.LocationConstraint)
 		if s3Bucket.Region == "" {
 			s3Bucket.Region = "us-east-1"

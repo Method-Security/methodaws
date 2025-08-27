@@ -15,55 +15,6 @@ import (
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-// isNonStandardS3URL checks if the URL follows standard S3 URL patterns
-func isNonStandardS3URL(url string) bool {
-	return !strings.Contains(url, "amazonaws.com") || !strings.Contains(url, "s3")
-}
-
-// parseBucketURL extracts bucket name and potentially region from S3 URL
-// Handles formats like:
-// - https://bucket-name.s3.region.amazonaws.com
-// - https://s3.region.amazonaws.com/bucket-name
-// - bucket-name.s3.region.amazonaws.com
-func parseBucketURL(bucketURL string) (bucketName string, region string) {
-	// Clean Bucket URL
-	// Remove protocol if present
-	bucketURL = strings.TrimPrefix(bucketURL, "https://")
-	bucketURL = strings.TrimPrefix(bucketURL, "http://")
-	bucketURL = strings.Split(bucketURL, ":")[0]
-
-	// Handle non-standard URLs
-	if isNonStandardS3URL(bucketURL) {
-		return bucketURL, ""
-	}
-
-	// Parse standard S3 URLs
-	if strings.Contains(bucketURL, "/") {
-		// Format: s3.region.amazonaws.com/bucket-name
-		parts := strings.SplitN(bucketURL, "/", 2)
-		bucketName = parts[1]
-		hostParts := strings.Split(parts[0], ".")
-		if len(hostParts) >= 4 && hostParts[0] == "s3" {
-			region = hostParts[1]
-		}
-	} else {
-		// Format: bucket-name.s3.region.amazonaws.com
-		parts := strings.Split(bucketURL, ".")
-		if len(parts) >= 5 {
-			bucketName = parts[0]
-			if parts[1] == "s3" {
-				region = parts[2]
-			}
-		}
-	}
-
-	// Clean up bucket name
-	bucketName = strings.Split(bucketName, "?")[0]
-	bucketName = strings.TrimRight(bucketName, "/")
-
-	return bucketName, region
-}
-
 // bucketExists checks if a bucket exists and is accessible
 func bucketExists(ctx context.Context, region string, bucketName string) (bool, error) {
 	log := svc1log.FromContext(ctx)
@@ -224,8 +175,8 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*s3f
 	return acls, ownerID, ownerName, nil
 }
 
-// ExternalEnumerateS3Region enumerates a single public facing S3 bucket in a specific region
-func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName string, region string) (*s3fern.ExternalS3BucketResult, []string) {
+// EnumerateS3Region enumerates a single public facing S3 bucket in a specific region
+func externalS3Region(ctx context.Context, bucketURL string, bucketName string, region string) (*s3fern.ExternalS3BucketResult, []string) {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting external S3 bucket enumeration",
 		svc1log.SafeParam("bucketName", bucketName),
@@ -306,27 +257,23 @@ func externalEnumerateS3Region(ctx context.Context, bucketURL string, bucketName
 	return &report, errors
 }
 
-// ExternalEnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
-func ExternalEnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.ExternalS3Report {
+// EnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
+func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.ExternalS3Report {
 	log := svc1log.FromContext(ctx)
-	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.BucketUrl))
+	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.Url))
 
 	report := s3fern.ExternalS3Report{Config: &config}
 	result := s3fern.ExternalS3BucketResult{}
 	errors := []string{}
 
 	// Parse the bucket URL to get name and potentially region
-	bucketName, urlRegion := parseBucketURL(config.BucketUrl)
+	bucketName, urlRegion := parseBucketURL(config.Url)
 
 	// If we got a region from the URL, only check that region
+	// By defaults tries us-ea
 	regionsToCheck := config.Regions
 	if urlRegion != "" {
 		regionsToCheck = []string{urlRegion}
-	}
-
-	// For non-standard URLs, try the default region first
-	if isNonStandardS3URL(config.BucketUrl) {
-		regionsToCheck = append([]string{"us-east-1"}, regionsToCheck...)
 	}
 
 	bucketFound := false
@@ -344,7 +291,7 @@ func ExternalEnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3
 			log.Info("Found bucket in region",
 				svc1log.SafeParam("bucketName", bucketName),
 				svc1log.SafeParam("region", region))
-			functionResult, functionErrors := externalEnumerateS3Region(ctx, config.BucketUrl, bucketName, region)
+			functionResult, functionErrors := externalS3Region(ctx, config.Url, bucketName, region)
 			if functionResult != nil {
 				result = *functionResult
 			}
