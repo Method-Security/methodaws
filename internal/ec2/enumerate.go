@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	// Generated
-	fernec2 "github.com/Method-Security/methodaws/generated/go/ec2"
-
+	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -19,12 +18,12 @@ import (
 
 // EnumerateEc2ForRegion enumerates all of the EC2 instances that the caller has access to. It returns a Ec2ResourceReport struct
 // that contains the EC2 instances and any non-fatal errors that occurred during the execution of the subcommand.
-func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region string) (*fernec2.Ec2EnumerateResult, []string, error) {
+func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region string) (*ec2fern.Ec2EnumerateResult, []string, error) {
 	log := svc1log.FromContext(ctx)
 	log.Info("Enumerating EC2 instances for region", svc1log.SafeParam("region", region))
 
 	errors := []string{}
-	ec2Instances := []*fernec2.InstanceWithIamRole{}
+	ec2Instances := []*ec2fern.InstanceWithIamRole{}
 
 	// Create a region-specific AWS config
 	regionConfig := awsConfig.Copy()
@@ -54,7 +53,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 				// Convert AWS SDK instance to Fern instance
 				fernInstance := convertAWSInstanceToFern(inst)
 
-				instanceWithRole := &fernec2.InstanceWithIamRole{
+				instanceWithRole := &ec2fern.InstanceWithIamRole{
 					Instance: fernInstance,
 					Region:   &region,
 				}
@@ -80,7 +79,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 		log.Info("Successfully enumerated EC2 instances",
 			svc1log.SafeParam("region", region),
 			svc1log.SafeParam("instanceCount", len(ec2Instances)))
-		return &fernec2.Ec2EnumerateResult{
+		return &ec2fern.Ec2EnumerateResult{
 			Instances: ec2Instances,
 		}, errors, nil
 	}
@@ -88,17 +87,17 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 	return nil, errors, nil
 }
 
-func EnumerateEc2(ctx context.Context, awsConfig aws.Config, config fernec2.Ec2EnumerateConfig) *fernec2.Ec2EnumerateReport {
+func EnumerateEc2(ctx context.Context, awsConfig aws.Config, config ec2fern.Ec2EnumerateConfig) *ec2fern.Ec2EnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting EC2 enumeration", svc1log.SafeParam("regionsCount", len(config.Regions)))
 
 	// Define the report structure at the top
-	report := &fernec2.Ec2EnumerateReport{
+	report := &ec2fern.Ec2EnumerateReport{
 		Config: &config,
-		Result: &fernec2.Ec2EnumerateResult{},
+		Result: &ec2fern.Ec2EnumerateResult{},
 	}
 
-	allInstances := []*fernec2.InstanceWithIamRole{}
+	allInstances := []*ec2fern.InstanceWithIamRole{}
 	allErrors := []string{}
 
 	for _, region := range config.Regions {
@@ -120,7 +119,7 @@ func EnumerateEc2(ctx context.Context, awsConfig aws.Config, config fernec2.Ec2E
 
 	// Only add Result if there are EC2 instances found
 	if len(allInstances) > 0 {
-		report.Result = &fernec2.Ec2EnumerateResult{
+		report.Result = &ec2fern.Ec2EnumerateResult{
 			Instances: allInstances,
 		}
 	}
@@ -171,8 +170,8 @@ func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn str
 }
 
 // convertAWSInstanceToFern converts an AWS SDK EC2 Instance to a Fern EC2Instance
-func convertAWSInstanceToFern(awsInstance ec2types.Instance) *fernec2.Ec2Instance {
-	fernInstance := &fernec2.Ec2Instance{}
+func convertAWSInstanceToFern(awsInstance ec2types.Instance) *ec2fern.Ec2Instance {
+	fernInstance := &ec2fern.Ec2Instance{}
 
 	// Convert basic string fields
 	if awsInstance.InstanceId != nil {
@@ -209,25 +208,25 @@ func convertAWSInstanceToFern(awsInstance ec2types.Instance) *fernec2.Ec2Instanc
 
 	// Convert enum fields
 	if awsInstance.InstanceType != "" {
-		instanceType := fernec2.InstanceType(string(awsInstance.InstanceType))
+		instanceType := ec2fern.InstanceType(string(awsInstance.InstanceType))
 		fernInstance.InstanceType = &instanceType
 	}
 	if awsInstance.Architecture != "" {
-		architecture := fernec2.Architecture(string(awsInstance.Architecture))
+		architecture := ec2fern.Architecture(string(awsInstance.Architecture))
 		fernInstance.Architecture = &architecture
 	}
 	if awsInstance.Hypervisor != "" {
-		hypervisor := fernec2.HypervisorType(string(awsInstance.Hypervisor))
+		hypervisor := ec2fern.HypervisorType(string(awsInstance.Hypervisor))
 		fernInstance.Hypervisor = &hypervisor
 	}
 	if awsInstance.Platform != "" {
-		platform := fernec2.PlatformValues(string(awsInstance.Platform))
+		platform := ec2fern.PlatformValues(string(awsInstance.Platform))
 		fernInstance.Platform = &platform
 	}
 
 	// Convert IAM Instance Profile
 	if awsInstance.IamInstanceProfile != nil {
-		fernInstance.IamInstanceProfile = &fernec2.IamInstanceProfile{
+		fernInstance.IamInstanceProfile = &ec2fern.IamInstanceProfile{
 			Arn: awsInstance.IamInstanceProfile.Arn,
 			Id:  awsInstance.IamInstanceProfile.Id,
 		}
@@ -235,7 +234,7 @@ func convertAWSInstanceToFern(awsInstance ec2types.Instance) *fernec2.Ec2Instanc
 
 	// Convert Placement
 	if awsInstance.Placement != nil {
-		fernInstance.Placement = &fernec2.Placement{
+		fernInstance.Placement = &ec2fern.Placement{
 			AvailabilityZone: awsInstance.Placement.AvailabilityZone,
 			Affinity:         awsInstance.Placement.Affinity,
 			GroupName:        awsInstance.Placement.GroupName,
@@ -255,9 +254,9 @@ func convertAWSInstanceToFern(awsInstance ec2types.Instance) *fernec2.Ec2Instanc
 
 	// Convert Network Interfaces
 	if awsInstance.NetworkInterfaces != nil {
-		var fernNetworkInterfaces []*fernec2.InstanceNetworkInterface
+		var fernNetworkInterfaces []*ec2fern.InstanceNetworkInterface
 		for _, ni := range awsInstance.NetworkInterfaces {
-			fernNI := &fernec2.InstanceNetworkInterface{
+			fernNI := &ec2fern.InstanceNetworkInterface{
 				NetworkInterfaceId: ni.NetworkInterfaceId,
 				SubnetId:           ni.SubnetId,
 				VpcId:              ni.VpcId,
@@ -276,9 +275,9 @@ func convertAWSInstanceToFern(awsInstance ec2types.Instance) *fernec2.Ec2Instanc
 
 	// Convert Tags
 	if awsInstance.Tags != nil {
-		var fernTags []*fernec2.Tag
+		var fernTags []*ec2fern.Tag
 		for _, tag := range awsInstance.Tags {
-			fernTag := &fernec2.Tag{
+			fernTag := &ec2fern.Tag{
 				Key:   tag.Key,
 				Value: tag.Value,
 			}

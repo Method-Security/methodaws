@@ -2,7 +2,7 @@ package cmd
 
 import (
 	// Generated
-	fernec2 "github.com/Method-Security/methodaws/generated/go/ec2"
+	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
 	"github.com/Method-Security/methodaws/utils"
 
 	// Internal
@@ -50,8 +50,8 @@ func (a *MethodAws) InitEc2Command() {
 }
 
 // getEc2EnumerateConfig returns the configuration for the EC2 enumerate command.
-func getEc2EnumerateConfig(regions []string, accountID string) fernec2.Ec2EnumerateConfig {
-	return fernec2.Ec2EnumerateConfig{
+func getEc2EnumerateConfig(regions []string, accountID string) ec2fern.Ec2EnumerateConfig {
+	return ec2fern.Ec2EnumerateConfig{
 		AccountId: accountID,
 		Regions:   regions,
 	}

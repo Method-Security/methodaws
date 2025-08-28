@@ -20,9 +20,8 @@ func (a *MethodAws) InitStsCommand() {
 		Run: func(cmd *cobra.Command, args []string) {
 			arn, err := sts.GetCallerArn(cmd.Context(), *a.AwsConfig)
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
+				return
 			}
 			a.OutputSignal.Content = arn
 		},

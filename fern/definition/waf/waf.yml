@@ -1,4 +1,10 @@
 types:
+# Config
+  WafEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# WAF Enums
   ActionType:
     enum:
       - ALLOW
@@ -37,6 +43,7 @@ types:
       - APP_RUNNER_SERVICE
       - VERIFIED_ACCESS_INSTANCE
       - OTHER
+# Supporting Types
   ActionInfo:
     properties:
       type: ActionType
@@ -57,6 +64,7 @@ types:
     properties:
       arn: string
       type: WafResourceType
+# Core WAF Types
   Waf:
     properties:
       arn: string
@@ -69,9 +77,13 @@ types:
     properties: 
       region: string
       wafs: optional<list<Waf>>
-  WafReport:
+  WafEnumerateResult:
     properties:
-      accountId: string
       scope: ScopeType
       regions: optional<list<RegionWafInfo>>
+  # Report Struct
+  WafEnumerateReport:
+    properties:
+      result: WafEnumerateResult
+      config: WafEnumerateConfig
       errors: optional<list<string>>
