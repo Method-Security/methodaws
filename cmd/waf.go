@@ -2,8 +2,7 @@ package cmd
 
 import (
 	// Generated
-	wafdefs "github.com/Method-Security/methodaws/generated/go/waf"
-
+	waffern "github.com/Method-Security/methodaws/generated/go/waf"
 	// Internal
 	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/Method-Security/methodaws/internal/waf"
@@ -49,8 +48,8 @@ func (a *MethodAws) InitWAFCommand() {
 }
 
 // getWafEnumerateConfig returns a WafEnumerateConfig with the given accountID and regions
-func getWafEnumerateConfig(accountID string, regions []string) wafdefs.WafEnumerateConfig {
-	return wafdefs.WafEnumerateConfig{
+func getWafEnumerateConfig(accountID string, regions []string) waffern.WafEnumerateConfig {
+	return waffern.WafEnumerateConfig{
 		AccountId: accountID,
 		Regions:   regions,
 	}
