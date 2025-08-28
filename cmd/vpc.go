@@ -3,7 +3,6 @@ package cmd
 import (
 	// Generated
 	vpcfern "github.com/Method-Security/methodaws/generated/go/vpc"
-
 	// Internal
 	"github.com/Method-Security/methodaws/internal/vpc"
 	"github.com/Method-Security/methodaws/utils"

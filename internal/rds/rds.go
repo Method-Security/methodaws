@@ -3,25 +3,88 @@ package rds
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/Method-Security/methodaws/internal/sts"
+	rdsfern "github.com/Method-Security/methodaws/generated/go/rds"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
+	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-// AWSResources contains the RDS instances that were enumerated.
-type AWSResources struct {
-	RDSInstances []types.DBInstance `json:"rds_instances" yaml:"rds_instances"`
+func EnumerateRDS(ctx context.Context, awsConfig aws.Config, config rdsfern.RdsEnumerateConfig) *rdsfern.RdsEnumerateReport {
+	log := svc1log.FromContext(ctx)
+	log.Info("Starting RDS enumeration",
+		svc1log.SafeParam("regionsCount", len(config.Regions)),
+		svc1log.SafeParam("accountId", config.AccountId))
+
+	// Initialize report
+	report := &rdsfern.RdsEnumerateReport{
+		Config: &config,
+		Result: &rdsfern.RdsEnumerateResult{},
+	}
+
+	var allRDSInstances []*rdsfern.RdsInstance
+	var allErrors []string
+
+	for _, region := range config.Regions {
+		log.Info("Processing RDS instances in region", svc1log.SafeParam("region", region))
+		instances, errors := enumerateRDSForRegion(ctx, awsConfig, region)
+
+		if len(errors) > 0 {
+			log.Warn("Errors occurred while enumerating RDS instances in region",
+				svc1log.SafeParam("region", region),
+				svc1log.SafeParam("errorCount", len(errors)))
+		}
+
+		allRDSInstances = append(allRDSInstances, instances...)
+		allErrors = append(allErrors, errors...)
+
+		log.Info("Successfully processed RDS instances in region",
+			svc1log.SafeParam("region", region),
+			svc1log.SafeParam("instanceCount", len(instances)))
+	}
+
+	// Marshal report
+	if len(allRDSInstances) > 0 {
+		report.Result.RdsInstances = allRDSInstances
+	}
+
+	if len(allErrors) > 0 {
+		report.Errors = allErrors
+	}
+
+	log.Info("Completed RDS enumeration",
+		svc1log.SafeParam("totalInstances", len(allRDSInstances)),
+		svc1log.SafeParam("totalErrors", len(allErrors)))
+
+	return report
 }
 
-// AWSResourceReport contains the account ID that the RDS instances were discovered in, the resources themselves,
-// and any non-fatal errors that occurred during the execution of the `methodaws rds enumerate` subcommand.
-type AWSResourceReport struct {
-	AccountID string       `json:"account_id" yaml:"account_id"`
-	Resources AWSResources `json:"resources" yaml:"resources"`
-	Errors    []string     `json:"errors" yaml:"errors"`
+func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*rdsfern.RdsInstance, []string) {
+	log := svc1log.FromContext(ctx)
+	awsConfig.Region = region
+
+	rdsClient := rds.NewFromConfig(awsConfig)
+	var errors []string
+
+	// List RDS instances
+	instances, err := listRDSInstances(ctx, rdsClient)
+	if err != nil {
+		errorMsg := "Failed to list RDS instances: " + err.Error()
+		log.Error("Error listing RDS instances", svc1log.SafeParam("error", err.Error()))
+		errors = append(errors, errorMsg)
+		return nil, errors
+	}
+
+	log.Info("Successfully listed RDS instances", svc1log.SafeParam("count", len(instances)))
+
+	var rdsInstances []*rdsfern.RdsInstance
+	for _, instance := range instances {
+		rdsInstance := transformDBInstanceToFern(instance, region)
+		rdsInstances = append(rdsInstances, rdsInstance)
+	}
+
+	return rdsInstances, errors
 }
 
 func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBInstance, error) {
@@ -40,58 +103,71 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 	return instances, nil
 }
 
-// EnumerateRdsForRegion retrieves all RDS instances available to the caller and returns an AWSResourceReport struct
-func EnumerateRdsForRegion(ctx context.Context, cfg aws.Config, region string) (*AWSResourceReport, error) {
-	cfg.Region = region
+func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfern.RdsInstance {
+	dbInstance := &rdsfern.DbInstance{}
 
-	rdsClient := rds.NewFromConfig(cfg)
-	resources := AWSResources{}
-	errors := []string{}
+	// Map basic fields
+	dbInstance.DbInstanceIdentifier = instance.DBInstanceIdentifier
+	dbInstance.DbInstanceClass = instance.DBInstanceClass
+	dbInstance.Engine = instance.Engine
+	dbInstance.EngineVersion = instance.EngineVersion
+	dbInstance.DbInstanceStatus = instance.DBInstanceStatus
+	dbInstance.MasterUsername = instance.MasterUsername
+	dbInstance.DbName = instance.DBName
+	dbInstance.AvailabilityZone = instance.AvailabilityZone
+	dbInstance.DbInstanceArn = instance.DBInstanceArn
+	dbInstance.DbiResourceId = instance.DbiResourceId
 
-	accountID, err := sts.GetAccountID(ctx, cfg)
-	if err != nil {
-		errors = append(errors, err.Error())
-		return &AWSResourceReport{Errors: errors}, err
+	// Map integer fields
+	if instance.AllocatedStorage != nil {
+		allocatedStorage := int(*instance.AllocatedStorage)
+		dbInstance.AllocatedStorage = &allocatedStorage
+	}
+	if instance.DbInstancePort != nil {
+		dbInstancePort := int(*instance.DbInstancePort)
+		dbInstance.DbInstancePort = &dbInstancePort
+	}
+	if instance.Iops != nil {
+		iops := int(*instance.Iops)
+		dbInstance.Iops = &iops
 	}
 
-	instances, err := listRDSInstances(ctx, rdsClient)
-	if err != nil {
-		errors = append(errors, err.Error())
-	} else {
-		resources.RDSInstances = instances
-	}
+	// Map boolean fields
+	dbInstance.MultiAz = instance.MultiAZ
+	dbInstance.PubliclyAccessible = instance.PubliclyAccessible
+	dbInstance.StorageEncrypted = instance.StorageEncrypted
+	dbInstance.AutoMinorVersionUpgrade = instance.AutoMinorVersionUpgrade
 
-	report := AWSResourceReport{
-		AccountID: *accountID,
-		Resources: resources,
-		Errors:    errors,
-	}
-
-	return &report, nil
-}
-
-func EnumerateRds(ctx context.Context, cfg aws.Config, regions []string) (*AWSResourceReport, error) {
-	accountID, err := sts.GetAccountID(ctx, cfg)
-	if err != nil {
-		return &AWSResourceReport{Errors: []string{err.Error()}}, err
-	}
-
-	report := AWSResourceReport{
-		AccountID: *accountID,
-		Resources: AWSResources{},
-		Errors:    []string{},
-	}
-
-	for _, region := range regions {
-		r, err := EnumerateRdsForRegion(ctx, cfg, region)
-		if err != nil {
-			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
-			continue
+	// Map endpoint
+	if instance.Endpoint != nil {
+		endpoint := &rdsfern.Endpoint{}
+		if instance.Endpoint.Address != nil {
+			endpoint.Address = instance.Endpoint.Address
 		}
-		if r != nil && r.Resources.RDSInstances != nil {
-			report.Resources.RDSInstances = append(report.Resources.RDSInstances, r.Resources.RDSInstances...)
+		if instance.Endpoint.Port != nil {
+			port := int(*instance.Endpoint.Port)
+			endpoint.Port = &port
 		}
+		if instance.Endpoint.HostedZoneId != nil {
+			endpoint.HostedZoneId = instance.Endpoint.HostedZoneId
+		}
+		dbInstance.Endpoint = endpoint
 	}
 
-	return &report, nil
+	// Map tags
+	if len(instance.TagList) > 0 {
+		var tags []*rdsfern.Tag
+		for _, tag := range instance.TagList {
+			fernTag := &rdsfern.Tag{}
+			fernTag.Key = tag.Key
+			fernTag.Value = tag.Value
+			tags = append(tags, fernTag)
+		}
+		dbInstance.TagList = tags
+	}
+
+	return &rdsfern.RdsInstance{
+		DbInstance: dbInstance,
+		Region:     region,
+	}
 }

@@ -1,51 +1,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
-  Certificate:
+  # Config
+  LoadBalancerEnumerateConfig:
     properties:
-      arn: string
-      isDefault: boolean
-  Protocol:
+      accountId: string
+      regions: list<string>
+      versions: optional<list<LoadBalancerVersion>>
+  # Enums
+  LoadBalancerVersion:
     enum:
-      - HTTP
-      - HTTPS
-      - TCP
-      - TLS
-      - UDP
-      - TCP_UDP
-      - GENEVE
-  Listener:
-    properties:
-      arn: optional<string>
-      protocol: optional<Protocol>
-      port: integer
-      certificates: optional<list<Certificate>>
-      loadBalancerArn: optional<string>
-  TargetGroupIpAddressType:
-    enum:
-      - IPV4
-      - IPV6
-  TargetType:
-    enum:
-      - INSTANCE
-      - IP
-      - LAMBDA
-  Target:
-    properties:
-      id: string
-      type: TargetType
-      port: integer
-      availabilityZone: optional<string>
-  TargetGroup:
-    properties:
-      arn: string
-      name: string
-      ipAddressType: TargetGroupIpAddressType
-      loadBalancerArn: string
-      port: integer
-      protocol: optional<Protocol>
-      vpcId: optional<string>
-      targets: optional<list<Target>>
+      - V1
+      - V2
   LoadBalancerState:
     enum:
       - ACTIVE
@@ -57,6 +23,52 @@ types:
       - IPV4
       - DUALSTACK
       - DUALSTACK_WITHOUT_PUBLIC_IPV4
+  Protocol:
+    enum:
+      - HTTP
+      - HTTPS
+      - TCP
+      - TLS
+      - UDP
+      - TCP_UDP
+      - GENEVE
+  TargetGroupIpAddressType:
+    enum:
+      - IPV4
+      - IPV6
+  TargetType:
+    enum:
+      - INSTANCE
+      - IP
+      - LAMBDA
+# Result Structs
+  Certificate:
+    properties:
+      arn: string
+      isDefault: boolean
+  Listener:
+    properties:
+      arn: optional<string>
+      protocol: optional<Protocol>
+      port: integer
+      certificates: optional<list<Certificate>>
+      loadBalancerArn: optional<string>
+  Target:
+    properties:
+      id: string
+      type: TargetType
+      port: integer
+      availabilityZone: optional<string>
+  TargetGroup:
+    properties:
+      arn: string
+      name: string
+      ipAddressType: TargetGroupIpAddressType
+      loadBalancerArns: list<string>
+      port: integer
+      protocol: optional<Protocol>
+      vpcId: optional<string>
+      targets: optional<list<Target>>
   LoadBalancerV2:
     docs: |
       LoadBalancer represents a load balancer that distributes incoming network traffic across multiple servers.
@@ -87,6 +99,7 @@ types:
       hostedZoneId: optional<string>
       targets: optional<list<Target>>
       listeners: optional<list<Listener>>
+  # Report Struct
   LoadBalancerReport:
     properties:
       accountId: string

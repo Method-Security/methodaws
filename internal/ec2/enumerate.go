@@ -8,7 +8,6 @@ import (
 
 	// Generated
 	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
-
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"

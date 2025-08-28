@@ -2,15 +2,21 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
-  # maybe let's go deepr on the origin type and capture more types of origins here?
-  CloudFrontDistributionOrigin:
+# Config
+  CloudFrontEnumerateConfig:
     properties:
-      DomainName: string
-      Id: string
+      accountId: string
+      regions: list<string>
+# Enums
   CloudFrontDistributionStatus:
     enum:
       - ENABLED
       - DISABLED
+# Result Structs
+  CloudFrontDistributionOrigin:
+    properties:
+      DomainName: string
+      Id: string
   CloudFrontDistribution:
     properties:
       Arn: string
@@ -18,8 +24,12 @@ types:
       Comment: optional<string>
       Origins: list<CloudFrontDistributionOrigin>
       Status: CloudFrontDistributionStatus
-  CloudFrontReport:
+  CloudFrontEnumerateResult:
     properties:
-      accountId: string
       distributions: optional<list<CloudFrontDistribution>>
+  # Report Struct
+  CloudFrontEnumerateReport:
+    properties:
+      result: CloudFrontEnumerateResult
+      config: CloudFrontEnumerateConfig
       errors: optional<list<string>>

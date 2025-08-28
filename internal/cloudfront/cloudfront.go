@@ -1,110 +1,155 @@
 package cloudfront
 
 import (
+	// Standard
 	"context"
-	"fmt"
-
-	methodaws "github.com/Method-Security/methodaws/generated/go"
-	"github.com/Method-Security/methodaws/internal/sts"
+	// Generated
+	cloudfrontfern "github.com/Method-Security/methodaws/generated/go/cloudfront"
+	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront"
+	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
+	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-func EnumerateCloudFrontForRegion(ctx context.Context, cfg aws.Config, region string) (*methodaws.CloudFrontReport, error) {
-	cfg.Region = region
+func EnumerateCloudFront(ctx context.Context, awsConfig aws.Config, config cloudfrontfern.CloudFrontEnumerateConfig) *cloudfrontfern.CloudFrontEnumerateReport {
+	log := svc1log.FromContext(ctx)
+	log.Info("Starting CloudFront enumeration",
+		svc1log.SafeParam("regionsCount", len(config.Regions)),
+		svc1log.SafeParam("accountId", config.AccountId))
 
-	svc := cloudfront.NewFromConfig(cfg)
-
-	paginator := cloudfront.NewListDistributionsPaginator(svc, &cloudfront.ListDistributionsInput{})
-
-	report := methodaws.CloudFrontReport{
-		AccountId:     "",
-		Distributions: []*methodaws.CloudFrontDistribution{},
-		Errors:        []string{},
+	// Initialize report
+	report := &cloudfrontfern.CloudFrontEnumerateReport{
+		Config: &config,
+		Result: &cloudfrontfern.CloudFrontEnumerateResult{},
 	}
 
-	for paginator.HasMorePages() {
-		output, err := paginator.NextPage(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, dist := range output.DistributionList.Items {
-			origins := []*methodaws.CloudFrontDistributionOrigin{}
-			for _, origin := range dist.Origins.Items {
-				origins = append(origins, &methodaws.CloudFrontDistributionOrigin{
-					DomainName: *origin.DomainName,
-					Id:         *origin.Id,
-				})
-			}
-
-			// check that the comment exists, avoid passing back an empty string
-			var comment *string
-			if dist.Comment != nil && len(*dist.Comment) > 0 {
-				comment = dist.Comment
-			}
-
-			// check CDN enabled status
-			var status methodaws.CloudFrontDistributionStatus = methodaws.CloudFrontDistributionStatusEnabled
-			if !*dist.Enabled {
-				status = methodaws.CloudFrontDistributionStatusDisabled
-			}
-
-			distribution := &methodaws.CloudFrontDistribution{
-				Arn:        *dist.ARN,
-				DomainName: *dist.DomainName,
-				Comment:    comment,
-				Origins:    origins,
-				Status:     status,
-			}
-			report.Distributions = append(report.Distributions, distribution)
-		}
-	}
-
-	return &report, nil
-}
-
-func EnumerateCloudFront(ctx context.Context, cfg aws.Config, regions []string) (*methodaws.CloudFrontReport, error) {
-	// try to setup an account id
-	accountID, err := sts.GetAccountID(ctx, cfg)
-	if err != nil {
-		// return a resource report with error information if we can't get id
-		return &methodaws.CloudFrontReport{
-			AccountId:     aws.ToString(accountID),
-			Distributions: []*methodaws.CloudFrontDistribution{},
-			Errors:        []string{err.Error()},
-		}, err
-	}
-
-	// initialize a resource report
-	report := methodaws.CloudFrontReport{
-		AccountId:     aws.ToString(accountID),
-		Distributions: []*methodaws.CloudFrontDistribution{},
-		Errors:        []string{},
-	}
+	var allDistributions []*cloudfrontfern.CloudFrontDistribution
+	var allErrors []string
 
 	// Create a map to deduplicate distributions by ARN
-	distributionsMap := make(map[string]*methodaws.CloudFrontDistribution)
+	distributionsMap := make(map[string]*cloudfrontfern.CloudFrontDistribution)
 
-	// loop through the regions and enumerate the cloudfront distributions
-	for _, region := range regions {
-		r, err := EnumerateCloudFrontForRegion(ctx, cfg, region)
-		if err != nil {
-			report.Errors = append(report.Errors, fmt.Sprintf("Error in region %s: %s", region, err.Error()))
-			continue
+	for _, region := range config.Regions {
+		log.Info("Processing CloudFront distributions in region", svc1log.SafeParam("region", region))
+		distributions, errors := enumerateCloudFrontForRegion(ctx, awsConfig, region)
+
+		if len(errors) > 0 {
+			log.Warn("Errors occurred while enumerating CloudFront distributions in region",
+				svc1log.SafeParam("region", region),
+				svc1log.SafeParam("errorCount", len(errors)))
 		}
-		if r != nil && r.Distributions != nil {
-			// Add each distribution to the map using ARN as key in order to deduplicate distributions
-			for _, dist := range r.Distributions {
-				distributionsMap[dist.Arn] = dist
-			}
+
+		// Add each distribution to the map using ARN as key to deduplicate
+		for _, dist := range distributions {
+			distributionsMap[dist.Arn] = dist
 		}
+		allErrors = append(allErrors, errors...)
+
+		log.Info("Successfully processed CloudFront distributions in region",
+			svc1log.SafeParam("region", region),
+			svc1log.SafeParam("distributionCount", len(distributions)))
 	}
 
 	// Convert map back to slice for the report
 	for _, dist := range distributionsMap {
-		report.Distributions = append(report.Distributions, dist)
+		allDistributions = append(allDistributions, dist)
 	}
 
-	return &report, nil
+	// Marshal report
+	if len(allDistributions) > 0 {
+		report.Result.Distributions = allDistributions
+	}
+
+	if len(allErrors) > 0 {
+		report.Errors = allErrors
+	}
+
+	log.Info("Completed CloudFront enumeration",
+		svc1log.SafeParam("totalDistributions", len(allDistributions)),
+		svc1log.SafeParam("totalErrors", len(allErrors)))
+
+	return report
+}
+
+func enumerateCloudFrontForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*cloudfrontfern.CloudFrontDistribution, []string) {
+	log := svc1log.FromContext(ctx)
+	awsConfig.Region = region
+
+	cloudfrontClient := cloudfront.NewFromConfig(awsConfig)
+	var errors []string
+
+	// List CloudFront distributions
+	distributions, err := listCloudFrontDistributions(ctx, cloudfrontClient)
+	if err != nil {
+		errorMsg := "Failed to list CloudFront distributions: " + err.Error()
+		log.Error("Error listing CloudFront distributions", svc1log.SafeParam("error", err.Error()))
+		errors = append(errors, errorMsg)
+		return nil, errors
+	}
+
+	log.Info("Successfully listed CloudFront distributions", svc1log.SafeParam("count", len(distributions)))
+
+	var cloudFrontDistributions []*cloudfrontfern.CloudFrontDistribution
+	for _, dist := range distributions {
+		cloudFrontDistribution := transformDistributionToFern(dist)
+		cloudFrontDistributions = append(cloudFrontDistributions, cloudFrontDistribution)
+	}
+
+	return cloudFrontDistributions, errors
+}
+
+func listCloudFrontDistributions(ctx context.Context, cloudfrontClient *cloudfront.Client) ([]types.DistributionSummary, error) {
+	var distributions []types.DistributionSummary
+	paginator := cloudfront.NewListDistributionsPaginator(cloudfrontClient, &cloudfront.ListDistributionsInput{})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		if page.DistributionList != nil {
+			distributions = append(distributions, page.DistributionList.Items...)
+		}
+	}
+
+	return distributions, nil
+}
+
+func transformDistributionToFern(dist types.DistributionSummary) *cloudfrontfern.CloudFrontDistribution {
+	// Transform origins
+	var origins []*cloudfrontfern.CloudFrontDistributionOrigin
+	if dist.Origins != nil {
+		for _, origin := range dist.Origins.Items {
+			fernOrigin := &cloudfrontfern.CloudFrontDistributionOrigin{}
+			if origin.DomainName != nil {
+				fernOrigin.DomainName = *origin.DomainName
+			}
+			if origin.Id != nil {
+				fernOrigin.Id = *origin.Id
+			}
+			origins = append(origins, fernOrigin)
+		}
+	}
+
+	// Check that the comment exists, avoid passing back an empty string
+	var comment *string
+	if dist.Comment != nil && len(*dist.Comment) > 0 {
+		comment = dist.Comment
+	}
+
+	// Check CDN enabled status
+	var status cloudfrontfern.CloudFrontDistributionStatus = cloudfrontfern.CloudFrontDistributionStatusEnabled
+	if dist.Enabled != nil && !*dist.Enabled {
+		status = cloudfrontfern.CloudFrontDistributionStatusDisabled
+	}
+
+	return &cloudfrontfern.CloudFrontDistribution{
+		Arn:        aws.ToString(dist.ARN),
+		DomainName: aws.ToString(dist.DomainName),
+		Comment:    comment,
+		Origins:    origins,
+		Status:     status,
+	}
 }
