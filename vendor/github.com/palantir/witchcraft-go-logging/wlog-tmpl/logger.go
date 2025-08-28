@@ -38,7 +38,7 @@ func (l *tmplLogger) Log(params ...wlog.Param) {
 }
 
 func (l *tmplLogger) Debug(msg string, params ...wlog.Param) {
-	if l.Enabled(wlog.DebugLevel) {
+	if l.Enabled(wlog.InfoLevel) {
 		l.logOutput(append(params, wlog.StringParam("message", msg), wlog.StringParam("level", "DEBUG")))
 	}
 }

@@ -17,7 +17,7 @@ import (
 func InitializeLogging(cmd *cobra.Command, rootFlags *RootFlags) svc1log.Logger {
 	logLevel := wlog.InfoLevel
 	if rootFlags.Verbose {
-		logLevel = wlog.DebugLevel
+		logLevel = wlog.InfoLevel
 	}
 
 	if rootFlags.Quiet {

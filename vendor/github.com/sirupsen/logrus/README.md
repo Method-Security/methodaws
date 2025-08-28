@@ -296,7 +296,7 @@ Logrus has seven logging levels: Trace, Debug, Info, Warning, Error, Fatal and P
 
 ```go
 log.Trace("Something very low level.")
-log.Debug("Useful debugging information.")
+log.Info("Useful debugging information.")
 log.Info("Something noteworthy happened!")
 log.Warn("You should probably take a look at this.")
 log.Error("Something failed but I'm not quitting.")

@@ -1,10 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
-
 types:
-# Config
-  Route53EnumerateConfig:
-    properties:
-      accountId: string
   # DNS Record Types Enum
   RRType:
     enum:
@@ -25,6 +19,10 @@ types:
       - SSHFP
       - SVCB
       - HTTPS
+# Config
+  Route53EnumerateConfig:
+    properties:
+      accountId: string
 # Report Structs
   HostedZone:
     properties:

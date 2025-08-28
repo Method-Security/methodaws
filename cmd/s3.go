@@ -32,53 +32,22 @@ func (a *MethodAws) InitS3Command() {
 		Short: "Enumerate all S3 buckets",
 		Long:  `Enumerate all S3 buckets in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// Get Config
-			cfg := a.getS3EnumerateConfig(a.RootFlags.Regions)
-
-			// Get Report
-			report, err := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, cfg)
+			// Account ID
+			accountID, err := utils.GetAccountID(cmd.Context(), *a.AwsConfig)
 			if err != nil {
 				a.OutputSignal.AddError(err)
 				return
 			}
+
+			// Get Config
+			config := a.getS3EnumerateConfig(accountID, a.RootFlags.Regions)
+
+			// Get Report
+			report := s3.EnumerateS3(cmd.Context(), *a.AwsConfig, config)
 			a.OutputSignal.Content = report
 		},
 	}
 	s3Cmd.AddCommand(enumerateCmd)
-
-	// List Command
-	listCmd := &cobra.Command{
-		Use:   "list",
-		Short: "List all objects in a single S3 bucket",
-		Long:  `List all objects in a single S3 bucket.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			// Config  Flags
-			bucketName, err := cmd.Flags().GetString("name")
-			if err != nil {
-				a.OutputSignal.AddError(err)
-				return
-			}
-
-			// Get Config
-			config := a.getS3ListConfig(a.RootFlags.Regions, bucketName)
-
-			// Return report
-			report, err := s3.ListS3Bucket(cmd.Context(), *a.AwsConfig, config)
-			if err != nil {
-				a.OutputSignal.AddError(err)
-				return
-			}
-			a.OutputSignal.Content = report
-		},
-	}
-
-	// Flags
-	listCmd.Flags().String("name", "", "Name of the S3 bucket")
-
-	_ = listCmd.MarkFlagRequired("name")
-
-	// Add Command to S3 Command
-	s3Cmd.AddCommand(listCmd)
 
 	// External Command
 	externalCmd := &cobra.Command{
@@ -99,7 +68,7 @@ func (a *MethodAws) InitS3Command() {
 			}
 
 			// Check if specific region was provided via --region flag
-			// Override to not use the default region from the root command (us-east-1)
+			// Overide since this is an external command and we dont want to default check all regions
 			regionFlag, err := cmd.Flags().GetString("region")
 			if err != nil {
 				a.OutputSignal.AddError(err)
@@ -109,12 +78,12 @@ func (a *MethodAws) InitS3Command() {
 			if regionFlag != "" {
 				// Use specific region if provided
 				regions = []string{regionFlag}
-			} else {
-				// Default to all regions for external command (override root default of us-east-1)
-				regions = utils.GetGeneralRegions()
 			}
 
+			// Get Config
 			config := getExternalS3BucketConfig(regions, bucketURL)
+
+			// Get Report
 			report := external.EnumerateS3(cmd.Context(), config)
 			a.OutputSignal.Content = report
 		},
@@ -129,14 +98,52 @@ func (a *MethodAws) InitS3Command() {
 	// Add Command to S3 Command
 	s3Cmd.AddCommand(externalCmd)
 
+	// List Command
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all objects in a single S3 bucket",
+		Long:  `List all objects in a single S3 bucket.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			// Config  Flags
+			bucketName, err := cmd.Flags().GetString("name")
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+
+			// Account ID
+			accountID, err := utils.GetAccountID(cmd.Context(), *a.AwsConfig)
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+
+			// Get Config
+			config := a.getS3ListConfig(accountID, bucketName)
+
+			// Return report
+			report := s3.ListS3Bucket(cmd.Context(), *a.AwsConfig, config)
+			a.OutputSignal.Content = report
+		},
+	}
+
+	// Flags
+	listCmd.Flags().String("name", "", "Name of the S3 bucket")
+
+	_ = listCmd.MarkFlagRequired("name")
+
+	// Add Command to S3 Command
+	s3Cmd.AddCommand(listCmd)
+
 	// Add S3 Command to Root Command
 	a.RootCmd.AddCommand(s3Cmd)
 }
 
 // getS3EnumerateConfig returns a s3fern.S3EnumerateConfig with the given regions
-func (a *MethodAws) getS3EnumerateConfig(regions []string) s3fern.S3EnumerateConfig {
+func (a *MethodAws) getS3EnumerateConfig(accountID string, regions []string) s3fern.S3EnumerateConfig {
 	return s3fern.S3EnumerateConfig{
-		Regions: regions,
+		AccountId: accountID,
+		Regions:   regions,
 	}
 }
 
@@ -149,9 +156,9 @@ func getExternalS3BucketConfig(regions []string, bucketURL string) s3fern.S3Exte
 }
 
 // getS3ListConfig returns a s3fern.ListS3BucketConfig with the given regions, and bucket name
-func (a *MethodAws) getS3ListConfig(regions []string, bucketName string) s3fern.ListS3BucketConfig {
+func (a *MethodAws) getS3ListConfig(accountID string, bucketName string) s3fern.ListS3BucketConfig {
 	return s3fern.ListS3BucketConfig{
+		AccountId:  accountID,
 		BucketName: bucketName,
-		Regions:    regions,
 	}
 }

@@ -1,6 +1,11 @@
 package cmd
 
 import (
+	// Generated
+	fernec2 "github.com/Method-Security/methodaws/generated/go/ec2"
+	"github.com/Method-Security/methodaws/utils"
+
+	// Internal
 	"github.com/Method-Security/methodaws/internal/ec2"
 	"github.com/spf13/cobra"
 )
@@ -8,27 +13,46 @@ import (
 // InitEc2Command initializes the `methodaws ec2` subcommand that deals with enumerating EC2 instances and their
 // related resources.
 func (a *MethodAws) InitEc2Command() {
+	// ec2 command
+	// Subcommands:
+	// - enumerate
 	ec2Cmd := &cobra.Command{
 		Use:   "ec2",
 		Short: "Audit and command EC2 instances",
 		Long:  `Audit and command EC2 instances`,
 	}
 
+	// Enumerate command
 	enumerateCmd := &cobra.Command{
 		Use:   "enumerate",
 		Short: "Enumerate EC2 instances",
 		Long:  `Enumerate EC2 instances`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := ec2.EnumerateEc2(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+			// Account ID
+			accountID, err := utils.GetAccountID(cmd.Context(), *a.AwsConfig)
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
+				return
 			}
+
+			// Config
+			config := getEc2EnumerateConfig(a.RootFlags.Regions, accountID)
+
+			// Genate Report
+			report := ec2.EnumerateEc2(cmd.Context(), *a.AwsConfig, config)
 			a.OutputSignal.Content = report
 		},
 	}
 
+	// Add subcommands
 	ec2Cmd.AddCommand(enumerateCmd)
 	a.RootCmd.AddCommand(ec2Cmd)
+}
+
+// getEc2EnumerateConfig returns the configuration for the EC2 enumerate command.
+func getEc2EnumerateConfig(regions []string, accountID string) fernec2.Ec2EnumerateConfig {
+	return fernec2.Ec2EnumerateConfig{
+		AccountId: accountID,
+		Regions:   regions,
+	}
 }

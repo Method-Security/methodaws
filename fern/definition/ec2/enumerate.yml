@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+  InstanceBootMode:
+    enum:
+      - LEGACY_BIOS
+      - UEFI
+      - UEFI_PREFERRED
+  InstanceState:
+    enum:
+      - PENDING
+      - RUNNING
+      - SHUTTING_DOWN
+      - TERMINATED
+      - STOPPING
+      - STOPPED
+  InstanceType:
+    enum:
+      - T2_NANO
+      - T2_MICRO
+      - T2_SMALL
+      - T2_MEDIUM
+      - T2_LARGE
+      - T3_NANO
+      - T3_MICRO
+      - T3_SMALL
+      - T3_MEDIUM
+      - T3_LARGE
+      - M5_LARGE
+      - M5_XLARGE
+  PlatformValues:
+    enum:
+      - WINDOWS
+  Architecture:
+    enum:
+      - I386
+      - X86_64
+      - ARM64
+      - X86_64_MAC
+      - ARM64_MAC
+  HypervisorType:
+    enum:
+      - OVM
+      - XEN
+  Tag:
+    properties:
+      key: optional<string>
+      value: optional<string>
+# Config
+  EC2EnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# EC2 Instance Types
+  IamInstanceProfile:
+    properties:
+      arn: optional<string>
+      id: optional<string>
+  Placement:
+    properties:
+      availabilityZone: optional<string>
+      affinity: optional<string>
+      groupName: optional<string>
+      partitionNumber: optional<integer>
+      hostId: optional<string>
+      tenancy: optional<string>
+      spreadDomain: optional<string>
+      hostResourceGroupArn: optional<string>
+      groupId: optional<string>
+  InstanceNetworkInterface:
+    properties:
+      networkInterfaceId: optional<string>
+      subnetId: optional<string>
+      vpcId: optional<string>
+      description: optional<string>
+      ownerId: optional<string>
+      status: optional<string>
+      macAddress: optional<string>
+      privateIpAddress: optional<string>
+      privateDnsName: optional<string>
+      sourceDestCheck: optional<boolean>
+  EC2Instance:
+    properties:
+      instanceId: optional<string>
+      imageId: optional<string>
+      keyName: optional<string>
+      instanceType: optional<InstanceType>
+      launchTime: optional<datetime>
+      placement: optional<Placement>
+      privateIpAddress: optional<string>
+      publicIpAddress: optional<string>
+      privateDnsName: optional<string>
+      publicDnsName: optional<string>
+      architecture: optional<Architecture>
+      hypervisor: optional<HypervisorType>
+      platform: optional<PlatformValues>
+      ebsOptimized: optional<boolean>
+      iamInstanceProfile: optional<IamInstanceProfile>
+      networkInterfaces: optional<list<InstanceNetworkInterface>>
+      tags: optional<list<Tag>>
+# Report Types
+  InstanceWithIAMRole:
+    properties:
+      instance: EC2Instance
+      iamRoles: optional<list<string>>
+      region: optional<string>
+  Instances:
+    properties:
+      ec2Instances: list<InstanceWithIAMRole>
+  EC2EnumerateResult:
+    properties:
+      instances: optional<list<InstanceWithIAMRole>>
+  EC2EnumerateReport:
+    properties:
+      result: EC2EnumerateResult
+      config: EC2EnumerateConfig
+      errors: optional<list<string>>

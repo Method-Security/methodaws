@@ -165,7 +165,7 @@ func (l *zapLogger) Log(params ...wlog.Param) {
 }
 
 func (l *zapLogger) Debug(msg string, params ...wlog.Param) {
-	if l.Enabled(wlog.DebugLevel) {
+	if l.Enabled(wlog.InfoLevel) {
 		logOutput(l.logger.Debug, msg, params)
 	}
 }

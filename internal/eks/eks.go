@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	eksTypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 )
@@ -160,7 +160,7 @@ func EnumerateEks(ctx context.Context, cfg aws.Config, regions []string) (*AWSRe
 	return &report, nil
 }
 
-func getInstancesForNodeGroup(ctx context.Context, cfg aws.Config, clusterName, nodeGroupName string) ([]ec2Types.Instance, error) {
+func getInstancesForNodeGroup(ctx context.Context, cfg aws.Config, clusterName, nodeGroupName string) ([]ec2types.Instance, error) {
 	eksSvc := eks.NewFromConfig(cfg)
 	asSvc := autoscaling.NewFromConfig(cfg)
 	ec2Svc := ec2.NewFromConfig(cfg)
@@ -204,7 +204,7 @@ func getInstancesForNodeGroup(ctx context.Context, cfg aws.Config, clusterName, 
 		return nil, err
 	}
 
-	var instances []ec2Types.Instance
+	var instances []ec2types.Instance
 	for _, reservation := range ec2Desc.Reservations {
 		instances = append(instances, reservation.Instances...)
 	}
