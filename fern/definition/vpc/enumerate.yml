@@ -1,0 +1,63 @@
+types:
+# Config
+  VPCEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# VPC Structs
+  VpcState:
+    enum:
+      - PENDING
+      - AVAILABLE
+  Tenancy:
+    enum:
+      - DEFAULT
+      - DEDICATED
+      - HOST
+  VpcCidrBlockState:
+    enum:
+      - ASSOCIATING
+      - ASSOCIATED
+      - DISASSOCIATING
+      - DISASSOCIATED
+      - FAILING
+      - FAILED
+  Tag:
+    properties:
+      key: string
+      value: string
+  VpcCidrBlockAssociation:
+    properties:
+      associationId: optional<string>
+      cidrBlock: optional<string>
+      cidrBlockState: optional<VpcCidrBlockState>
+  VpcIpv6CidrBlockAssociation:
+    properties:
+      associationId: optional<string>
+      ipv6CidrBlock: optional<string>
+      ipv6CidrBlockState: optional<VpcCidrBlockState>
+  VPC:
+    properties:
+      cidrBlock: optional<string>
+      cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
+      dhcpOptionsId: optional<string>
+      instanceTenancy: optional<Tenancy>
+      ipv6CidrBlockAssociationSet: optional<list<VpcIpv6CidrBlockAssociation>>
+      isDefault: optional<boolean>
+      ownerId: optional<string>
+      state: optional<VpcState>
+      tags: optional<list<Tag>>
+      vpcId: optional<string>
+  VPCInstance:
+    properties:
+      vpc: VPC
+      region: string
+  VPCEnumerateResult:
+    properties:
+      vpcs: optional<list<VPCInstance>>
+  # Report Struct
+  VPCEnumerateReport:
+    properties:
+      result: VPCEnumerateResult
+      config: VPCEnumerateConfig
+      errors: optional<list<string>>
