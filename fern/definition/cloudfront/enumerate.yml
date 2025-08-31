@@ -6,7 +6,6 @@ types:
   CloudFrontEnumerateConfig:
     properties:
       accountId: string
-      regions: list<string>
 # Enums
   CloudFrontDistributionStatus:
     enum:
