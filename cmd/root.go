@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Method-Security/methodaws/internal/common"
 	"github.com/Method-Security/methodaws/internal/config"
 	"github.com/Method-Security/methodaws/utils"
 	"github.com/Method-Security/pkg/signal"
@@ -81,17 +80,17 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 		}
 		a.AwsConfig = &awsConfig
 		if len(a.RootFlags.Regions) != 0 {
-			a.RootFlags.Regions, err = common.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
+			a.RootFlags.Regions, err = utils.GetAWSRegions(cmd.Context(), *a.AwsConfig, a.RootFlags.Regions)
 			if err != nil {
 				a.OutputSignal.Status = 1
 				a.OutputSignal.ErrorMessage = aws.String("No valid AWS regions specified")
 				return errors.New("no valid AWS regions specified")
 			}
 		} else {
-			a.RootFlags.Regions = utils.GetGeneralRegions()
+			a.RootFlags.Regions = utils.GetGeneralRegionsList()
 		}
 	} else {
-		a.RootFlags.Regions = common.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
+		a.RootFlags.Regions = utils.GetRegionsToCheck(cmd.Context(), a.RootFlags.Regions)
 	}
 
 	return nil
