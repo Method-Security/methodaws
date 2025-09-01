@@ -12,6 +12,12 @@ types:
     enum:
       - V1
       - V2
+  LoadBalancerType:
+    enum:
+      - APPLICATION
+      - NETWORK
+      - GATEWAY
+      - CLASSIC
   LoadBalancerState:
     enum:
       - ACTIVE
@@ -41,6 +47,7 @@ types:
       - INSTANCE
       - IP
       - LAMBDA
+      - ALB
 # Result Structs
   Certificate:
     properties:
@@ -69,40 +76,33 @@ types:
       protocol: optional<Protocol>
       vpcId: optional<string>
       targets: optional<list<Target>>
-  LoadBalancerV2:
-    docs: |
-      LoadBalancer represents a load balancer that distributes incoming network traffic across multiple servers.
-      As defined by the AWS Go SDK (https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2@v1.33.1/types#LoadBalancer)
+  LoadBalancer:
     properties:
-      arn: string
+      version: LoadBalancerVersion
+      loadBalancerType: optional<LoadBalancerType>
+      # Common properties
       name: string
       region: string
-      createdTime: datetime
-      dnsName: string
-      ipAddressType: IpAddressType
+      createdTime: optional<datetime>
+      dnsName: optional<string>
       securityGroupIds: optional<list<string>>
+      vpcId: optional<string>
+      subnetIds: optional<list<string>>
+      hostedZoneId: optional<string>
+      listeners: optional<list<Listener>>
+      # V2-only properties
+      arn: optional<string>
+      ipAddressType: optional<IpAddressType>
       state: optional<LoadBalancerState>
-      vpcId: optional<string>
-      listeners: optional<list<Listener>>
-      subnetIds: optional<list<string>>
-      hostedZoneId: optional<string>
       targetGroups: optional<list<TargetGroup>>
-  LoadBalancerV1:
-    properties:
-      name: string
-      region: string
-      createdTime: datetime
-      dnsName: string
-      securityGroupIds: optional<list<string>>
-      vpcId: optional<string>
-      subnetIds: optional<list<string>>
-      hostedZoneId: optional<string>
+      # V1-only properties
       targets: optional<list<Target>>
-      listeners: optional<list<Listener>>
+  LoadBalancerResult:
+    properties:
+      loadBalancers: optional<list<LoadBalancer>>
   # Report Struct
   LoadBalancerReport:
     properties:
-      accountId: string
-      v2LoadBalancers: optional<list<LoadBalancerV2>>
-      v1LoadBalancers: optional<list<LoadBalancerV1>>
+      config: LoadBalancerEnumerateConfig
+      result: LoadBalancerResult
       errors: optional<list<string>>

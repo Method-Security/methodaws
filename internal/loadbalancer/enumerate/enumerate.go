@@ -18,11 +18,11 @@ func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config lo
 
 	// Initialize report
 	report := &loadbalancerfern.LoadBalancerReport{
-		AccountId: config.AccountId,
+		Config: &config,
+		Result: &loadbalancerfern.LoadBalancerResult{},
 	}
 
-	var allV1LoadBalancers []*loadbalancerfern.LoadBalancerV1
-	var allV2LoadBalancers []*loadbalancerfern.LoadBalancerV2
+	var allLoadBalancers []*loadbalancerfern.LoadBalancer
 	var allErrors []string
 
 	// Process each version requested
@@ -32,25 +32,21 @@ func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config lo
 			case loadbalancerfern.LoadBalancerVersionV1:
 				log.Info("Processing v1 load balancers")
 				v1LBs, errors := enumerateV1LoadBalancersAllRegions(ctx, awsConfig, config.Regions)
-				allV1LoadBalancers = append(allV1LoadBalancers, v1LBs...)
+				allLoadBalancers = append(allLoadBalancers, v1LBs...)
 				allErrors = append(allErrors, errors...)
 
 			case loadbalancerfern.LoadBalancerVersionV2:
 				log.Info("Processing v2 load balancers")
 				v2LBs, errors := enumerateV2LoadBalancersAllRegions(ctx, awsConfig, config.Regions)
-				allV2LoadBalancers = append(allV2LoadBalancers, v2LBs...)
+				allLoadBalancers = append(allLoadBalancers, v2LBs...)
 				allErrors = append(allErrors, errors...)
 			}
 		}
 	}
 
 	// Marshal report
-	if len(allV1LoadBalancers) > 0 {
-		report.V1LoadBalancers = allV1LoadBalancers
-	}
-
-	if len(allV2LoadBalancers) > 0 {
-		report.V2LoadBalancers = allV2LoadBalancers
+	if len(allLoadBalancers) > 0 {
+		report.Result.LoadBalancers = allLoadBalancers
 	}
 
 	if len(allErrors) > 0 {
@@ -58,8 +54,7 @@ func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config lo
 	}
 
 	log.Info("Completed Load Balancer enumeration",
-		svc1log.SafeParam("totalV1LoadBalancers", len(allV1LoadBalancers)),
-		svc1log.SafeParam("totalV2LoadBalancers", len(allV2LoadBalancers)),
+		svc1log.SafeParam("totalLoadBalancers", len(allLoadBalancers)),
 		svc1log.SafeParam("totalErrors", len(allErrors)))
 
 	return report

@@ -2,6 +2,8 @@ package loadbalancer
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	loadbalancerfern "github.com/Method-Security/methodaws/generated/go/loadbalancer"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,9 +13,9 @@ import (
 )
 
 // enumerateV1LoadBalancersAllRegions enumerates v1 load balancers across all specified regions
-func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancerV1, []string) {
+func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancer, []string) {
 	log := svc1log.FromContext(ctx)
-	var allLoadBalancers []*loadbalancerfern.LoadBalancerV1
+	var allLoadBalancers []*loadbalancerfern.LoadBalancer
 	var allErrors []string
 
 	for _, region := range regions {
@@ -38,14 +40,14 @@ func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Confi
 }
 
 // enumerateV1LoadBalancersForRegion enumerates v1 load balancers for a specific region
-func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancerV1, []string) {
+func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancer, []string) {
 	log := svc1log.FromContext(ctx)
 	cfg.Region = region
 
 	client := elasticloadbalancing.NewFromConfig(cfg)
 	paginator := elasticloadbalancing.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancing.DescribeLoadBalancersInput{})
 
-	var loadBalancers []*loadbalancerfern.LoadBalancerV1
+	var loadBalancers []*loadbalancerfern.LoadBalancer
 	var errorMessages []string
 
 	for paginator.HasMorePages() {
@@ -58,11 +60,22 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 		}
 
 		for _, lb := range page.LoadBalancerDescriptions {
-			loadBalancer := &loadbalancerfern.LoadBalancerV1{
+			lbType := loadbalancerfern.LoadBalancerTypeClassic
+			var createdTime *time.Time
+			if lb.CreatedTime != nil {
+				createdTime = lb.CreatedTime
+			}
+			var dnsName *string
+			if lb.DNSName != nil {
+				dnsName = lb.DNSName
+			}
+			loadBalancer := &loadbalancerfern.LoadBalancer{
+				Version:          loadbalancerfern.LoadBalancerVersionV1,
+				LoadBalancerType: &lbType,
 				Name:             aws.ToString(lb.LoadBalancerName),
 				Region:           region,
-				CreatedTime:      aws.ToTime(lb.CreatedTime),
-				DnsName:          aws.ToString(lb.DNSName),
+				CreatedTime:      createdTime,
+				DnsName:          dnsName,
 				SecurityGroupIds: lb.SecurityGroups,
 				VpcId:            lb.VPCId,
 				SubnetIds:        lb.Subnets,
@@ -119,7 +132,7 @@ func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*
 
 		// Convert protocol
 		if listener.Listener.Protocol != nil {
-			if protocol, err := loadbalancerfern.NewProtocolFromString(*listener.Listener.Protocol); err == nil {
+			if protocol, err := loadbalancerfern.NewProtocolFromString(strings.ToUpper(*listener.Listener.Protocol)); err == nil {
 				fernListener.Protocol = &protocol
 			} else {
 				errorMessages = append(errorMessages, "Failed to convert listener protocol: "+err.Error())
