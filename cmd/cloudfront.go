@@ -31,7 +31,7 @@ func (a *MethodAws) InitCloudFrontCommand() {
 			}
 
 			// Config
-			config := getCloudFrontEnumerateConfig(a.RootFlags.Regions, accountID)
+			config := getCloudFrontEnumerateConfig(accountID)
 
 			// Report
 			report := cloudfront.EnumerateCloudFront(cmd.Context(), *a.AwsConfig, config)
@@ -43,9 +43,8 @@ func (a *MethodAws) InitCloudFrontCommand() {
 	a.RootCmd.AddCommand(cloudFrontCmd)
 }
 
-func getCloudFrontEnumerateConfig(regions []string, accountID string) cloudfrontfern.CloudFrontEnumerateConfig {
+func getCloudFrontEnumerateConfig(accountID string) cloudfrontfern.CloudFrontEnumerateConfig {
 	return cloudfrontfern.CloudFrontEnumerateConfig{
-		Regions:   regions,
 		AccountId: accountID,
 	}
 }

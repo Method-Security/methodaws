@@ -279,7 +279,7 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 	} else if urlRegion != "" {
 		regionsToCheck = []string{urlRegion}
 	} else {
-		regionsToCheck = utils.GetGeneralRegions()
+		regionsToCheck = utils.GetGeneralRegionsList()
 	}
 
 	bucketFound := false

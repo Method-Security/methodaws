@@ -14,8 +14,7 @@ import (
 
 func EnumerateCloudFront(ctx context.Context, awsConfig aws.Config, config cloudfrontfern.CloudFrontEnumerateConfig) *cloudfrontfern.CloudFrontEnumerateReport {
 	log := svc1log.FromContext(ctx)
-	log.Info("Starting CloudFront enumeration",
-		svc1log.SafeParam("regionsCount", len(config.Regions)),
+	log.Info("Starting CloudFront enumeration (global service)",
 		svc1log.SafeParam("accountId", config.AccountId))
 
 	// Initialize report
@@ -24,60 +23,35 @@ func EnumerateCloudFront(ctx context.Context, awsConfig aws.Config, config cloud
 		Result: &cloudfrontfern.CloudFrontEnumerateResult{},
 	}
 
-	var allDistributions []*cloudfrontfern.CloudFrontDistribution
-	var allErrors []string
+	// CloudFront is a global service, always use us-east-1
+	distributions, errors := enumerateCloudFrontDistributions(ctx, awsConfig)
 
-	// Create a map to deduplicate distributions by ARN
-	distributionsMap := make(map[string]*cloudfrontfern.CloudFrontDistribution)
-
-	for _, region := range config.Regions {
-		log.Info("Processing CloudFront distributions in region", svc1log.SafeParam("region", region))
-		distributions, errors := enumerateCloudFrontForRegion(ctx, awsConfig, region)
-
-		if len(errors) > 0 {
-			log.Warn("Errors occurred while enumerating CloudFront distributions in region",
-				svc1log.SafeParam("region", region),
-				svc1log.SafeParam("errorCount", len(errors)))
-		}
-
-		// Add each distribution to the map using ARN as key to deduplicate
-		for _, dist := range distributions {
-			distributionsMap[dist.Arn] = dist
-		}
-		allErrors = append(allErrors, errors...)
-
-		log.Info("Successfully processed CloudFront distributions in region",
-			svc1log.SafeParam("region", region),
-			svc1log.SafeParam("distributionCount", len(distributions)))
+	if len(errors) > 0 {
+		log.Warn("Errors occurred while enumerating CloudFront distributions",
+			svc1log.SafeParam("errorCount", len(errors)))
+		report.Errors = errors
 	}
 
-	// Convert map back to slice for the report
-	for _, dist := range distributionsMap {
-		allDistributions = append(allDistributions, dist)
-	}
-
-	// Marshal report
-	if len(allDistributions) > 0 {
-		report.Result.Distributions = allDistributions
-	}
-
-	if len(allErrors) > 0 {
-		report.Errors = allErrors
+	if len(distributions) > 0 {
+		report.Result.Distributions = distributions
 	}
 
 	log.Info("Completed CloudFront enumeration",
-		svc1log.SafeParam("totalDistributions", len(allDistributions)),
-		svc1log.SafeParam("totalErrors", len(allErrors)))
+		svc1log.SafeParam("totalDistributions", len(distributions)),
+		svc1log.SafeParam("totalErrors", len(errors)))
 
 	return report
 }
 
-func enumerateCloudFrontForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*cloudfrontfern.CloudFrontDistribution, []string) {
+func enumerateCloudFrontDistributions(ctx context.Context, awsConfig aws.Config) ([]*cloudfrontfern.CloudFrontDistribution, []string) {
 	log := svc1log.FromContext(ctx)
-	awsConfig.Region = region
+	// CloudFront is a global service, always use us-east-1
+	awsConfig.Region = "us-east-1"
 
 	cloudfrontClient := cloudfront.NewFromConfig(awsConfig)
 	var errors []string
+
+	log.Info("Listing CloudFront distributions from global endpoint")
 
 	// List CloudFront distributions
 	distributions, err := listCloudFrontDistributions(ctx, cloudfrontClient)
