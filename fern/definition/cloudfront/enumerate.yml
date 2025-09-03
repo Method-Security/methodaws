@@ -28,7 +28,6 @@ types:
       OriginArn: optional<string>
       Path: optional<string>
       CustomHeaders: optional<list<string>>
-      IsS3Website: optional<boolean>
       ConnectionAttempts: optional<integer>
       ConnectionTimeout: optional<integer>
   CloudFrontDistribution:

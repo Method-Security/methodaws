@@ -325,7 +325,7 @@ func resolveAPIGatewayArn(domainName string, accountID string) (string, error) {
 	if len(parts) < 4 {
 		return "", fmt.Errorf("unable to extract API ID from domain: %s", domainName)
 	}
-	apiId := parts[0]
+	apiID := parts[0]
 
 	// Extract region (the part between execute-api and amazonaws)
 	region, err := extractRegionFromAPIGatewayDomain(domainName)
@@ -334,7 +334,7 @@ func resolveAPIGatewayArn(domainName string, accountID string) (string, error) {
 	}
 
 	// API Gateway REST API ARN format: arn:aws:apigateway:region::restapis/api-id
-	return fmt.Sprintf("arn:aws:apigateway:%s::/restapis/%s", region, apiId), nil
+	return fmt.Sprintf("arn:aws:apigateway:%s::/restapis/%s", region, apiID), nil
 }
 
 func extractRegionFromAPIGatewayDomain(domainName string) (string, error) {
@@ -399,12 +399,6 @@ func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist
 				if origin.CustomOriginConfig.OriginKeepaliveTimeout != nil {
 					fernOrigin.ConnectionTimeout = &timeoutInt
 				}
-			}
-
-			// S3 website check
-			if origin.S3OriginConfig != nil {
-				isS3Website := false
-				fernOrigin.IsS3Website = &isS3Website
 			}
 
 			// Custom headers
