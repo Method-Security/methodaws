@@ -207,10 +207,12 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			}
 
 			// Convert IP address type
-			if ipType, err := loadbalancerfern.NewTargetGroupIpAddressTypeFromString(strings.ToUpper(string(awsTargetGroup.IpAddressType))); err == nil {
-				targetGroup.IpAddressType = ipType
-			} else {
-				errorMessages = append(errorMessages, "Failed to convert target group IP address type: "+err.Error())
+			if awsTargetGroup.IpAddressType != "" {
+				if ipType, err := loadbalancerfern.NewTargetGroupIpAddressTypeFromString(strings.ToUpper(string(awsTargetGroup.IpAddressType))); err == nil {
+					targetGroup.IpAddressType = ipType
+				} else {
+					errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert target group IP address type '%s': %s", awsTargetGroup.IpAddressType, err.Error()))
+				}
 			}
 
 			// Convert protocol
