@@ -9,7 +9,7 @@ import (
 )
 
 // EnumerateLoadBalancers enumerates load balancers based on the provided configuration
-func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config loadbalancerfern.LoadBalancerEnumerateConfig) *loadbalancerfern.LoadBalancerReport {
+func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config loadbalancerfern.LoadBalancerEnumerateConfig) *loadbalancerfern.LoadBalancerEnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting Load Balancer enumeration",
 		svc1log.SafeParam("regionsCount", len(config.Regions)),
@@ -17,7 +17,7 @@ func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config lo
 		svc1log.SafeParam("versionsCount", len(config.Versions)))
 
 	// Initialize report
-	report := &loadbalancerfern.LoadBalancerReport{
+	report := &loadbalancerfern.LoadBalancerEnumerateReport{
 		Config: &config,
 		Result: &loadbalancerfern.LoadBalancerResult{},
 	}

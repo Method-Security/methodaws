@@ -11,11 +11,26 @@ types:
     enum:
       - ENABLED
       - DISABLED
+  CloudFrontOriginType:
+    enum:
+      - S3
+      - EC2
+      - APPLICATION_LOAD_BALANCER
+      - VPC_ORIGIN
+      - API_GATEWAY
+      - UNKNOWN
 # Result Structs
   CloudFrontDistributionOrigin:
     properties:
       DomainName: string
       Id: string
+      OriginType: CloudFrontOriginType
+      OriginArn: optional<string>
+      Path: optional<string>
+      CustomHeaders: optional<list<string>>
+      IsS3Website: optional<boolean>
+      ConnectionAttempts: optional<integer>
+      ConnectionTimeout: optional<integer>
   CloudFrontDistribution:
     properties:
       Arn: string

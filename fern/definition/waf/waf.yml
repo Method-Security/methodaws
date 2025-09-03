@@ -51,7 +51,7 @@ types:
   StatementInfo:
     properties:
       type: StatementType
-      jsonString: optional<string>   
+      rawStatement: optional<string>   
   RuleInfo:
     properties:
       name: string
@@ -59,7 +59,7 @@ types:
       statement: StatementInfo
       action: optional<ActionInfo>
       labels: optional<list<string>>
-      jsonString: string 
+      rawRule: string 
   ResourceInfo:
     properties:
       arn: string

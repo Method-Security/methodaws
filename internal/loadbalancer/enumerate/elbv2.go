@@ -177,9 +177,8 @@ func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancin
 func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancer *loadbalancerfern.LoadBalancer) ([]*loadbalancerfern.TargetGroup, []string) {
 	targetGroups := []*loadbalancerfern.TargetGroup{}
 	errorMessages := []string{}
-	paginator := elasticloadbalancingv2.NewDescribeTargetGroupsPaginator(client, &elasticloadbalancingv2.DescribeTargetGroupsInput{
-		LoadBalancerArn: loadBalancer.Arn,
-	})
+	paginator := elasticloadbalancingv2.NewDescribeTargetGroupsPaginator(client, &elasticloadbalancingv2.DescribeTargetGroupsInput{})
+
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
@@ -188,6 +187,17 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 		}
 
 		for _, awsTargetGroup := range page.TargetGroups {
+			// Filter target groups by load balancer ARN
+			isAttachedToLB := false
+			for _, lbArn := range awsTargetGroup.LoadBalancerArns {
+				if lbArn == aws.ToString(loadBalancer.Arn) {
+					isAttachedToLB = true
+					break
+				}
+			}
+			if !isAttachedToLB {
+				continue
+			}
 			targetGroup := &loadbalancerfern.TargetGroup{
 				Arn:              aws.ToString(awsTargetGroup.TargetGroupArn),
 				Name:             aws.ToString(awsTargetGroup.TargetGroupName),
@@ -221,7 +231,7 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			targetGroups = append(targetGroups, targetGroup)
 		}
 	}
-	return targetGroups, nil
+	return targetGroups, errorMessages
 }
 
 // targetsForTargetGroupV2 converts AWS TargetGroup to Fern Target
@@ -246,9 +256,10 @@ func targetsForTargetGroupV2(ctx context.Context, client *elasticloadbalancingv2
 		if targetHealth.Target.AvailabilityZone != nil {
 			availabilityZone = targetHealth.Target.AvailabilityZone
 		}
+		portValue := int(aws.ToInt32(targetHealth.Target.Port))
 		targets = append(targets, &loadbalancerfern.Target{
 			Id:               aws.ToString(targetHealth.Target.Id),
-			Port:             int(aws.ToInt32(targetHealth.Target.Port)),
+			Port:             &portValue,
 			Type:             targetType,
 			AvailabilityZone: availabilityZone,
 		})

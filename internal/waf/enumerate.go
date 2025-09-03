@@ -161,11 +161,11 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 			Name:     aws.ToString(rule.Name),
 			Priority: int(rule.Priority),
 			Statement: &waffern.StatementInfo{
-				Type:       getStatementType(rule.Statement),
-				JsonString: &statementJSONString,
+				Type:         getStatementType(rule.Statement),
+				RawStatement: &statementJSONString,
 			},
-			Action:     actionInfo,
-			JsonString: string(ruleJSON),
+			Action:  actionInfo,
+			RawRule: string(ruleJSON),
 		}
 		rules = append(rules, &ruleInfo)
 	}

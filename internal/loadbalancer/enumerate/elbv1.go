@@ -108,10 +108,15 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*lo
 	if len(loadBalancer.Instances) == len(loadBalancer.BackendServerDescriptions) {
 		for i, instance := range loadBalancer.Instances {
 			backendServer := loadBalancer.BackendServerDescriptions[i]
+			var port *int
+			if backendServer.InstancePort != nil {
+				portValue := int(*backendServer.InstancePort)
+				port = &portValue
+			}
 			target := &loadbalancerfern.Target{
 				Id:   aws.ToString(instance.InstanceId),
-				Type: loadbalancerfern.TargetTypeInstance,
-				Port: int(aws.ToInt32(backendServer.InstancePort)),
+				Type: loadbalancerfern.TargetTypeInstance, // Classic ELB can only point to EC2 instances
+				Port: port,
 			}
 			targets = append(targets, target)
 		}

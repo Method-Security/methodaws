@@ -12,12 +12,16 @@ import (
 // InitCloudFrontCommand initializes the `methodaws cloudfront` subcommand that deals with enumerating CloudFront distributions and their
 // related resources.
 func (a *MethodAws) InitCloudFrontCommand() {
+	// CloudFront Command
+	// Subcommands:
+	// - enumerate
 	cloudFrontCmd := &cobra.Command{
 		Use:   "cloudfront",
 		Short: "Audit and command CloudFront distributions",
 		Long:  `Audit and command CloudFront distributions`,
 	}
 
+	// Enumerate Command
 	enumerateCmd := &cobra.Command{
 		Use:   "enumerate",
 		Short: "Enumerate CloudFront distributions",
@@ -39,10 +43,14 @@ func (a *MethodAws) InitCloudFrontCommand() {
 		},
 	}
 
+	// Add subcommands
 	cloudFrontCmd.AddCommand(enumerateCmd)
+
+	// Add CloudFront Command to Root Command
 	a.RootCmd.AddCommand(cloudFrontCmd)
 }
 
+// getCloudFrontEnumerateConfig returns the configuration for the CloudFront enumerate command.
 func getCloudFrontEnumerateConfig(accountID string) cloudfrontfern.CloudFrontEnumerateConfig {
 	return cloudfrontfern.CloudFrontEnumerateConfig{
 		AccountId: accountID,
