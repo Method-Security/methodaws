@@ -51,7 +51,7 @@ types:
     properties:
       accountId: string
       regions: list<string>
-# EC2 Instance Types
+# Result Structs
   IamInstanceProfile:
     properties:
       arn: optional<string>
@@ -98,7 +98,6 @@ types:
       iamInstanceProfile: optional<IamInstanceProfile>
       networkInterfaces: optional<list<InstanceNetworkInterface>>
       tags: optional<list<Tag>>
-# Report Types
   InstanceWithIAMRole:
     properties:
       instance: EC2Instance
@@ -110,6 +109,7 @@ types:
   EC2EnumerateResult:
     properties:
       instances: optional<list<InstanceWithIAMRole>>
+# Report Struct
   EC2EnumerateReport:
     properties:
       result: EC2EnumerateResult

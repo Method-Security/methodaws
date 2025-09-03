@@ -64,7 +64,7 @@ types:
     properties:
       id: string
       type: TargetType
-      port: integer
+      port: optional<integer>
       availabilityZone: optional<string>
   TargetGroup:
     properties:
@@ -101,7 +101,7 @@ types:
     properties:
       loadBalancers: optional<list<LoadBalancer>>
   # Report Struct
-  LoadBalancerReport:
+  LoadBalancerEnumerateReport:
     properties:
       config: LoadBalancerEnumerateConfig
       result: LoadBalancerResult

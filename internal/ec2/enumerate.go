@@ -43,7 +43,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 			log.Warn("Failed to retrieve EC2 instances page",
 				svc1log.SafeParam("region", region),
 				svc1log.Stacktrace(err))
-			errors = append(errors, err.Error())
+			errors = append(errors, fmt.Sprintf("Failed to retrieve EC2 instances in region %s: %s", region, err.Error()))
 			break
 		}
 
@@ -65,7 +65,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 							svc1log.SafeParam("instanceId", aws.ToString(inst.InstanceId)),
 							svc1log.SafeParam("region", region),
 							svc1log.Stacktrace(err))
-						errors = append(errors, err.Error())
+						errors = append(errors, fmt.Sprintf("Failed to get IAM roles for instance %s in region %s: %s", aws.ToString(inst.InstanceId), region, err.Error()))
 					}
 					instanceWithRole.IamRoles = roles
 				}
@@ -151,7 +151,7 @@ func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn str
 		log.Warn("Failed to get instance profile",
 			svc1log.SafeParam("instanceProfileName", instanceProfileName),
 			svc1log.Stacktrace(err))
-		return roles, err
+		return roles, fmt.Errorf("failed to get instance profile %s: %w", instanceProfileName, err)
 	}
 
 	for _, role := range result.InstanceProfile.Roles {
