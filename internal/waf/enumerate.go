@@ -73,7 +73,7 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 	listWebACLsInput := &wafv2.ListWebACLsInput{Scope: types.ScopeRegional}
 	webACLsOutput, err := wafClient.ListWebACLs(ctx, listWebACLsInput)
 	if err != nil {
-		errorMsg := "Failed to list WAF WebACLs: " + err.Error()
+		errorMsg := "Failed to list WAF WebACLs in region " + region + ": " + err.Error()
 		log.Error("Error listing WAF WebACLs", svc1log.SafeParam("error", err.Error()))
 		errors = append(errors, errorMsg)
 		return nil, errors

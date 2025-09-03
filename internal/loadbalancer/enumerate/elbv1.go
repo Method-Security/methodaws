@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -53,8 +54,8 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			errorMsg := "Failed to list v1 load balancers: " + err.Error()
-			log.Error("Error listing v1 load balancers", svc1log.SafeParam("error", err.Error()))
+			errorMsg := fmt.Sprintf("Failed to list v1 load balancers in region %s: %s", region, err.Error())
+			log.Error("Error listing v1 load balancers", svc1log.SafeParam("error", err.Error()), svc1log.SafeParam("region", region))
 			errorMessages = append(errorMessages, errorMsg)
 			return loadBalancers, errorMessages
 		}
@@ -121,7 +122,8 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*lo
 			targets = append(targets, target)
 		}
 	} else {
-		errorMessages = append(errorMessages, "Mismatch between instances and backend server descriptions")
+		errorMessages = append(errorMessages, fmt.Sprintf("Mismatch between instances (%d) and backend server descriptions (%d) for load balancer %s",
+			len(loadBalancer.Instances), len(loadBalancer.BackendServerDescriptions), aws.ToString(loadBalancer.LoadBalancerName)))
 	}
 	return targets, errorMessages
 }
@@ -140,7 +142,7 @@ func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*
 			if protocol, err := loadbalancerfern.NewProtocolFromString(strings.ToUpper(*listener.Listener.Protocol)); err == nil {
 				fernListener.Protocol = &protocol
 			} else {
-				errorMessages = append(errorMessages, "Failed to convert listener protocol: "+err.Error())
+				errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert listener protocol for load balancer %s: %s", aws.ToString(loadBalancer.LoadBalancerName), err.Error()))
 			}
 		}
 
