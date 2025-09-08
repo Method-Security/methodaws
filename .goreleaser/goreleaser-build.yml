@@ -5,11 +5,8 @@ version: 2
 
 project_name: methodaws
 
-partial:
-  by: target
-
 builds:
-  - id: build-linux-amd64
+  - id: build-linux
     main: .
     binary: methodaws
     ldflags:
@@ -17,25 +14,12 @@ builds:
       - "-extldflags '-static -lm -ldl -lpthread'"
       - -X github.com/method-security/methodaws/main.version={{.Version}}
     env:
-      - CGO_ENABLED=1
-    goos:
-      - linux
-    goarch:
-      - amd64
-    goarm:
-      - "7"
-  - id: build-linux-arm64
-    main: .
-    binary: methodaws
-    ldflags:
-      - -s -w
-      - -X github.com/method-security/methodaws/main.version={{.Version}}
-    env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     goos:
       - linux
     goarch:
       - arm64
+      - amd64
     goarm:
       - "7"
   - id: build-macos
