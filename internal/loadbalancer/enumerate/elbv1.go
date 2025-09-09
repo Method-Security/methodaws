@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	loadbalancerfern "github.com/Method-Security/methodaws/generated/go/loadbalancer"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -61,22 +60,17 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 		}
 
 		for _, lb := range page.LoadBalancerDescriptions {
-			lbType := loadbalancerfern.LoadBalancerTypeClassic
-			var createdTime *time.Time
-			if lb.CreatedTime != nil {
-				createdTime = lb.CreatedTime
+			if lb.LoadBalancerName == nil {
+				log.Warn("LoadBalancer name is nil for load balancer", svc1log.SafeParam("loadBalancer", lb))
+				errorMessages = append(errorMessages, "LoadBalancer name is nil")
+				continue
 			}
-			var dnsName *string
-			if lb.DNSName != nil {
-				dnsName = lb.DNSName
-			}
-			loadBalancer := &loadbalancerfern.LoadBalancer{
-				Version:          loadbalancerfern.LoadBalancerVersionV1,
-				LoadBalancerType: &lbType,
-				Name:             aws.ToString(lb.LoadBalancerName),
+			lbV1 := &loadbalancerfern.LoadBalancerV1{
+				Id:               aws.ToString(lb.LoadBalancerName),
+				LoadBalancerType: loadbalancerfern.LoadBalancerTypeClassic,
 				Region:           region,
-				CreatedTime:      createdTime,
-				DnsName:          dnsName,
+				CreatedTime:      lb.CreatedTime,
+				DnsName:          lb.DNSName,
 				SecurityGroupIds: lb.SecurityGroups,
 				VpcId:            lb.VPCId,
 				SubnetIds:        lb.Subnets,
@@ -87,14 +81,16 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			loadBalancer.Targets = targets
+			lbV1.Targets = targets
 
 			listeners, errors := listenersForLoadBalancerV1(lb)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			loadBalancer.Listeners = listeners
+			lbV1.Listeners = listeners
 
+			// Create union LoadBalancer
+			loadBalancer := loadbalancerfern.NewLoadBalancerFromV1(lbV1)
 			loadBalancers = append(loadBalancers, loadBalancer)
 		}
 	}
@@ -114,9 +110,10 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*lo
 				portValue := int(*backendServer.InstancePort)
 				port = &portValue
 			}
+			targetType := loadbalancerfern.TargetTypeInstance
 			target := &loadbalancerfern.Target{
 				Id:   aws.ToString(instance.InstanceId),
-				Type: loadbalancerfern.TargetTypeInstance, // Classic ELB can only point to EC2 instances
+				Type: &targetType, // Classic ELB can only point to EC2 instances
 				Port: port,
 			}
 			targets = append(targets, target)
@@ -133,8 +130,9 @@ func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*
 	errorMessages := []string{}
 
 	for _, listener := range loadBalancer.ListenerDescriptions {
+		port := int(listener.Listener.LoadBalancerPort)
 		fernListener := &loadbalancerfern.Listener{
-			Port: int(listener.Listener.LoadBalancerPort),
+			Port: &port,
 		}
 
 		// Convert protocol

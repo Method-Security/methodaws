@@ -5,6 +5,7 @@ import (
 	// Standard
 	"context"
 	"fmt"
+	"strings"
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
@@ -86,9 +87,9 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S
 		return bucket, err
 	}
 
-	bucketVersioning, _ := s3fern.NewBucketVersioningStatusFromString(string(result.Status))
+	bucketVersioning, _ := s3fern.NewBucketVersioningStatusFromString(strings.ToUpper(string(result.Status)))
 	bucket.BucketVersioning = &bucketVersioning
-	mfaDelete, _ := s3fern.NewS3MfaDeleteStatusFromString(string(result.MFADelete))
+	mfaDelete, _ := s3fern.NewS3MfaDeleteStatusFromString(strings.ToUpper(string(result.MFADelete)))
 	bucket.MfaDelete = &mfaDelete
 
 	return bucket, nil
@@ -110,6 +111,38 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Buc
 	}
 
 	bucket.Policy = result.Policy
+
+	return bucket, nil
+}
+
+func bucketACL(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, error) {
+	log := svc1log.FromContext(ctx)
+
+	input := &s3.GetBucketAclInput{
+		Bucket: aws.String(bucket.Name),
+	}
+
+	result, err := s3Client.GetBucketAcl(ctx, input)
+	if err != nil {
+		log.Warn("Failed to get bucket ACL",
+			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.Stacktrace(err))
+		return bucket, err
+	}
+
+	acls := []*s3fern.S3BucketAcl{}
+	for _, grant := range result.Grants {
+		if grant.Grantee != nil && grant.Grantee.URI != nil {
+			acls = append(acls, &s3fern.S3BucketAcl{
+				GranteeUri: *grant.Grantee.URI,
+				Permission: string(grant.Permission),
+			})
+		}
+	}
+
+	if len(acls) > 0 {
+		bucket.Acls = acls
+	}
 
 	return bucket, nil
 }
@@ -239,6 +272,11 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 			}
 
 			bucketPtr, err = publicAccess(ctx, regionClient, bucketPtr)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			bucketPtr, err = bucketACL(ctx, regionClient, bucketPtr)
 			if err != nil {
 				errorMessages = append(errorMessages, err.Error())
 			}

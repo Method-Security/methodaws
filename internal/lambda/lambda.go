@@ -1,18 +1,28 @@
 package lambda
 
 import (
+	//standard
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
-	methodaws "github.com/Method-Security/methodaws/generated/go"
-	"github.com/Method-Security/methodaws/internal/sts"
+	// generated
+	lambdafern "github.com/Method-Security/methodaws/generated/go/lambda"
+	// external
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
+	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-func parseLambdaFunctionConfiguration(function types.FunctionConfiguration, region string) (*methodaws.LambdaFunction, error) {
+func parseLambdaFunctionConfiguration(ctx context.Context, function types.FunctionConfiguration, region string) (*lambdafern.LambdaFunction, error) {
+	log := svc1log.FromContext(ctx)
+	log.Info("Parsing Lambda function configuration",
+		svc1log.SafeParam("functionName", function.FunctionName),
+		svc1log.SafeParam("region", region))
+
 	if function.LastModified == nil {
 		return nil, errors.New("function LastModified is nil")
 	}
@@ -22,37 +32,37 @@ func parseLambdaFunctionConfiguration(function types.FunctionConfiguration, regi
 		return nil, err
 	}
 
-	lambdaArchitectures := []methodaws.LambdaArchitecture{}
+	lambdaArchitectures := []lambdafern.LambdaArchitecture{}
 	for _, architecture := range function.Architectures {
-		architecture, err := methodaws.NewLambdaArchitectureFromString(string(architecture))
+		architecture, err := lambdafern.NewLambdaArchitectureFromString(strings.ToUpper(string(architecture)))
 		if err != nil {
 			return nil, err
 		}
 		lambdaArchitectures = append(lambdaArchitectures, architecture)
 	}
 
-	lambdaPackageType, err := methodaws.NewLambdaPackageTypeFromString(string(function.PackageType))
+	lambdaPackageType, err := lambdafern.NewLambdaPackageTypeFromString(strings.ToUpper(string(function.PackageType)))
 	if err != nil {
 		return nil, err
 	}
 
-	var vpcConfig *methodaws.LambdaVpcConfig
+	var vpcConfig *lambdafern.LambdaVpcConfig
 	if function.VpcConfig != nil {
-		vpcConfig = &methodaws.LambdaVpcConfig{
+		vpcConfig = &lambdafern.LambdaVpcConfig{
 			VpcId:            *function.VpcConfig.VpcId,
 			SubnetIds:        function.VpcConfig.SubnetIds,
 			SecurityGroupIds: function.VpcConfig.SecurityGroupIds,
 		}
 	}
 
-	var loggingConfig *methodaws.LambdaLoggingConfig
+	var loggingConfig *lambdafern.LambdaLoggingConfig
 	if function.LoggingConfig != nil {
 		if function.LoggingConfig.LogGroup != nil {
-			logFormat, err := methodaws.NewLambdaLoggingFormatFromString(string(function.LoggingConfig.LogFormat))
+			logFormat, err := lambdafern.NewLambdaLoggingFormatFromString(strings.ToUpper(string(function.LoggingConfig.LogFormat)))
 			if err != nil {
 				return nil, err
 			}
-			loggingConfig = &methodaws.LambdaLoggingConfig{
+			loggingConfig = &lambdafern.LambdaLoggingConfig{
 				LogFormat: logFormat,
 				LogGroup:  *function.LoggingConfig.LogGroup,
 			}
@@ -79,7 +89,7 @@ func parseLambdaFunctionConfiguration(function types.FunctionConfiguration, regi
 		return nil, errors.New("function handler is nil")
 	}
 
-	var result = &methodaws.LambdaFunction{
+	var result = &lambdafern.LambdaFunction{
 		Name:                 *function.FunctionName,
 		Arn:                  *function.FunctionArn,
 		Description:          function.Description,
@@ -102,25 +112,33 @@ func parseLambdaFunctionConfiguration(function types.FunctionConfiguration, regi
 	return result, nil
 }
 
-func enumerateLambdaForRegion(ctx context.Context, cfg aws.Config, region string) ([]*methodaws.LambdaFunction, []error) {
-	cfg.Region = region
-	lambdaClient := lambda.NewFromConfig(cfg)
+func enumerateLambdaForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*lambdafern.LambdaFunction, []error) {
+	log := svc1log.FromContext(ctx)
+	log.Info("Enumerating Lambda functions for region", svc1log.SafeParam("region", region))
+
+	awsConfig.Region = region
+	lambdaClient := lambda.NewFromConfig(awsConfig)
 	paginator := lambda.NewListFunctionsPaginator(lambdaClient, &lambda.ListFunctionsInput{
 		MaxItems: aws.Int32(50),
 	})
 
-	var functions []*methodaws.LambdaFunction
+	var functions []*lambdafern.LambdaFunction
 	var errors []error
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(context.TODO())
 		if err != nil {
-			// failed to page so just return an empty list and the error
-			return []*methodaws.LambdaFunction{}, append(errors, err)
+			log.Error("Failed to get next page of Lambda functions",
+				svc1log.SafeParam("region", region),
+				svc1log.Stacktrace(err))
+			// failed to page so just return an empty list and the error with region context
+			wrappedErr := fmt.Errorf("region %s: %w", region, err)
+			return []*lambdafern.LambdaFunction{}, append(errors, wrappedErr)
 		}
 		for _, function := range page.Functions {
-			parsedFunction, err := parseLambdaFunctionConfiguration(function, region)
+			parsedFunction, err := parseLambdaFunctionConfiguration(ctx, function, region)
 			if err != nil {
-				errors = append(errors, err)
+				wrappedErr := fmt.Errorf("region %s: %w", region, err)
+				errors = append(errors, wrappedErr)
 			} else {
 				functions = append(functions, parsedFunction)
 			}
@@ -129,29 +147,34 @@ func enumerateLambdaForRegion(ctx context.Context, cfg aws.Config, region string
 	return functions, errors
 }
 
-func EnumerateLambda(ctx context.Context, cfg aws.Config, regions []string) methodaws.LambdaReport {
-	accountID, err := sts.GetAccountID(ctx, cfg)
-	if err != nil {
-		return methodaws.LambdaReport{
-			AccountId: aws.ToString(accountID),
-			Functions: []*methodaws.LambdaFunction{},
-			Errors:    []string{err.Error()},
-		}
+func EnumerateLambda(ctx context.Context, awsConfig aws.Config, config lambdafern.LambdaEnumerateConfig) *lambdafern.LambdaEnumerateReport {
+	log := svc1log.FromContext(ctx)
+	log.Info("Starting Lambda enumeration",
+		svc1log.SafeParam("regionsCount", len(config.Regions)),
+		svc1log.SafeParam("accountId", config.AccountId))
+
+	// Initialize report
+	report := &lambdafern.LambdaEnumerateReport{
+		Config: &config,
+		Result: &lambdafern.LambdaEnumerateResult{},
 	}
 
-	report := methodaws.LambdaReport{
-		AccountId: aws.ToString(accountID),
-		Functions: []*methodaws.LambdaFunction{},
-		Errors:    []string{},
-	}
+	var allFunctions []*lambdafern.LambdaFunction
+	var allErrors []string
 
-	for _, region := range regions {
-		functions, errs := enumerateLambdaForRegion(ctx, cfg, region)
-		report.Functions = append(report.Functions, functions...)
+	for _, region := range config.Regions {
+		log.Info("Processing Lambda functions in region", svc1log.SafeParam("region", region))
+		functions, errs := enumerateLambdaForRegion(ctx, awsConfig, region)
+		allFunctions = append(allFunctions, functions...)
 		for _, err := range errs {
-			report.Errors = append(report.Errors, err.Error())
+			allErrors = append(allErrors, err.Error())
 		}
 	}
 
+	// Populate report
+	if len(allFunctions) > 0 {
+		report.Result.Functions = allFunctions
+	}
+	report.Errors = allErrors
 	return report
 }

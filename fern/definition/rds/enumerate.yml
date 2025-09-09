@@ -1,32 +1,9 @@
 types:
 # Config
-  RDSEnumerateConfig:
+  RdsEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
-# RDS Enums
-  ActivityStreamMode:
-    enum:
-      - SYNC
-      - ASYNC
-  ActivityStreamStatus:
-    enum:
-      - STOPPED
-      - STARTING
-      - STARTED
-      - STOPPING
-  AutomationMode:
-    enum:
-      - FULL
-      - ALL_PAUSED
-  DatabaseInsightsMode:
-    enum:
-      - STANDARD
-      - ADVANCED
-  ReplicaMode:
-    enum:
-      - OPEN_READ_ONLY
-      - MOUNTED
 # Supporting Types
   Tag:
     properties:
@@ -37,178 +14,72 @@ types:
       address: optional<string>
       port: optional<integer>
       hostedZoneId: optional<string>
-  DBInstanceRole:
+  StorageConfig:
     properties:
-      roleArn: optional<string>
-      featureName: optional<string>
-      status: optional<string>
-  DBInstanceAutomatedBackupsReplication:
-    properties:
-      dbInstanceAutomatedBackupsArn: optional<string>
-  VpcSecurityGroupMembership:
-    properties:
-      vpcSecurityGroupId: optional<string>
-      status: optional<string>
-  DBParameterGroupStatus:
-    properties:
-      dbParameterGroupName: optional<string>
-      parameterApplyStatus: optional<string>
-  DBSecurityGroupMembership:
-    properties:
-      dbSecurityGroupName: optional<string>
-      status: optional<string>
-  DBSubnetGroup:
-    properties:
-      dbSubnetGroupName: optional<string>
-      dbSubnetGroupDescription: optional<string>
-      vpcId: optional<string>
-      subnetGroupStatus: optional<string>
-  DomainMembership:
-    properties:
-      domain: optional<string>
-      status: optional<string>
-      fqdn: optional<string>
-      iamRoleName: optional<string>
-      oudistinguishedName: optional<string>
-  OptionGroupMembership:
-    properties:
-      optionGroupName: optional<string>
-      status: optional<string>
-  ProcessorFeature:
-    properties:
-      name: optional<string>
-      value: optional<string>
-  DBInstanceStatusInfo:
-    properties:
-      statusType: optional<string>
-      normal: optional<boolean>
-      status: optional<string>
-      message: optional<string>
-  PendingModifiedValues:
-    properties:
-      dbInstanceClass: optional<string>
       allocatedStorage: optional<integer>
-      masterUserPassword: optional<string>
-      port: optional<integer>
-      backupRetentionPeriod: optional<integer>
-      multiAZ: optional<boolean>
-      engineVersion: optional<string>
-      licenseModel: optional<string>
-      iops: optional<integer>
-      dbInstanceIdentifier: optional<string>
-      storageType: optional<string>
-      caCertificateIdentifier: optional<string>
-      dbSubnetGroupName: optional<string>
-      storageThroughput: optional<integer>
-      dedicatedLogVolume: optional<boolean>
-  MasterUserSecret:
-    properties:
-      secretArn: optional<string>
-      secretStatus: optional<string>
-      kmsKeyId: optional<string>
-  CertificateDetails:
-    properties:
-      caIdentifier: optional<string>
-      validTill: optional<string>
-# Core RDS Types
-  DBInstance:
-    properties:
-      activityStreamEngineNativeAuditFieldsIncluded: optional<boolean>
-      activityStreamKinesisStreamName: optional<string>
-      activityStreamKmsKeyId: optional<string>
-      activityStreamMode: optional<ActivityStreamMode>
-      activityStreamStatus: optional<ActivityStreamStatus>
-      allocatedStorage: optional<integer>
-      associatedRoles: optional<list<DBInstanceRole>>
-      autoMinorVersionUpgrade: optional<boolean>
-      automaticRestartTime: optional<string>
-      automationMode: optional<AutomationMode>
-      availabilityZone: optional<string>
-      awsBackupRecoveryPointArn: optional<string>
-      backupRetentionPeriod: optional<integer>
-      backupTarget: optional<string>
-      caCertificateIdentifier: optional<string>
-      certificateDetails: optional<CertificateDetails>
-      characterSetName: optional<string>
-      copyTagsToSnapshot: optional<boolean>
-      customIamInstanceProfile: optional<string>
-      customerOwnedIpEnabled: optional<boolean>
-      dbClusterIdentifier: optional<string>
-      dbInstanceArn: optional<string>
-      dbInstanceAutomatedBackupsReplications: optional<list<DBInstanceAutomatedBackupsReplication>>
-      dbInstanceClass: optional<string>
-      dbInstanceIdentifier: optional<string>
-      dbInstanceStatus: optional<string>
-      dbName: optional<string>
-      dbParameterGroups: optional<list<DBParameterGroupStatus>>
-      dbSecurityGroups: optional<list<DBSecurityGroupMembership>>
-      dbSubnetGroup: optional<DBSubnetGroup>
-      dbSystemId: optional<string>
-      databaseInsightsMode: optional<DatabaseInsightsMode>
-      dbInstancePort: optional<integer>
-      dbiResourceId: optional<string>
-      dedicatedLogVolume: optional<boolean>
-      deletionProtection: optional<boolean>
-      domainMemberships: optional<list<DomainMembership>>
-      enabledCloudwatchLogsExports: optional<list<string>>
-      endpoint: optional<Endpoint>
-      engine: optional<string>
-      engineLifecycleSupport: optional<string>
-      engineVersion: optional<string>
-      enhancedMonitoringResourceArn: optional<string>
-      iamDatabaseAuthenticationEnabled: optional<boolean>
-      instanceCreateTime: optional<string>
-      iops: optional<integer>
-      isStorageConfigUpgradeAvailable: optional<boolean>
-      kmsKeyId: optional<string>
-      latestRestorableTime: optional<string>
-      licenseModel: optional<string>
-      listenerEndpoint: optional<Endpoint>
-      masterUserSecret: optional<MasterUserSecret>
-      masterUsername: optional<string>
       maxAllocatedStorage: optional<integer>
-      monitoringInterval: optional<integer>
-      monitoringRoleArn: optional<string>
-      multiAZ: optional<boolean>
-      multiTenant: optional<boolean>
-      ncharCharacterSetName: optional<string>
-      networkType: optional<string>
-      optionGroupMemberships: optional<list<OptionGroupMembership>>
-      pendingModifiedValues: optional<PendingModifiedValues>
-      percentProgress: optional<string>
-      performanceInsightsEnabled: optional<boolean>
-      performanceInsightsKMSKeyId: optional<string>
-      performanceInsightsRetentionPeriod: optional<integer>
-      preferredBackupWindow: optional<string>
-      preferredMaintenanceWindow: optional<string>
-      processorFeatures: optional<list<ProcessorFeature>>
-      promotionTier: optional<integer>
-      publiclyAccessible: optional<boolean>
-      readReplicaDBClusterIdentifiers: optional<list<string>>
-      readReplicaDBInstanceIdentifiers: optional<list<string>>
-      readReplicaSourceDBClusterIdentifier: optional<string>
-      readReplicaSourceDBInstanceIdentifier: optional<string>
-      replicaMode: optional<ReplicaMode>
-      resumeFullAutomationModeTime: optional<string>
-      secondaryAvailabilityZone: optional<string>
-      statusInfos: optional<list<DBInstanceStatusInfo>>
+      storageType: optional<string>
       storageEncrypted: optional<boolean>
       storageThroughput: optional<integer>
-      storageType: optional<string>
-      tagList: optional<list<Tag>>
-      tdeCredentialArn: optional<string>
-      timezone: optional<string>
-      vpcSecurityGroups: optional<list<VpcSecurityGroupMembership>>
-  RDSInstance:
+      iops: optional<integer>
+  SecurityConfig:
     properties:
-      dbInstance: DBInstance
+      deletionProtection: optional<boolean>
+      iamDatabaseAuthenticationEnabled: optional<boolean>
+      kmsKeyId: optional<string>
+      vpcSecurityGroupIds: optional<list<string>>
+  MonitoringConfig:
+    properties:
+      monitoringInterval: optional<integer>
+      monitoringRoleArn: optional<string>
+      performanceInsightsEnabled: optional<boolean>
+      performanceInsightsKMSKeyId: optional<string>
+  BackupConfig:
+    properties:
+      backupRetentionPeriod: optional<integer>
+      preferredBackupWindow: optional<string>
+      preferredMaintenanceWindow: optional<string>
+      copyTagsToSnapshot: optional<boolean>
+      latestRestorableTime: optional<datetime>
+  VpcInstance:
+    properties:
+      id: string
+      subnetIds: optional<list<string>>
+# Core RDS Types
+  RdsInstance:
+    properties:
+      # Core Identity & Status
+      id: string
+      arn: optional<string>
+      name: optional<string>
       region: string
-  RDSEnumerateResult:
+      status: optional<string>
+      class: optional<string>
+      # Database Configuration
+      engine: optional<string>
+      engineVersion: optional<string>
+      masterUsername: optional<string>
+      # Network & Availability
+      endpoint: optional<Endpoint>
+      availabilityZone: optional<string>
+      multiAZ: optional<boolean>
+      publiclyAccessible: optional<boolean>
+      # VPC References
+      vpc: optional<VpcInstance>
+      # Grouped Configurations
+      storage: optional<StorageConfig>
+      security: optional<SecurityConfig>
+      monitoring: optional<MonitoringConfig>
+      backup: optional<BackupConfig>
+      # Metadata
+      instanceCreateTime: optional<datetime>
+      tags: optional<list<Tag>>
+  RdsEnumerateResult:
     properties:
-      rdsInstances: optional<list<RDSInstance>>
+      rdsInstances: optional<list<RdsInstance>>
   # Report Struct
-  RDSEnumerateReport:
+  RdsEnumerateReport:
     properties:
-      result: RDSEnumerateResult
-      config: RDSEnumerateConfig
+      result: RdsEnumerateResult
+      config: RdsEnumerateConfig
       errors: optional<list<string>>

@@ -37,23 +37,8 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 				return
 			}
 
-			var vpcID *string
-			vpcIDFlag, err := cmd.Flags().GetString("vpc")
-			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
-				return
-			}
-
-			if vpcIDFlag != "" {
-				vpcID = &vpcIDFlag
-			} else {
-				vpcID = nil
-			}
-
 			// Get Config
-			config := getSecurityGroupEnumerateConfig(accountID, vpcID, a.RootFlags.Regions)
+			config := getSecurityGroupEnumerateConfig(accountID, a.RootFlags.Regions)
 
 			// Get Report
 			report := securitygroup.EnumerateSecurityGroups(cmd.Context(), *a.AwsConfig, config)
@@ -61,16 +46,13 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 		},
 	}
 
-	enumerateCmd.Flags().String("vpc", "", "VPC ID to filter security groups by")
-
 	securityGroupCmd.AddCommand(enumerateCmd)
 	a.RootCmd.AddCommand(securityGroupCmd)
 }
 
-func getSecurityGroupEnumerateConfig(accountID string, vpcID *string, regions []string) fernsecuritygroup.Ec2SecurityGroupsEnumerateConfig {
-	return fernsecuritygroup.Ec2SecurityGroupsEnumerateConfig{
+func getSecurityGroupEnumerateConfig(accountID string, regions []string) fernsecuritygroup.SecurityGroupsEnumerateConfig {
+	return fernsecuritygroup.SecurityGroupsEnumerateConfig{
 		AccountId: accountID,
-		VpcId:     vpcID,
 		Regions:   regions,
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
+// EnumerateWAF enumerates WAFs based on the provided configuration
 func EnumerateWAF(ctx context.Context, awsConfig aws.Config, config waffern.WafEnumerateConfig) *waffern.WafEnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting WAF enumeration",
@@ -25,9 +26,8 @@ func EnumerateWAF(ctx context.Context, awsConfig aws.Config, config waffern.WafE
 		Result: &waffern.WafEnumerateResult{},
 	}
 
-	var regionReports []*waffern.RegionWafInfo
 	var allErrors []string
-
+	var allWafs []*waffern.WafInstance
 	for _, region := range config.Regions {
 		log.Info("Processing WAF instances in region", svc1log.SafeParam("region", region))
 		wafs, errors := enumerateWAFForRegion(ctx, awsConfig, region)
@@ -39,30 +39,23 @@ func EnumerateWAF(ctx context.Context, awsConfig aws.Config, config waffern.WafE
 		}
 
 		allErrors = append(allErrors, errors...)
+		allWafs = append(allWafs, wafs...)
 
-		regionReport := waffern.RegionWafInfo{
-			Region: region,
-			Wafs:   wafs,
-		}
-		// Only add region report if there are WAFs in the region
-		if len(wafs) > 0 {
-			regionReports = append(regionReports, &regionReport)
-		}
 		log.Info("Successfully processed WAF instances in region",
 			svc1log.SafeParam("region", region),
 			svc1log.SafeParam("wafCount", len(wafs)))
 	}
 
-	// Marshal report
-	report.Result.Scope = waffern.ScopeTypeRegional
-	if len(regionReports) > 0 {
-		report.Result.Regions = regionReports
+	// Set the results
+	if len(allWafs) > 0 {
+		report.Result.Wafs = allWafs
 	}
 	report.Errors = allErrors
 	return report
 }
 
-func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*waffern.Waf, []string) {
+// enumerateWAFForRegion enumerates WAFs for a given region
+func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*waffern.WafInstance, []string) {
 	log := svc1log.FromContext(ctx)
 	awsConfig.Region = region
 
@@ -81,26 +74,37 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 
 	log.Info("Successfully listed WAF WebACLs", svc1log.SafeParam("count", len(webACLsOutput.WebACLs)))
 
-	var wafs []*waffern.Waf
+	var wafs []*waffern.WafInstance
 	for _, webACL := range webACLsOutput.WebACLs {
+		// check if WAF has an ID
+		if webACL.ARN == nil {
+			log.Warn("WAF WebACL ARN is nil", svc1log.SafeParam("webACL", webACL))
+			errors = append(errors, "WAF WebACL ARN is nil")
+			continue
+		}
+
+		// Get the rules for the WAF
 		rules, defaultAction, errs := getRules(ctx, wafClient, types.ScopeRegional, webACL.Id, webACL.Name)
 		if len(errs) != 0 {
 			errors = append(errors, errs...)
 			continue
 		}
 
+		// Get the resources for the WAF
 		resources, err := getResources(ctx, wafClient, webACL.ARN)
 		if err != nil {
 			errors = append(errors, err.Error())
 			continue
 		}
 
-		description := aws.ToString(webACL.Description)
-		waf := waffern.Waf{
+		// Create the WAF instance
+		waf := waffern.WafInstance{
 			Arn:           aws.ToString(webACL.ARN),
-			Name:          aws.ToString(webACL.Name),
-			Description:   &description,
-			DefaultAction: *defaultAction,
+			Name:          webACL.Name,
+			Region:        region,
+			Scope:         waffern.ScopeTypeRegional,
+			Description:   webACL.Description,
+			DefaultAction: defaultAction,
 			Rules:         rules,
 			Resources:     resources,
 		}
@@ -110,7 +114,9 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 	return wafs, errors
 }
 
+// getRules gets the rules for a given WebACL
 func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, webACLId, webACLName *string) ([]*waffern.RuleInfo, *waffern.ActionType, []string) {
+	log := svc1log.FromContext(ctx)
 	getWebACLInput := &wafv2.GetWebACLInput{Id: webACLId, Name: webACLName, Scope: scope}
 	webACLOutput, err := wafClient.GetWebACL(ctx, getWebACLInput)
 	if err != nil {
@@ -127,6 +133,11 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 	var rules []*waffern.RuleInfo
 	var errors []string
 	for _, rule := range webACLOutput.WebACL.Rules {
+		if rule.Name == nil {
+			log.Warn("WAF Rule Name is nil", svc1log.SafeParam("rule", rule))
+			errors = append(errors, "WAF Rule Name is nil")
+			continue
+		}
 		ruleJSON, err := json.Marshal(rule)
 		if err != nil {
 			errors = append(errors, err.Error())
@@ -173,6 +184,7 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 	return rules, &defaultActionType, errors
 }
 
+// getResources gets the resources for a given WebACL
 func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*waffern.ResourceInfo, error) {
 	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
 	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
@@ -191,6 +203,7 @@ func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *strin
 	return resourceInfos, nil
 }
 
+// getActionType gets the action type for a given RuleAction
 func getActionType(action *types.RuleAction) waffern.ActionType {
 	switch {
 	case action.Allow != nil:
@@ -208,6 +221,7 @@ func getActionType(action *types.RuleAction) waffern.ActionType {
 	}
 }
 
+// getDefaultActionType gets the default action type for a given DefaultAction
 func getDefaultActionType(action *types.DefaultAction) waffern.ActionType {
 	switch {
 	case action.Allow != nil:
@@ -219,6 +233,7 @@ func getDefaultActionType(action *types.DefaultAction) waffern.ActionType {
 	}
 }
 
+// getResourceTypeFromArn gets the resource type for a given ARN
 func getResourceTypeFromArn(arn string) waffern.WafResourceType {
 	switch {
 	case strings.Contains(arn, "elasticloadbalancing") && strings.Contains(arn, "loadbalancer/app"):
@@ -238,6 +253,7 @@ func getResourceTypeFromArn(arn string) waffern.WafResourceType {
 	}
 }
 
+// getStatementType gets the statement type for a given Statement
 func getStatementType(statement *types.Statement) waffern.StatementType {
 	switch {
 	case statement.AndStatement != nil:

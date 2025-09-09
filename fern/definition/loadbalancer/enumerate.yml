@@ -55,48 +55,62 @@ types:
       isDefault: boolean
   Listener:
     properties:
-      arn: optional<string>
+      arn: string
       protocol: optional<Protocol>
-      port: integer
+      port: optional<integer>
       certificates: optional<list<Certificate>>
       loadBalancerArn: optional<string>
   Target:
     properties:
+    # Core fields
       id: string
-      type: TargetType
+    # Target fields
+      type: optional<TargetType>
       port: optional<integer>
       availabilityZone: optional<string>
   TargetGroup:
     properties:
+    # Core fields
       arn: string
-      name: string
-      ipAddressType: TargetGroupIpAddressType
-      loadBalancerArns: list<string>
-      port: integer
+      name: optional<string>
+    # Target Group fields
+      ipAddressType: optional<TargetGroupIpAddressType>
+      port: optional<integer>
+      loadBalancerArns: optional<list<string>>
       protocol: optional<Protocol>
       vpcId: optional<string>
       targets: optional<list<Target>>
-  LoadBalancer:
+  BaseLoadBalancer:
     properties:
-      version: LoadBalancerVersion
-      loadBalancerType: optional<LoadBalancerType>
-      # Common properties
-      name: string
+    # Core properties
+      loadBalancerType: LoadBalancerType
+      id: string
       region: string
       createdTime: optional<datetime>
+    # Common LB properties
       dnsName: optional<string>
       securityGroupIds: optional<list<string>>
       vpcId: optional<string>
       subnetIds: optional<list<string>>
       hostedZoneId: optional<string>
       listeners: optional<list<Listener>>
-      # V2-only properties
+  LoadBalancerV1:
+    extends: BaseLoadBalancer
+    properties:
+      # V1-specific properties
+      targets: optional<list<Target>>
+  LoadBalancerV2:
+    extends: BaseLoadBalancer
+    properties:
+      # V2-specific properties
       arn: optional<string>
       ipAddressType: optional<IpAddressType>
       state: optional<LoadBalancerState>
       targetGroups: optional<list<TargetGroup>>
-      # V1-only properties
-      targets: optional<list<Target>>
+  LoadBalancer:
+    union:
+      v1: LoadBalancerV1
+      v2: LoadBalancerV2
   LoadBalancerResult:
     properties:
       loadBalancers: optional<list<LoadBalancer>>

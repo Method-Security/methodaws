@@ -4,7 +4,7 @@ import (
 	// Generated
 	cloudfrontfern "github.com/Method-Security/methodaws/generated/go/cloudfront"
 	// Internal
-	"github.com/Method-Security/methodaws/internal/cloudfront"
+	"github.com/Method-Security/methodaws/internal/cloudfront/enumerate"
 	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
 )
@@ -38,7 +38,7 @@ func (a *MethodAws) InitCloudFrontCommand() {
 			config := getCloudFrontEnumerateConfig(accountID)
 
 			// Report
-			report := cloudfront.EnumerateCloudFront(cmd.Context(), *a.AwsConfig, config)
+			report := enumerate.GatherCloudFrontInfo(cmd.Context(), *a.AwsConfig, config)
 			a.OutputSignal.Content = report
 		},
 	}

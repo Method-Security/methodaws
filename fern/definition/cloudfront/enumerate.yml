@@ -1,6 +1,3 @@
-
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
-
 types:
 # Config
   CloudFrontEnumerateConfig:
@@ -11,7 +8,7 @@ types:
     enum:
       - ENABLED
       - DISABLED
-  CloudFrontOriginType:
+  CloudFrontResourceType:
     enum:
       - S3
       - EC2
@@ -22,21 +19,26 @@ types:
 # Result Structs
   CloudFrontDistributionOrigin:
     properties:
-      DomainName: string
-      Id: string
-      OriginType: CloudFrontOriginType
-      OriginArn: optional<string>
-      Path: optional<string>
-      CustomHeaders: optional<list<string>>
-      ConnectionAttempts: optional<integer>
-      ConnectionTimeout: optional<integer>
+    # Core fields
+      id: string
+    # CloudFront Distribution Origin fields
+      domainName: string
+      resourceType: CloudFrontResourceType
+      path: optional<string>
+      customHeaders: optional<list<string>>
+      connectionAttempts: optional<integer>
+      connectionTimeout: optional<integer>
   CloudFrontDistribution:
     properties:
-      Arn: string
-      DomainName: string
-      Comment: optional<string>
-      Origins: list<CloudFrontDistributionOrigin>
-      Status: CloudFrontDistributionStatus
+    # Core fields
+      id: string
+    # CloudFront Distribution fields
+      domainName: optional<string>
+      status: optional<CloudFrontDistributionStatus>
+      arn: optional<string>
+      comment: optional<string>
+    # Linked primatives
+      origins: optional<list<CloudFrontDistributionOrigin>>
   CloudFrontEnumerateResult:
     properties:
       distributions: optional<list<CloudFrontDistribution>>

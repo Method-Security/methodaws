@@ -2,9 +2,11 @@
 package rds
 
 import (
+	// Standard
 	"context"
-
+	// Generated
 	rdsfern "github.com/Method-Security/methodaws/generated/go/rds"
+	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
@@ -80,8 +82,18 @@ func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region str
 
 	var rdsInstances []*rdsfern.RdsInstance
 	for _, instance := range instances {
-		rdsInstance := transformDBInstanceToFern(instance, region)
-		rdsInstances = append(rdsInstances, rdsInstance)
+		// Check for required DBInstanceIdentifier
+		if instance.DBInstanceIdentifier == nil {
+			log.Warn("RDS DB Instance Identifier is nil", svc1log.SafeParam("instance", instance))
+			errors = append(errors, "RDS DB Instance Identifier is nil")
+			continue
+		}
+
+		rdsInstance, errs := convertAWSDBInstanceToFern(instance, region)
+		if rdsInstance != nil {
+			rdsInstances = append(rdsInstances, rdsInstance)
+		}
+		errors = append(errors, errs...)
 	}
 
 	return rdsInstances, errors
@@ -103,71 +115,143 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 	return instances, nil
 }
 
-func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfern.RdsInstance {
-	dbInstance := &rdsfern.DbInstance{}
+// convertAWSDBInstanceToFern converts an AWS RDS DB Instance to a Fern RDS Instance
+func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsfern.RdsInstance, []string) {
+	errors := []string{}
 
-	// Map basic fields
-	dbInstance.DbInstanceIdentifier = instance.DBInstanceIdentifier
-	dbInstance.DbInstanceClass = instance.DBInstanceClass
-	dbInstance.Engine = instance.Engine
-	dbInstance.EngineVersion = instance.EngineVersion
-	dbInstance.DbInstanceStatus = instance.DBInstanceStatus
-	dbInstance.MasterUsername = instance.MasterUsername
-	dbInstance.DbName = instance.DBName
-	dbInstance.AvailabilityZone = instance.AvailabilityZone
-	dbInstance.DbInstanceArn = instance.DBInstanceArn
-	dbInstance.DbiResourceId = instance.DbiResourceId
-
-	// Map integer fields
-	if instance.AllocatedStorage != nil {
-		allocatedStorage := int(*instance.AllocatedStorage)
-		dbInstance.AllocatedStorage = &allocatedStorage
+	// Core Identity & Status (required field)
+	if instance.DBInstanceIdentifier == nil {
+		return nil, errors
 	}
-	if instance.DbInstancePort != nil {
-		dbInstancePort := int(*instance.DbInstancePort)
-		dbInstance.DbInstancePort = &dbInstancePort
+	dbInstance := &rdsfern.RdsInstance{
+		// Core Identity & Status
+		Id:     *instance.DBInstanceIdentifier,
+		Arn:    instance.DBInstanceArn,
+		Status: instance.DBInstanceStatus,
+		Class:  instance.DBInstanceClass,
+		Region: region,
+		// Database Configuration
+		Engine:         instance.Engine,
+		EngineVersion:  instance.EngineVersion,
+		Name:           instance.DBName,
+		MasterUsername: instance.MasterUsername,
+		// Network & Availability
+		AvailabilityZone:   instance.AvailabilityZone,
+		MultiAz:            instance.MultiAZ,
+		PubliclyAccessible: instance.PubliclyAccessible,
+	}
+
+	// Network & Availability
+	if instance.Endpoint != nil {
+		var port *int
+		if instance.Endpoint.Port != nil {
+			val := int(*instance.Endpoint.Port)
+			port = &val
+		}
+		dbInstance.Endpoint = &rdsfern.Endpoint{
+			Address:      instance.Endpoint.Address,
+			Port:         port,
+			HostedZoneId: instance.Endpoint.HostedZoneId,
+		}
+	}
+
+	// VPC References (minimal VPC info to avoid duplication with VPC enumeration)
+	if instance.DBSubnetGroup != nil && instance.DBSubnetGroup.VpcId != nil {
+		// Get subnet IDs from the subnet group
+		var subnetIds []string
+		for _, subnet := range instance.DBSubnetGroup.Subnets {
+			if subnet.SubnetIdentifier != nil {
+				subnetIds = append(subnetIds, *subnet.SubnetIdentifier)
+			}
+		}
+
+		dbInstance.Vpc = &rdsfern.VpcInstance{
+			Id:        *instance.DBSubnetGroup.VpcId,
+			SubnetIds: subnetIds,
+		}
+	}
+
+	// Storage Configuration
+	var allocatedStorage, maxStorage, storageThroughput, iops *int
+	if instance.AllocatedStorage != nil {
+		val := int(*instance.AllocatedStorage)
+		allocatedStorage = &val
+	}
+	if instance.MaxAllocatedStorage != nil {
+		val := int(*instance.MaxAllocatedStorage)
+		maxStorage = &val
+	}
+	if instance.StorageThroughput != nil {
+		val := int(*instance.StorageThroughput)
+		storageThroughput = &val
 	}
 	if instance.Iops != nil {
-		iops := int(*instance.Iops)
-		dbInstance.Iops = &iops
+		val := int(*instance.Iops)
+		iops = &val
+	}
+	dbInstance.Storage = &rdsfern.StorageConfig{
+		AllocatedStorage:    allocatedStorage,
+		MaxAllocatedStorage: maxStorage,
+		StorageType:         instance.StorageType,
+		StorageEncrypted:    instance.StorageEncrypted,
+		StorageThroughput:   storageThroughput,
+		Iops:                iops,
 	}
 
-	// Map boolean fields
-	dbInstance.MultiAz = instance.MultiAZ
-	dbInstance.PubliclyAccessible = instance.PubliclyAccessible
-	dbInstance.StorageEncrypted = instance.StorageEncrypted
-	dbInstance.AutoMinorVersionUpgrade = instance.AutoMinorVersionUpgrade
-
-	// Map endpoint
-	if instance.Endpoint != nil {
-		endpoint := &rdsfern.Endpoint{}
-		if instance.Endpoint.Address != nil {
-			endpoint.Address = instance.Endpoint.Address
+	// Security Configuration
+	var vpcSecurityGroupIds []string
+	for _, sg := range instance.VpcSecurityGroups {
+		if sg.VpcSecurityGroupId != nil {
+			vpcSecurityGroupIds = append(vpcSecurityGroupIds, *sg.VpcSecurityGroupId)
 		}
-		if instance.Endpoint.Port != nil {
-			port := int(*instance.Endpoint.Port)
-			endpoint.Port = &port
-		}
-		if instance.Endpoint.HostedZoneId != nil {
-			endpoint.HostedZoneId = instance.Endpoint.HostedZoneId
-		}
-		dbInstance.Endpoint = endpoint
+	}
+	dbInstance.Security = &rdsfern.SecurityConfig{
+		DeletionProtection:               instance.DeletionProtection,
+		IamDatabaseAuthenticationEnabled: instance.IAMDatabaseAuthenticationEnabled,
+		KmsKeyId:                         instance.KmsKeyId,
+		VpcSecurityGroupIds:              vpcSecurityGroupIds,
 	}
 
-	// Map tags
-	if len(instance.TagList) > 0 {
-		var tags []*rdsfern.Tag
-		for _, tag := range instance.TagList {
-			fernTag := &rdsfern.Tag{}
-			fernTag.Key = tag.Key
-			fernTag.Value = tag.Value
-			tags = append(tags, fernTag)
-		}
-		dbInstance.TagList = tags
+	// Monitoring Configuration
+	var monitoringInterval *int
+	if instance.MonitoringInterval != nil {
+		val := int(*instance.MonitoringInterval)
+		monitoringInterval = &val
+	}
+	dbInstance.Monitoring = &rdsfern.MonitoringConfig{
+		MonitoringInterval:          monitoringInterval,
+		MonitoringRoleArn:           instance.MonitoringRoleArn,
+		PerformanceInsightsEnabled:  instance.PerformanceInsightsEnabled,
+		PerformanceInsightsKmsKeyId: instance.PerformanceInsightsKMSKeyId,
 	}
 
-	return &rdsfern.RdsInstance{
-		DbInstance: dbInstance,
-		Region:     region,
+	// Backup Configuration
+	var backupRetention *int
+	if instance.BackupRetentionPeriod != nil {
+		val := int(*instance.BackupRetentionPeriod)
+		backupRetention = &val
 	}
+
+	dbInstance.Backup = &rdsfern.BackupConfig{
+		BackupRetentionPeriod:      backupRetention,
+		PreferredBackupWindow:      instance.PreferredBackupWindow,
+		PreferredMaintenanceWindow: instance.PreferredMaintenanceWindow,
+		CopyTagsToSnapshot:         instance.CopyTagsToSnapshot,
+		LatestRestorableTime:       instance.LatestRestorableTime,
+	}
+
+	// Metadata
+	dbInstance.InstanceCreateTime = instance.InstanceCreateTime
+
+	// Tags
+	var tags []*rdsfern.Tag
+	for _, tag := range instance.TagList {
+		tags = append(tags, &rdsfern.Tag{
+			Key:   tag.Key,
+			Value: tag.Value,
+		})
+	}
+	dbInstance.Tags = tags
+
+	return dbInstance, errors
 }

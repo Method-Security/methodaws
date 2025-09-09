@@ -16,7 +16,6 @@ func main() {
 	methodaws.InitRootCommand()
 
 	methodaws.InitAPIGatewayCommand()
-	methodaws.InitCurrentInstanceCommand()
 	methodaws.InitEc2Command()
 	methodaws.InitEksCommand()
 	methodaws.InitIamCommand()

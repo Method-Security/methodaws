@@ -1,0 +1,60 @@
+types:
+# Config
+  LambdaEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Lambda Structs  
+  LambdaPackageType:
+    enum:
+      - ZIP
+      - IMAGE
+  LambdaArchitecture:
+    enum:
+      - X86_64
+      - ARM64
+  LambdaVpcConfig:
+    properties:
+      vpcId: string
+      subnetIds: list<string>
+      securityGroupIds: list<string>
+  LambdaLoggingFormat:
+    enum:
+      - TEXT
+      - JSON
+  LambdaLoggingConfig:
+    properties:
+      logFormat: LambdaLoggingFormat
+      logGroup: string
+  LambdaFunction:
+    properties:
+    # Core fields
+      name: string
+      arn: string
+      region: string
+    # Lambda fields
+      revisionId: string
+      runtime: string
+      handler: string
+      codeSizeInBytes: long
+      timeoutInSeconds: integer
+      memorySizeInMb: integer
+      ephemeralStorageInMb: integer
+      lastModified: datetime
+      packageType: LambdaPackageType
+      description: optional<string>
+      codeSha256: optional<string>
+      architectures: optional<list<LambdaArchitecture>>
+      loggingConfig: optional<LambdaLoggingConfig>
+    # Linked primatives
+      vpc: optional<LambdaVpcConfig>
+      roleArn: string
+  LambdaEnumerateResult:
+    properties:
+      functions: optional<list<LambdaFunction>>
+  # Report Struct
+  LambdaEnumerateReport:
+    properties:
+      result: LambdaEnumerateResult
+      config: LambdaEnumerateConfig
+      errors: optional<list<string>>

@@ -19,9 +19,9 @@ types:
       name: string
       url: string
       region: string
-      directoryContents: optional<list<S3ObjectDetails>>
       allowDirectoryListing: boolean
       allowAnonymousRead: boolean
+      directoryContents: optional<list<S3ObjectDetails>>
       policy: optional<string>
       acls: optional<list<enumerate.S3BucketACL>>
       ownerID: optional<string>

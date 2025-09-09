@@ -1,0 +1,37 @@
+types:
+# Config
+  IamEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Result Structs
+  RoleLastUsed:
+    properties:
+      lastUsedDate: optional<datetime>
+      region: optional<string>
+  AttachedPolicy:
+    properties:
+      arn: string
+      policyName: string
+      policyDocument: optional<string>
+      isCustomerManaged: optional<boolean>
+  IamRole:
+    properties:
+      # Essential role fields only
+      arn: string
+      roleName: string
+      createDate: optional<datetime>
+      roleLastUsed: optional<RoleLastUsed>
+      attachedPolicies: optional<list<AttachedPolicy>>
+  IamResources:
+    properties:
+      roles: optional<list<IamRole>>
+  IamEnumerateResult:
+    properties:
+      resources: optional<IamResources>
+# Report struct
+  IamEnumerateReport:
+    properties:
+      config: IamEnumerateConfig
+      result: IamEnumerateResult
+      errors: optional<list<string>>
