@@ -4,10 +4,18 @@ types:
     properties:
       accountId: string
       regions: list<string>
+  ClusterStatus:
+    enum:
+    - CREATING
+    - ACTIVE
+    - DELETING
+    - FAILED
+    - UPDATING
+    - PENDING
 # EKS Structs
   Ec2Instance:
     properties:
-      instanceId: string
+      id: string
   NodeGroup:
     properties:
       name: optional<string>
@@ -79,14 +87,14 @@ types:
       bootstrapClusterCreatorAdminPermissions: optional<boolean>
   EksCluster:
     properties:
-      # Core cluster properties from eksTypes.Cluster
+      # Core Fields
       arn: string
+      id: optional<string>
       name: string
       region: string
-      status: string
+    # EKS Cluster fields
+      status: ClusterStatus
       endpoint: optional<string>
-      roleArn: optional<string>
-      resourcesVpcConfig: optional<EksVpcConfig>
       kubernetesNetworkConfig: optional<EksKubernetesNetworkConfig>
       logging: optional<EksLogging>
       identity: optional<EksIdentity>
@@ -94,13 +102,15 @@ types:
       tags: optional<map<string, string>>
       encryptionConfig: optional<list<EksEncryptionConfig>>
       connectorConfig: optional<EksConnectorConfig>
-      id: optional<string>
       health: optional<EksClusterHealth>
       outpostConfig: optional<EksOutpostConfig>
       accessConfig: optional<EksAccessConfig>
-      nodeGroups: optional<list<NodeGroup>>
       version: optional<string>
       createdAt: optional<datetime>
+      # Linked primatives
+      roleArn: optional<string>
+      resourcesVpcConfig: optional<EksVpcConfig>
+      nodeGroups: optional<list<NodeGroup>>
   EksEnumerateResult:
     properties:
       eksClusters: optional<list<EksCluster>>

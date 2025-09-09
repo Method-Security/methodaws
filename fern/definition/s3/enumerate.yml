@@ -37,10 +37,12 @@ types:
       kmsMasterKeyID: optional<string>
   S3Bucket:
     properties:
+    # Core fields
       name: string
       arn: string
       url: string
       region: string
+    # S3 Bucket fields
       creationDate: datetime
       ownerID: string
       ownerName: string
@@ -49,6 +51,7 @@ types:
       bucketVersioning: optional<BucketVersioningStatus>
       mfaDelete: optional<S3MFADeleteStatus>
       encryptionRules: optional<list<EncryptionRule>>
+      acls: optional<list<S3BucketACL>>
   S3EnumerateResult:
     properties:
       s3Buckets: optional<list<S3Bucket>>

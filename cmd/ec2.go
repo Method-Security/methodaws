@@ -6,7 +6,7 @@ import (
 	"github.com/Method-Security/methodaws/utils"
 
 	// Internal
-	"github.com/Method-Security/methodaws/internal/ec2"
+	"github.com/Method-Security/methodaws/internal/ec2/enumerate"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func (a *MethodAws) InitEc2Command() {
 			config := getEc2EnumerateConfig(a.RootFlags.Regions, accountID)
 
 			// Genate Report
-			report := ec2.EnumerateEc2(cmd.Context(), *a.AwsConfig, config)
+			report := enumerate.InternalEnumerateEc2(cmd.Context(), *a.AwsConfig, config)
 			a.OutputSignal.Content = report
 		},
 	}

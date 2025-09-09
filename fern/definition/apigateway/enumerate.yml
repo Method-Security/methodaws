@@ -38,21 +38,56 @@ types:
       - CLIENT_CERTIFICATE_VERIFICATION
       - CLIENT_CERTIFICATE_EXPIRED
       - CLIENT_CERTIFICATE_INVALID
+  ResourceType:
+    enum:
+      - LAMBDA_FUNCTION
+      - CLOUDWATCH_LOG_GROUP
+      - IAM_ROLE
+      - WAF_WEB_ACL
+      - COGNITO_USER_POOL
+      - VPC_LINK
+      - LOAD_BALANCER
+      - ECS_SERVICE
+      - S3_BUCKET
+      - EC2_INSTANCE
+      - APPLICATION_LOAD_BALANCER
+      - NETWORK_LOAD_BALANCER
+      - SNS_TOPIC
+      - SQS_QUEUE
+      - KINESIS_STREAM
+      - DYNAMODB_TABLE
+      - EVENTBRIDGE_RULE
+      - HTTP_ENDPOINT
+      - OTHER
+# Resource Relationship Modeling
+  ResourceReference:
+    properties:
+      arn: optional<string>
+      uri: optional<string>
+      resourceId: optional<string>
+      type: ResourceType
+      region: optional<string>
+      name: optional<string>
+      description: optional<string>
 # API Gateway Structs
   AwsProxyIntegration:
     properties:
       arn: string
+      resourceReference: optional<ResourceReference>
   AwsIntegration:
     properties:
       arn: string
+      resourceReference: optional<ResourceReference>
   MockIntegration:
     properties: {}
   HttpIntegration:
     properties: 
       uri: string
+      resourceReference: optional<ResourceReference>
   HttpProxyIntegration:
     properties: 
       uri: string
+      resourceReference: optional<ResourceReference>
   Integration:
     union:
       aws_proxy: AwsProxyIntegration
@@ -106,12 +141,24 @@ types:
       authorizer: optional<Authorizer>
       apiKeyRequired: optional<boolean>
       throttle: optional<ThrottleSettings>
-  ApiGateway:
+  ApiGatewaySecurity:
+    properties:
+      hasWafIntegration: boolean
+      hasCloudWatchLogging: boolean
+      hasThrottling: boolean
+      openEndpoints: integer
+      highRiskRoutes: list<string>
+      securityScore: double
+      authenticationMethods: list<AuthorizationType>
+      tlsVersions: list<SecurityPolicy>
+      corsConfigured: boolean
+      apiKeysRequired: boolean
+  ApiGatewayBase:
     properties:
       version: ApiGatewayVersion
       # Common properties
       region: string
-      id: optional<string>
+      id: string
       name: optional<string>
       createdTime: optional<datetime>
       description: optional<string>
@@ -120,23 +167,40 @@ types:
       certificates: optional<list<Certificate>>
       accessLogSettings: optional<AccessLogSettings>
       executionRoleArn: optional<string>
+      # Resource relationships
+      relatedResources: optional<list<ResourceReference>>
+      lambdaFunctions: optional<list<ResourceReference>>
+      cloudwatchLogs: optional<list<ResourceReference>>
+      iamRoles: optional<list<ResourceReference>>
+      # Security analysis
+      securityAnalysis: optional<ApiGatewaySecurity>
+  RestApiGateway:
+    extends: ApiGatewayBase
+    properties:
       # V1 (REST API) specific properties
-      baseUrl: optional<string>
+      baseUrl: string
       apiKeySource: optional<string>
-      stage: optional<string>
+      stage: string
       paths: optional<list<Route>>
       apiKeys: optional<list<string>>
       usagePlans: optional<list<string>>
       clientCertificateId: optional<string>
       minimumCompressionSize: optional<integer>
+  HttpApiGateway:
+    extends: ApiGatewayBase
+    properties:
       # V2 (HTTP API) specific properties  
-      apiEndpoint: optional<string>
-      protocolType: optional<string>
+      apiEndpoint: string
+      protocolType: string
       routes: optional<list<Route>>
       corsConfiguration: optional<CorsConfiguration>
       disableExecuteApiEndpoint: optional<boolean>
       mutualTlsAuthentication: optional<MutualTlsAuthentication>
       authorizers: optional<list<Authorizer>>
+  ApiGateway:
+    union:
+      rest: RestApiGateway
+      http: HttpApiGateway
   ApiGatewayResult:
     properties:
       apis: optional<list<ApiGateway>>

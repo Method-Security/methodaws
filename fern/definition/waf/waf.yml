@@ -64,24 +64,24 @@ types:
     properties:
       arn: string
       type: WafResourceType
-# Core WAF Types
-  Waf:
+# Main WAF structs
+  WafInstance:
     properties:
+    # Core fields
       arn: string
-      name: string
-      description: optional<string>
-      defaultAction: ActionType
-      rules: optional<list<RuleInfo>>
-      resources: optional<list<ResourceInfo>>
-  RegionWafInfo:
-    properties: 
+      name: optional<string>
       region: string
-      wafs: optional<list<Waf>>
+    # WAF fields
+      scope: ScopeType
+      description: optional<string>
+      defaultAction: optional<ActionType>
+      rules: optional<list<RuleInfo>>
+    # Linked primatives
+      resources: optional<list<ResourceInfo>>
+# Report Structs
   WafEnumerateResult:
     properties:
-      scope: ScopeType
-      regions: optional<list<RegionWafInfo>>
-  # Report Struct
+      wafs: optional<list<WafInstance>>
   WafEnumerateReport:
     properties:
       result: WafEnumerateResult

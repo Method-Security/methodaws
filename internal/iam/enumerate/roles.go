@@ -13,31 +13,41 @@ import (
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-// enumerateIamRoles retrieves all IAM roles available to the caller
-func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.RoleResource, []string) {
+// enumerateIamRoles retrieves all IAM roles with their attached policies
+func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRole, []string) {
 	log := svc1log.FromContext(ctx)
 	client := iamaws.NewFromConfig(cfg)
-	var roleResources []*iam.RoleResource
+	var iamRoles []*iam.IamRole
 	var errors []string
 
 	// Get all roles
 	roles, err := getAllRoles(ctx, client)
 	if err != nil {
 		errors = append(errors, err.Error())
-		return roleResources, errors
+		return iamRoles, errors
 	}
 
 	log.Info("Processing IAM roles", svc1log.SafeParam("roleCount", len(roles)))
 
 	for _, role := range roles {
-		roleResource, errs := enrichRoleWithPolicies(ctx, client, role)
-		if roleResource != nil {
-			roleResources = append(roleResources, roleResource)
+		if role.Arn == nil {
+			log.Warn("role ARN is nil for role", svc1log.SafeParam("role", role))
+			errors = append(errors, fmt.Sprintf("role ARN is nil for role %s", *role.RoleName))
+			continue
+		}
+		if role.RoleName == nil {
+			log.Warn("role name is nil for role", svc1log.SafeParam("role", role))
+			errors = append(errors, fmt.Sprintf("role name is nil for role %s", *role.Arn))
+			continue
+		}
+		iamRole, errs := processRole(ctx, client, role)
+		if iamRole != nil {
+			iamRoles = append(iamRoles, iamRole)
 		}
 		errors = append(errors, errs...)
 	}
 
-	return roleResources, errors
+	return iamRoles, errors
 }
 
 // getAllRoles retrieves all IAM roles
@@ -56,98 +66,46 @@ func getAllRoles(ctx context.Context, client *iamaws.Client) ([]types.Role, erro
 	return roles, nil
 }
 
-// enrichRoleWithPolicies enriches a role with its attached and inline policies
-func enrichRoleWithPolicies(ctx context.Context, client *iamaws.Client, role types.Role) (*iam.RoleResource, []string) {
+// processRole converts a role and enriches it with policy information
+func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*iam.IamRole, []string) {
 	var errors []string
 
-	// Convert role to Fern format
-	decodedRole, err := convertRoleToFern(role)
-	if err != nil {
-		errors = append(errors, err.Error())
-		return nil, errors
+	// Create simplified IAM role
+	iamRole := &iam.IamRole{
+		Arn:      *role.Arn,
+		RoleName: *role.RoleName,
 	}
 
-	// Get attached policies
-	attachedPolicyArns, errs := getAttachedPolicyArns(ctx, client, *role.RoleName)
-	errors = append(errors, errs...)
-
-	// Get inline policies
-	inlinePolicies, errs := getInlinePolicies(ctx, client, *role.RoleName)
-	errors = append(errors, errs...)
-
-	roleResource := &iam.RoleResource{
-		Role:                 decodedRole,
-		AttachedPoliciesArns: attachedPolicyArns,
-		InlinePolicies:       inlinePolicies,
+	// Add optional fields
+	if role.CreateDate != nil {
+		iamRole.CreateDate = role.CreateDate
 	}
 
-	return roleResource, errors
-}
-
-// convertRoleToFern converts AWS IAM Role to Fern DecodedRole
-func convertRoleToFern(role types.Role) (*iam.DecodedRole, error) {
-	decodedRole := &iam.DecodedRole{
-		Arn:                      role.Arn,
-		AssumeRolePolicyDocument: role.AssumeRolePolicyDocument,
-		CreateDate:               role.CreateDate,
-		Description:              role.Description,
-		MaxSessionDuration:       convertInt32PtrToIntPtr(role.MaxSessionDuration),
-		Path:                     role.Path,
-		RoleId:                   role.RoleId,
-		RoleName:                 role.RoleName,
-	}
-
-	// Decode assume role policy document
-	if role.AssumeRolePolicyDocument != nil {
-		decodedDoc, err := url.QueryUnescape(*role.AssumeRolePolicyDocument)
-		if err == nil {
-			// Pretty format the JSON
-			var jsonDoc interface{}
-			if json.Unmarshal([]byte(decodedDoc), &jsonDoc) == nil {
-				if prettyJSON, err := json.MarshalIndent(jsonDoc, "", "  "); err == nil {
-					prettyJSONStr := string(prettyJSON)
-					decodedRole.DecodedAssumeRolePolicyDocument = &prettyJSONStr
-				}
-			}
-		}
-	}
-
-	// Convert permissions boundary if present
-	if role.PermissionsBoundary != nil {
-		decodedRole.PermissionsBoundary = &iam.AttachedPermissionsBoundary{
-			PermissionsBoundaryArn:  role.PermissionsBoundary.PermissionsBoundaryArn,
-			PermissionsBoundaryType: (*string)(&role.PermissionsBoundary.PermissionsBoundaryType),
-		}
-	}
-
-	// Convert role last used if present
+	// Add role last used if present
 	if role.RoleLastUsed != nil {
-		decodedRole.RoleLastUsed = &iam.RoleLastUsed{
+		iamRole.RoleLastUsed = &iam.RoleLastUsed{
 			LastUsedDate: role.RoleLastUsed.LastUsedDate,
 			Region:       role.RoleLastUsed.Region,
 		}
 	}
 
-	// Convert tags
-	if len(role.Tags) > 0 {
-		var tags []*iam.RoleTag
-		for _, tag := range role.Tags {
-			tags = append(tags, &iam.RoleTag{
-				Key:   *tag.Key,
-				Value: *tag.Value,
-			})
-		}
-		decodedRole.Tags = tags
+	// Get attached policies
+	attachedPolicies, errs := getAttachedPoliciesForRole(ctx, client, *role.RoleName)
+	errors = append(errors, errs...)
+
+	if len(attachedPolicies) > 0 {
+		iamRole.AttachedPolicies = attachedPolicies
 	}
 
-	return decodedRole, nil
+	return iamRole, errors
 }
 
-// getAttachedPolicyArns retrieves attached policy ARNs for a role
-func getAttachedPolicyArns(ctx context.Context, client *iamaws.Client, roleName string) ([]string, []string) {
-	var policyArns []string
+// getAttachedPoliciesForRole gets all attached policies for a role with their documents
+func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, roleName string) ([]*iam.AttachedPolicy, []string) {
+	var attachedPolicies []*iam.AttachedPolicy
 	var errors []string
 
+	// List attached policies
 	paginator := iamaws.NewListAttachedRolePoliciesPaginator(client, &iamaws.ListAttachedRolePoliciesInput{
 		RoleName: &roleName,
 	})
@@ -155,78 +113,89 @@ func getAttachedPolicyArns(ctx context.Context, client *iamaws.Client, roleName 
 	for paginator.HasMorePages() {
 		result, err := paginator.NextPage(ctx)
 		if err != nil {
-			errors = append(errors, err.Error())
+			errors = append(errors, fmt.Sprintf("failed to list attached policies for role %s: %v", roleName, err))
 			break
 		}
 
 		for _, policy := range result.AttachedPolicies {
-			if policy.PolicyArn != nil {
-				policyArns = append(policyArns, *policy.PolicyArn)
+			if policy.PolicyArn != nil && policy.PolicyName != nil {
+				attachedPolicy := &iam.AttachedPolicy{
+					Arn:        *policy.PolicyArn,
+					PolicyName: *policy.PolicyName,
+				}
+
+				// Determine if it's customer managed (Local scope) or AWS managed
+				isCustomerManaged := !isAWSManagedPolicy(*policy.PolicyArn)
+				attachedPolicy.IsCustomerManaged = &isCustomerManaged
+
+				// Get policy document if it's customer managed
+				if isCustomerManaged {
+					if policy.PolicyArn == nil {
+						errors = append(errors, fmt.Sprintf("policy ARN is nil for policy %s", *policy.PolicyName))
+						continue
+					}
+					policyDoc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
+					if err != nil {
+						errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
+					} else {
+						attachedPolicy.PolicyDocument = policyDoc
+					}
+				}
+
+				attachedPolicies = append(attachedPolicies, attachedPolicy)
 			}
 		}
 	}
 
-	return policyArns, errors
+	return attachedPolicies, errors
 }
 
-// getInlinePolicies retrieves inline policies for a role
-func getInlinePolicies(ctx context.Context, client *iamaws.Client, roleName string) ([]*iam.InlinePolicy, []string) {
-	var inlinePolicies []*iam.InlinePolicy
-	var errors []string
-
-	// Get policy names
-	policyNames, err := client.ListRolePolicies(ctx, &iamaws.ListRolePoliciesInput{
-		RoleName: &roleName,
+// getPolicyDocument retrieves the policy document for a given policy ARN
+func getPolicyDocument(ctx context.Context, client *iamaws.Client, policyArn string) (*string, error) {
+	// Get policy to find default version
+	policy, err := client.GetPolicy(ctx, &iamaws.GetPolicyInput{
+		PolicyArn: &policyArn,
 	})
 	if err != nil {
-		errors = append(errors, err.Error())
-		return inlinePolicies, errors
+		return nil, fmt.Errorf("failed to get policy %s: %w", policyArn, err)
 	}
 
-	// Get each policy document
-	for _, policyName := range policyNames.PolicyNames {
-		policy, err := client.GetRolePolicy(ctx, &iamaws.GetRolePolicyInput{
-			RoleName:   &roleName,
-			PolicyName: &policyName,
-		})
-		if err != nil {
-			errors = append(errors, err.Error())
-			continue
-		}
-
-		// Decode and format policy document
-		var policyDoc string
-		if policy.PolicyDocument != nil {
-			decodedDoc, err := url.QueryUnescape(*policy.PolicyDocument)
-			if err == nil {
-				// Pretty format the JSON
-				var jsonDoc interface{}
-				if json.Unmarshal([]byte(decodedDoc), &jsonDoc) == nil {
-					if prettyJSON, err := json.MarshalIndent(jsonDoc, "", "  "); err == nil {
-						policyDoc = string(prettyJSON)
-					} else {
-						policyDoc = decodedDoc
-					}
-				} else {
-					policyDoc = decodedDoc
-				}
-			}
-		}
-
-		inlinePolicies = append(inlinePolicies, &iam.InlinePolicy{
-			Name:   policyName,
-			Policy: policyDoc,
-		})
+	if policy.Policy.DefaultVersionId == nil {
+		return nil, nil
 	}
 
-	return inlinePolicies, errors
+	// Get the policy version document
+	version, err := client.GetPolicyVersion(ctx, &iamaws.GetPolicyVersionInput{
+		PolicyArn: &policyArn,
+		VersionId: policy.Policy.DefaultVersionId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get policy version for %s: %w", policyArn, err)
+	}
+
+	if version.PolicyVersion.Document == nil {
+		return nil, nil
+	}
+
+	// Decode and format the policy document
+	decodedDoc, err := url.QueryUnescape(*version.PolicyVersion.Document)
+	if err != nil {
+		return version.PolicyVersion.Document, nil // Return original if decode fails
+	}
+
+	// Pretty format JSON if possible
+	var jsonDoc interface{}
+	if json.Unmarshal([]byte(decodedDoc), &jsonDoc) == nil {
+		if prettyJSON, err := json.MarshalIndent(jsonDoc, "", "  "); err == nil {
+			prettyJSONStr := string(prettyJSON)
+			return &prettyJSONStr, nil
+		}
+	}
+
+	return &decodedDoc, nil
 }
 
-// convertInt32PtrToIntPtr converts *int32 to *int for compatibility
-func convertInt32PtrToIntPtr(val *int32) *int {
-	if val == nil {
-		return nil
-	}
-	converted := int(*val)
-	return &converted
+// isAWSManagedPolicy checks if a policy ARN represents an AWS managed policy
+func isAWSManagedPolicy(arn string) bool {
+	return len(arn) > 13 && arn[:13] == "arn:aws:iam::"
 }

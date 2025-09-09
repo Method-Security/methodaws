@@ -19,7 +19,9 @@ types:
 # Result Structs
   CloudFrontDistributionOrigin:
     properties:
+    # Core fields
       id: string
+    # CloudFront Distribution Origin fields
       domainName: string
       resourceType: CloudFrontResourceType
       path: optional<string>
@@ -28,11 +30,14 @@ types:
       connectionTimeout: optional<integer>
   CloudFrontDistribution:
     properties:
+    # Core fields
       id: string
+    # CloudFront Distribution fields
       domainName: optional<string>
       status: optional<CloudFrontDistributionStatus>
       arn: optional<string>
       comment: optional<string>
+    # Linked primatives
       origins: optional<list<CloudFrontDistributionOrigin>>
   CloudFrontEnumerateResult:
     properties:

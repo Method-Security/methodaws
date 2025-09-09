@@ -66,15 +66,20 @@ func enumerateCloudFrontDistributions(ctx context.Context, awsConfig aws.Config,
 
 	var cloudFrontDistributions []*cloudfrontfern.CloudFrontDistribution
 	for _, dist := range distributions {
-		distribution, err := processDistribution(ctx, awsConfig, cloudfrontClient, dist, config.AccountId)
-		if err != nil {
-			errorMsg := "Failed to process distribution " + *dist.Id + ": " + err.Error()
-			log.Error("Error processing distribution",
-				svc1log.SafeParam("distributionId", *dist.Id),
-				svc1log.SafeParam("error", err.Error()))
-			errors = append(errors, errorMsg)
-			// Fall back to using summary data
-			distribution = transformDistributionSummaryToFern(ctx, awsConfig, dist, config.AccountId)
+		if dist.Id == nil {
+			log.Warn("Distribution ID is nil for distribution", svc1log.SafeParam("distribution", dist))
+			errors = append(errors, "Distribution ID is nil")
+			continue
+		}
+		distribution, errs := processDistribution(ctx, awsConfig, cloudfrontClient, dist, config.AccountId)
+		if len(errs) > 0 {
+			log.Error("Error processing distribution, using fallback transformation",
+				svc1log.SafeParam("distributionId", *dist.Id))
+			errors = append(errors, errs...)
+			// Use fallback transformation when full distribution processing fails
+			var fallbackErrs []string
+			distribution, fallbackErrs = transformDistributionSummaryToFern(ctx, awsConfig, dist, config.AccountId)
+			errors = append(errors, fallbackErrs...)
 		}
 		cloudFrontDistributions = append(cloudFrontDistributions, distribution)
 	}
@@ -83,15 +88,18 @@ func enumerateCloudFrontDistributions(ctx context.Context, awsConfig aws.Config,
 }
 
 // processDistribution gets full distribution details and transforms them to Fern format
-func processDistribution(ctx context.Context, awsConfig aws.Config, cloudfrontClient *cloudfront.Client, distSummary types.DistributionSummary, accountID string) (*cloudfrontfern.CloudFrontDistribution, error) {
+func processDistribution(ctx context.Context, awsConfig aws.Config, cloudfrontClient *cloudfront.Client, distSummary types.DistributionSummary, accountID string) (*cloudfrontfern.CloudFrontDistribution, []string) {
+	var errors []string
 	// Get full distribution details
 	fullDistribution, err := getDistributionDetails(ctx, cloudfrontClient, distSummary.Id)
 	if err != nil {
-		return nil, err
+		errors = append(errors, err.Error())
+		return nil, errors
 	}
 
 	// Transform to Fern format
-	return transformDistributionToFern(ctx, awsConfig, *fullDistribution, accountID), nil
+	distribution, errors := transformDistributionToFern(ctx, awsConfig, *fullDistribution, accountID)
+	return distribution, errors
 }
 
 func listCloudFrontDistributions(ctx context.Context, cloudfrontClient *cloudfront.Client) ([]types.DistributionSummary, error) {

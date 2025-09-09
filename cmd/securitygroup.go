@@ -61,8 +61,6 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 		},
 	}
 
-	enumerateCmd.Flags().String("vpc", "", "VPC ID to filter security groups by")
-
 	securityGroupCmd.AddCommand(enumerateCmd)
 	a.RootCmd.AddCommand(securityGroupCmd)
 }
@@ -70,7 +68,6 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 func getSecurityGroupEnumerateConfig(accountID string, vpcID *string, regions []string) fernsecuritygroup.SecurityGroupsEnumerateConfig {
 	return fernsecuritygroup.SecurityGroupsEnumerateConfig{
 		AccountId: accountID,
-		VpcId:     vpcID,
 		Regions:   regions,
 	}
 }

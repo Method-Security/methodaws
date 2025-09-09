@@ -1,11 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
-  InstanceBootMode:
-    enum:
-      - LEGACY_BIOS
-      - UEFI
-      - UEFI_PREFERRED
   InstanceState:
     enum:
       - PENDING
@@ -47,7 +42,7 @@ types:
       key: optional<string>
       value: optional<string>
 # Config
-  EC2EnumerateConfig:
+  Ec2EnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
@@ -67,11 +62,15 @@ types:
       spreadDomain: optional<string>
       hostResourceGroupArn: optional<string>
       groupId: optional<string>
+  VpcInstance:
+    properties:
+      id: string
+      subnetIds: optional<list<string>>
   InstanceNetworkInterface:
     properties:
-      networkInterfaceId: optional<string>
-      subnetId: optional<string>
-      vpcId: optional<string>
+    # Core fields
+      id: string
+    # Instance Network Interface fields
       description: optional<string>
       ownerId: optional<string>
       status: optional<string>
@@ -79,9 +78,16 @@ types:
       privateIpAddress: optional<string>
       privateDnsName: optional<string>
       sourceDestCheck: optional<boolean>
-  EC2Instance:
+    # Linked primatives
+      vpc: VpcInstance
+  Ec2Instance:
     properties:
+    # Core fields
       id: string
+      arn: optional<string>
+      region: string
+    # EC2 Instance fields
+      state: optional<InstanceState>
       imageId: optional<string>
       keyName: optional<string>
       instanceType: optional<InstanceType>
@@ -95,20 +101,17 @@ types:
       hypervisor: optional<HypervisorType>
       platform: optional<PlatformValues>
       ebsOptimized: optional<boolean>
-      iamInstanceProfile: optional<IamInstanceProfile>
-      networkInterfaces: optional<list<InstanceNetworkInterface>>
+      name: optional<string>
       tags: optional<list<Tag>>
-  InstanceWithIAMRole:
+    # Linked primatives
+      networkInterfaces: optional<list<InstanceNetworkInterface>>
+      iamInstanceProfile: optional<IamInstanceProfile>
+  Ec2EnumerateResult:
     properties:
-      instance: EC2Instance
-      iamRoles: optional<list<string>>
-      region: optional<string>
-  EC2EnumerateResult:
-    properties:
-      instances: optional<list<InstanceWithIAMRole>>
+      instances: optional<list<Ec2Instance>>
 # Report Struct
-  EC2EnumerateReport:
+  Ec2EnumerateReport:
     properties:
-      result: EC2EnumerateResult
-      config: EC2EnumerateConfig
+      result: Ec2EnumerateResult
+      config: Ec2EnumerateConfig
       errors: optional<list<string>>

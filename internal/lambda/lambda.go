@@ -4,6 +4,7 @@ import (
 	//standard
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -33,14 +34,14 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 
 	lambdaArchitectures := []lambdafern.LambdaArchitecture{}
 	for _, architecture := range function.Architectures {
-		architecture, err := lambdafern.NewLambdaArchitectureFromString(string(architecture))
+		architecture, err := lambdafern.NewLambdaArchitectureFromString(strings.ToUpper(string(architecture)))
 		if err != nil {
 			return nil, err
 		}
 		lambdaArchitectures = append(lambdaArchitectures, architecture)
 	}
 
-	lambdaPackageType, err := lambdafern.NewLambdaPackageTypeFromString(string(function.PackageType))
+	lambdaPackageType, err := lambdafern.NewLambdaPackageTypeFromString(strings.ToUpper(string(function.PackageType)))
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +130,15 @@ func enumerateLambdaForRegion(ctx context.Context, awsConfig aws.Config, region 
 			log.Error("Failed to get next page of Lambda functions",
 				svc1log.SafeParam("region", region),
 				svc1log.Stacktrace(err))
-			// failed to page so just return an empty list and the error
-			return []*lambdafern.LambdaFunction{}, append(errors, err)
+			// failed to page so just return an empty list and the error with region context
+			wrappedErr := fmt.Errorf("region %s: %w", region, err)
+			return []*lambdafern.LambdaFunction{}, append(errors, wrappedErr)
 		}
 		for _, function := range page.Functions {
 			parsedFunction, err := parseLambdaFunctionConfiguration(ctx, function, region)
 			if err != nil {
-				errors = append(errors, err)
+				wrappedErr := fmt.Errorf("region %s: %w", region, err)
+				errors = append(errors, wrappedErr)
 			} else {
 				functions = append(functions, parsedFunction)
 			}

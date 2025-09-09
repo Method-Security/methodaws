@@ -26,14 +26,12 @@ func extractDistributionStatus(enabled *bool) cloudfrontfern.CloudFrontDistribut
 	return cloudfrontfern.CloudFrontDistributionStatusEnabled
 }
 
-func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist types.Distribution, accountID string) *cloudfrontfern.CloudFrontDistribution {
+func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist types.Distribution, accountID string) (*cloudfrontfern.CloudFrontDistribution, []string) {
+	var errors []string
 	// Transform origins with enhanced details
-	if dist.Id == nil {
-		return nil
-	}
 	var origins []*cloudfrontfern.CloudFrontDistributionOrigin
 	if dist.DistributionConfig != nil && dist.DistributionConfig.Origins != nil {
-		origins = processOrigins(ctx, awsConfig, dist.DistributionConfig.Origins.Items, accountID)
+		origins, errors = processOrigins(ctx, awsConfig, dist.DistributionConfig.Origins.Items, accountID)
 	}
 
 	// Extract comment and status using helper functions
@@ -53,18 +51,16 @@ func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist
 		Comment:    comment,
 		Origins:    origins,
 		Status:     &status,
-	}
+	}, errors
 }
 
 // Fallback transformation for when we only have DistributionSummary
-func transformDistributionSummaryToFern(ctx context.Context, awsConfig aws.Config, dist types.DistributionSummary, accountID string) *cloudfrontfern.CloudFrontDistribution {
+func transformDistributionSummaryToFern(ctx context.Context, awsConfig aws.Config, dist types.DistributionSummary, accountID string) (*cloudfrontfern.CloudFrontDistribution, []string) {
+	var errors []string
 	// Transform origins (limited info from summary)
-	if dist.Id == nil {
-		return nil
-	}
 	var origins []*cloudfrontfern.CloudFrontDistributionOrigin
 	if dist.Origins != nil {
-		origins = processOrigins(ctx, awsConfig, dist.Origins.Items, accountID)
+		origins, errors = processOrigins(ctx, awsConfig, dist.Origins.Items, accountID)
 	}
 
 	// Extract comment and status using helper functions
@@ -78,5 +74,5 @@ func transformDistributionSummaryToFern(ctx context.Context, awsConfig aws.Confi
 		Comment:    comment,
 		Origins:    origins,
 		Status:     &status,
-	}
+	}, errors
 }

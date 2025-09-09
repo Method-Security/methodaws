@@ -24,27 +24,33 @@ func EnumerateIam(ctx context.Context, awsConfig aws.Config, config iam.IamEnume
 
 	var allErrors []string
 
-	// Enumerate roles
-	log.Info("Enumerating IAM roles")
+	// Enumerate roles (with nested policy information)
+	log.Info("Enumerating IAM roles with attached policies")
 	roles, rolesErrors := enumerateIamRoles(ctx, awsConfig)
-	allErrors = append(allErrors, rolesErrors...)
+	if len(rolesErrors) > 0 {
+		log.Warn("Errors encountered during role enumeration",
+			svc1log.SafeParam("errorCount", len(rolesErrors)))
+		allErrors = append(allErrors, rolesErrors...)
+	}
 
-	// Enumerate policies
-	log.Info("Enumerating IAM policies")
-	policyReport, policiesErrors := enumerateIamPolicies(ctx, awsConfig)
-	allErrors = append(allErrors, policiesErrors...)
+	// Only populate roles if we have any
+	if len(roles) > 0 {
+		report.Result.Resources.Roles = roles
+		log.Info("Successfully enumerated IAM roles",
+			svc1log.SafeParam("roleCount", len(roles)))
+	} else {
+		log.Info("No IAM roles found or accessible")
+		// Still initialize empty slice instead of nil
+		report.Result.Resources.Roles = []*iam.IamRole{}
+	}
 
-	// Populate report
-	report.Result.Resources.Roles = roles
-	report.Result.Resources.Policies = policyReport
-
+	// Add errors to report if any occurred
 	if len(allErrors) > 0 {
 		report.Errors = allErrors
 	}
 
 	log.Info("Completed IAM enumeration",
 		svc1log.SafeParam("totalRoles", len(roles)),
-		svc1log.SafeParam("totalPolicies", len(policyReport.Policies)),
 		svc1log.SafeParam("totalErrors", len(allErrors)))
 
 	return report

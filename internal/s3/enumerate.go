@@ -115,6 +115,38 @@ func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Buc
 	return bucket, nil
 }
 
+func bucketACL(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, error) {
+	log := svc1log.FromContext(ctx)
+
+	input := &s3.GetBucketAclInput{
+		Bucket: aws.String(bucket.Name),
+	}
+
+	result, err := s3Client.GetBucketAcl(ctx, input)
+	if err != nil {
+		log.Warn("Failed to get bucket ACL",
+			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.Stacktrace(err))
+		return bucket, err
+	}
+
+	acls := []*s3fern.S3BucketAcl{}
+	for _, grant := range result.Grants {
+		if grant.Grantee != nil && grant.Grantee.URI != nil {
+			acls = append(acls, &s3fern.S3BucketAcl{
+				GranteeUri: *grant.Grantee.URI,
+				Permission: string(grant.Permission),
+			})
+		}
+	}
+
+	if len(acls) > 0 {
+		bucket.Acls = acls
+	}
+
+	return bucket, nil
+}
+
 // EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal
 // errors that occur during the execution of the `methodaws s3 enumerate` subcommand are included in the report, but
 // the function will not return an error unless there is an issue retrieving the account ID.
@@ -240,6 +272,11 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 			}
 
 			bucketPtr, err = publicAccess(ctx, regionClient, bucketPtr)
+			if err != nil {
+				errorMessages = append(errorMessages, err.Error())
+			}
+
+			bucketPtr, err = bucketACL(ctx, regionClient, bucketPtr)
 			if err != nil {
 				errorMessages = append(errorMessages, err.Error())
 			}

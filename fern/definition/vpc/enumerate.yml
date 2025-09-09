@@ -1,6 +1,6 @@
 types:
 # Config
-  VPCEnumerateConfig:
+  VpcEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
@@ -39,8 +39,12 @@ types:
       optInStatus: optional<string>
   Subnet:
     properties:
-      availabilityZone: optional<string>
-      availabilityZoneId: optional<string>
+    # Core fields
+      id: string
+      arn: optional<string>
+      region: string
+    # Subnet fields
+      availabilityZone: optional<AvailabilityZone>
       availableIpAddressCount: optional<integer>
       cidrBlock: optional<string>
       defaultForAz: optional<boolean>
@@ -51,10 +55,7 @@ types:
       outpostArn: optional<string>
       ownerId: optional<string>
       state: optional<SubnetState>
-      subnetArn: optional<string>
-      subnetId: optional<string>
       tags: optional<list<Tag>>
-      vpcId: optional<string>
       assignIpv6AddressOnCreation: optional<boolean>
       customerOwnedIpv4Pool: optional<string>
       enableDns64: optional<boolean>
@@ -69,9 +70,13 @@ types:
       associationId: optional<string>
       cidrBlock: optional<string>
       cidrBlockState: optional<VpcCidrBlockState>
-  Vpc:
+  VpcInstance:
     properties:
-      id: optional<string>
+    # Core fields
+      id: string
+      arn: optional<string>
+      region: string
+    # VPC fields
       creationCidrBlock: optional<string>
       cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       dhcpOptionsId: optional<string>
@@ -80,16 +85,14 @@ types:
       ownerId: optional<string>
       state: optional<VpcState>
       tags: optional<list<Tag>>
-  VPCInstance:
+    # Linked primatives
+      subnets: optional<list<Subnet>>
+  VpcEnumerateResult:
     properties:
-      vpc: Vpc
-      region: string
-  VPCEnumerateResult:
-    properties:
-      vpcs: optional<list<VPCInstance>>
+      vpcs: optional<list<VpcInstance>>
   # Report Struct
-  VPCEnumerateReport:
+  VpcEnumerateReport:
     properties:
-      result: VPCEnumerateResult
-      config: VPCEnumerateConfig
+      result: VpcEnumerateResult
+      config: VpcEnumerateConfig
       errors: optional<list<string>>

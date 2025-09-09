@@ -5,75 +5,27 @@ types:
       accountId: string
       regions: list<string>
 # Result Structs
-  DecodedPolicyVersion:
-    properties:
-      createDate: optional<datetime>
-      document: optional<string>
-      isDefaultVersion: optional<boolean>
-      versionId: optional<string>
-  PolicyTag:
-    properties:
-      key: string
-      value: string
-  InlinePolicy:
-    properties:
-      name: string
-      policy: string
-  AttachedPermissionsBoundary:
-    properties:
-      permissionsBoundaryArn: optional<string>
-      permissionsBoundaryType: optional<string>
   RoleLastUsed:
     properties:
       lastUsedDate: optional<datetime>
       region: optional<string>
-  RoleTag:
+  AttachedPolicy:
     properties:
-      key: string
-      value: string
-  PolicyResource:
+      arn: string
+      policyName: string
+      policyDocument: optional<string>
+      isCustomerManaged: optional<boolean>
+  IamRole:
     properties:
-      # AWS native policy fields
-      arn: optional<string>
-      attachmentCount: optional<integer>
+      # Essential role fields only
+      arn: string
+      roleName: string
       createDate: optional<datetime>
-      defaultVersionId: optional<string>
-      description: optional<string>
-      isAttachable: optional<boolean>
-      path: optional<string>
-      permissionsBoundaryUsageCount: optional<integer>
-      policyId: optional<string>
-      policyName: optional<string>
-      tags: optional<list<PolicyTag>>
-      updateDate: optional<datetime>
-      policyVersion: optional<DecodedPolicyVersion>
-  DecodedRole:
-    properties:
-      # AWS native role fields
-      arn: optional<string>
-      assumeRolePolicyDocument: optional<string>
-      createDate: optional<datetime>
-      description: optional<string>
-      maxSessionDuration: optional<integer>
-      path: optional<string>
-      permissionsBoundary: optional<AttachedPermissionsBoundary>
-      roleId: optional<string>
-      roleName: optional<string>
       roleLastUsed: optional<RoleLastUsed>
-      tags: optional<list<RoleTag>>
-      decodedAssumeRolePolicyDocument: optional<string>
-  RoleResource:
-    properties:
-      role: optional<DecodedRole>
-      attachedPoliciesArns: optional<list<string>>
-      inlinePolicies: optional<list<InlinePolicy>>
-  PolicyReport:
-    properties:
-      policies: optional<list<PolicyResource>>
+      attachedPolicies: optional<list<AttachedPolicy>>
   IamResources:
     properties:
-      roles: optional<list<RoleResource>>
-      policies: PolicyReport
+      roles: optional<list<IamRole>>
   IamEnumerateResult:
     properties:
       resources: optional<IamResources>

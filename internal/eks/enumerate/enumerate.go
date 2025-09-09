@@ -86,6 +86,7 @@ func enumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) (
 // processCluster processes a single EKS cluster and its node groups
 func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clusterName string, region string) (*eksfern.EksCluster, []string) {
 	var errors []string
+	log := svc1log.FromContext(ctx)
 
 	// Describe cluster
 	clusterDetail, err := eksSvc.DescribeCluster(ctx, &eks.DescribeClusterInput{Name: &clusterName})
@@ -95,6 +96,21 @@ func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clu
 	}
 
 	// Convert cluster to Fern format
+	if clusterDetail.Cluster == nil {
+		log.Warn("Cluster is nil for cluster", svc1log.SafeParam("clusterName", clusterName))
+		errors = append(errors, "Cluster is nil")
+		return nil, errors
+	}
+	if clusterDetail.Cluster.Name == nil {
+		log.Warn("Cluster name is nil for cluster", svc1log.SafeParam("clusterName", clusterName))
+		errors = append(errors, "Cluster name is nil")
+		return nil, errors
+	}
+	if clusterDetail.Cluster.Arn == nil {
+		log.Warn("Cluster ARN is nil for cluster", svc1log.SafeParam("clusterName", clusterName))
+		errors = append(errors, "Cluster ARN is nil")
+		return nil, errors
+	}
 	cluster := convertClusterToFern(clusterDetail.Cluster, region)
 
 	// Get node groups
@@ -155,8 +171,12 @@ func processNodeGroup(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, c
 	// Convert instances to Fern format
 	var fernInstances []*eksfern.Ec2Instance
 	for _, inst := range instances {
+		if inst.InstanceId == nil {
+			errors = append(errors, fmt.Sprintf("Instance ID is nil for instance %v", inst))
+			continue
+		}
 		fernInstances = append(fernInstances, &eksfern.Ec2Instance{
-			InstanceId: *inst.InstanceId,
+			Id: *inst.InstanceId,
 		})
 	}
 	nodeGroup.Instances = fernInstances
@@ -240,7 +260,7 @@ func convertClusterToFern(cluster *eksTypes.Cluster, region string) *eksfern.Eks
 	fernCluster := &eksfern.EksCluster{
 		Arn:             *cluster.Arn,
 		Name:            *cluster.Name,
-		Status:          string(cluster.Status),
+		Status:          eksfern.ClusterStatus(string(cluster.Status)),
 		Endpoint:        cluster.Endpoint,
 		RoleArn:         cluster.RoleArn,
 		PlatformVersion: cluster.PlatformVersion,
@@ -303,11 +323,6 @@ func convertClusterToFern(cluster *eksTypes.Cluster, region string) *eksfern.Eks
 	if cluster.AccessConfig != nil {
 		fernCluster.AccessConfig = convertAccessConfigToFern(cluster.AccessConfig)
 	}
-
-	// Note: UpgradePolicy is not available in current AWS SDK version
-
-	// Note: ZoneMapping is not available in current AWS SDK version
-
 	return fernCluster
 }
 

@@ -7,6 +7,8 @@ import (
 
 	// Generated
 	cloudfrontfern "github.com/Method-Security/methodaws/generated/go/cloudfront"
+	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
+
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudfront/types"
@@ -66,15 +68,23 @@ func shouldResolveIdentifier(resourceType cloudfrontfern.CloudFrontResourceType)
 }
 
 // processOrigins converts AWS CloudFront origins to Fern format with identifier resolution
-func processOrigins(ctx context.Context, awsConfig aws.Config, origins []types.Origin, accountID string) []*cloudfrontfern.CloudFrontDistributionOrigin {
+func processOrigins(ctx context.Context, awsConfig aws.Config, origins []types.Origin, accountID string) ([]*cloudfrontfern.CloudFrontDistributionOrigin, []string) {
+	log := svc1log.FromContext(ctx)
+
 	var fernOrigins []*cloudfrontfern.CloudFrontDistributionOrigin
+	var errors []string
 
 	for _, origin := range origins {
+		if origin.Id == nil {
+			log.Warn("Origin ID is nil for origin", svc1log.SafeParam("origin", origin))
+			errors = append(errors, "Origin ID is nil")
+			continue
+		}
 		fernOrigin := processOrigin(ctx, awsConfig, origin, accountID)
 		fernOrigins = append(fernOrigins, fernOrigin)
 	}
 
-	return fernOrigins
+	return fernOrigins, errors
 }
 
 // processOrigin converts a single AWS CloudFront origin to Fern format

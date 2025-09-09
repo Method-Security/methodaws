@@ -1,11 +1,18 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
+  SecurityGroupType:
+    enum:
+      - EC2
+      - RDS
+  PermissionDirection:
+    enum:
+      - INGRESS
+      - EGRESS
 # Config
   SecurityGroupsEnumerateConfig:
     properties:
       accountId: string
-      vpcId: optional<string>
       regions: list<string>
 # Security Group Structs
   Tag:
@@ -14,26 +21,25 @@ types:
       value: string
   IpPermission:
     properties:
+      direction: PermissionDirection
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
   SecurityGroup:
     properties:
+    # Core fields
+      id: string
+      arn: optional<string>
+      name: optional<string>
       region: string
-      type: string  # "EC2" or "RDS"
+    # Security Group fields
+      securityGroupType: SecurityGroupType
       description: optional<string>
-      groupId: optional<string>
-      groupName: optional<string>
-      ipPermissions: optional<list<IpPermission>>
-      ipPermissionsEgress: optional<list<IpPermission>>
+      permissions: optional<list<IpPermission>>
       ownerId: optional<string>
-      securityGroupId: optional<string>
       tags: optional<list<Tag>>
+    # Linked primatives
       vpcId: optional<string>
-      # RDS-specific fields
-      dbSecurityGroupName: optional<string>
-      ec2SecurityGroups: optional<list<string>>
-      ipRanges: optional<list<string>>
   SecurityGroupsEnumerateResult:
     properties:
       securityGroups: optional<list<SecurityGroup>>
