@@ -1,0 +1,148 @@
+types:
+# Config
+  ApiGatewayEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+      versions: optional<list<ApiGatewayVersion>>
+# Enums
+  ApiGatewayVersion:
+    enum:
+      - V1
+      - V2
+  IntegrationType:
+    enum:
+      - HTTP
+      - AWS
+      - HTTP_PROXY  
+      - AWS_PROXY
+      - MOCK
+  AuthorizationType:
+    enum:
+      - NONE
+      - AWS_IAM
+      - CUSTOM
+      - COGNITO_USER_POOLS
+      - JWT
+  EndpointType:
+    enum:
+      - EDGE
+      - REGIONAL
+      - PRIVATE
+  SecurityPolicy:
+    enum:
+      - TLS_1_0
+      - TLS_1_2
+  MutualTlsAuthenticationFailureType:
+    enum:
+      - CLIENT_CERTIFICATE_VERIFICATION
+      - CLIENT_CERTIFICATE_EXPIRED
+      - CLIENT_CERTIFICATE_INVALID
+# API Gateway Structs
+  AwsProxyIntegration:
+    properties:
+      arn: string
+  AwsIntegration:
+    properties:
+      arn: string
+  MockIntegration:
+    properties: {}
+  HttpIntegration:
+    properties: 
+      uri: string
+  HttpProxyIntegration:
+    properties: 
+      uri: string
+  Integration:
+    union:
+      aws_proxy: AwsProxyIntegration
+      aws: AwsIntegration
+      mock: MockIntegration
+      http: HttpIntegration
+      http_proxy: HttpProxyIntegration
+  Certificate:
+    properties:
+      arn: string
+      name: string
+      isDefault: boolean
+      securityPolicy: optional<SecurityPolicy>
+  Authorizer:
+    properties:
+      id: string
+      name: string
+      type: AuthorizationType
+      providerArns: optional<list<string>>
+      uri: optional<string>
+      credentials: optional<string>
+      identitySource: optional<list<string>>
+      identityValidationExpression: optional<string>
+      resultTtlInSeconds: optional<integer>
+  ThrottleSettings:
+    properties:
+      rateLimit: double
+      burstLimit: integer
+  AccessLogSettings:
+    properties:
+      destinationArn: string
+      format: optional<string>
+  CorsConfiguration:
+    properties:
+      allowCredentials: optional<boolean>
+      allowHeaders: optional<list<string>>
+      allowMethods: optional<list<string>>
+      allowOrigins: optional<list<string>>
+      exposeHeaders: optional<list<string>>
+      maxAge: optional<integer>
+  MutualTlsAuthentication:
+    properties:
+      truststoreUri: string
+      truststoreVersion: optional<string>
+  Route:
+    properties:
+      path: string
+      method: string
+      integration: optional<Integration>
+      authorization: optional<AuthorizationType>
+      authorizer: optional<Authorizer>
+      apiKeyRequired: optional<boolean>
+      throttle: optional<ThrottleSettings>
+  ApiGateway:
+    properties:
+      version: ApiGatewayVersion
+      # Common properties
+      region: string
+      id: optional<string>
+      name: optional<string>
+      createdTime: optional<datetime>
+      description: optional<string>
+      # Security properties (common)
+      endpointConfiguration: optional<EndpointType>
+      certificates: optional<list<Certificate>>
+      accessLogSettings: optional<AccessLogSettings>
+      executionRoleArn: optional<string>
+      # V1 (REST API) specific properties
+      baseUrl: optional<string>
+      apiKeySource: optional<string>
+      stage: optional<string>
+      paths: optional<list<Route>>
+      apiKeys: optional<list<string>>
+      usagePlans: optional<list<string>>
+      clientCertificateId: optional<string>
+      minimumCompressionSize: optional<integer>
+      # V2 (HTTP API) specific properties  
+      apiEndpoint: optional<string>
+      protocolType: optional<string>
+      routes: optional<list<Route>>
+      corsConfiguration: optional<CorsConfiguration>
+      disableExecuteApiEndpoint: optional<boolean>
+      mutualTlsAuthentication: optional<MutualTlsAuthentication>
+      authorizers: optional<list<Authorizer>>
+  ApiGatewayResult:
+    properties:
+      apis: optional<list<ApiGateway>>
+# Report Struct
+  ApiGatewayEnumerateReport:
+    properties:
+      config: ApiGatewayEnumerateConfig
+      result: ApiGatewayResult
+      errors: optional<list<string>>

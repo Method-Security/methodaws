@@ -5,6 +5,7 @@ import (
 	// Standard
 	"context"
 	"fmt"
+	"strings"
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
@@ -86,9 +87,9 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S
 		return bucket, err
 	}
 
-	bucketVersioning, _ := s3fern.NewBucketVersioningStatusFromString(string(result.Status))
+	bucketVersioning, _ := s3fern.NewBucketVersioningStatusFromString(strings.ToUpper(string(result.Status)))
 	bucket.BucketVersioning = &bucketVersioning
-	mfaDelete, _ := s3fern.NewS3MfaDeleteStatusFromString(string(result.MFADelete))
+	mfaDelete, _ := s3fern.NewS3MfaDeleteStatusFromString(strings.ToUpper(string(result.MFADelete)))
 	bucket.MfaDelete = &mfaDelete
 
 	return bucket, nil

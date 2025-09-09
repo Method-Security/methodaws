@@ -11,21 +11,24 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
+	rdstypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 // EnumerateSecurityGroups lists all of the security groups available to the caller across multiple regions
 // alongside any non-fatal errors that occurred during the execution of the `methodaws securitygroup enumerate` subcommand.
-// If vpcID is not nil, it will only return security groups associated with that VPC.
-func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, config fernsecuritygroup.Ec2SecurityGroupsEnumerateConfig) *fernsecuritygroup.Ec2SecurityGroupsEnumerateReport {
+// This includes both EC2/VPC security groups and RDS DB security groups.
+// If vpcID is not nil, it will only return EC2 security groups associated with that VPC.
+func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, config fernsecuritygroup.SecurityGroupsEnumerateConfig) *fernsecuritygroup.SecurityGroupsEnumerateReport {
 	log := svc1log.FromContext(ctx)
 	log.Info("Starting SecurityGroup enumeration",
 		svc1log.SafeParam("regionsCount", len(config.Regions)),
 		svc1log.SafeParam("vpcId", config.VpcId))
 
-	report := fernsecuritygroup.Ec2SecurityGroupsEnumerateReport{
+	report := fernsecuritygroup.SecurityGroupsEnumerateReport{
 		Config: &config,
-		Result: &fernsecuritygroup.Ec2SecurityGroupsEnumerateResult{},
+		Result: &fernsecuritygroup.SecurityGroupsEnumerateResult{},
 	}
 
 	var allSecurityGroups []*fernsecuritygroup.SecurityGroup
@@ -33,25 +36,38 @@ func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, config fernsec
 
 	for _, region := range config.Regions {
 		log.Info("Processing SecurityGroups in region", svc1log.SafeParam("region", region))
-		securityGroups, errors := enumerateSecurityGroupForRegion(ctx, cfg, config.VpcId, region)
 
-		if len(errors) > 0 {
+		// Enumerate EC2 security groups
+		ec2SecurityGroups, ec2Errors := enumerateEC2SecurityGroupForRegion(ctx, cfg, config.VpcId, region)
+
+		// Enumerate RDS DB security groups
+		rdsSecurityGroups, rdsErrors := enumerateRDSSecurityGroupForRegion(ctx, cfg, region)
+
+		totalErrors := append(ec2Errors, rdsErrors...)
+		if len(totalErrors) > 0 {
 			log.Warn("Errors occurred while enumerating SecurityGroups in region",
 				svc1log.SafeParam("region", region),
-				svc1log.SafeParam("errorCount", len(errors)))
+				svc1log.SafeParam("errorCount", len(totalErrors)))
 		}
 
-		// Convert AWS SDK SecurityGroups to Fern SecurityGroups
-		for _, sg := range securityGroups {
-			fernSG := convertAWSSecurityGroupToFern(sg, region)
+		// Convert AWS SDK EC2 SecurityGroups to Fern SecurityGroups
+		for _, sg := range ec2SecurityGroups {
+			fernSG := convertAWSEC2SecurityGroupToFern(sg, region)
+			allSecurityGroups = append(allSecurityGroups, fernSG)
+		}
+
+		// Convert AWS SDK RDS DB SecurityGroups to Fern SecurityGroups
+		for _, sg := range rdsSecurityGroups {
+			fernSG := convertAWSRDSSecurityGroupToFern(sg, region)
 			allSecurityGroups = append(allSecurityGroups, fernSG)
 		}
 
 		log.Info("Successfully processed SecurityGroups in region",
 			svc1log.SafeParam("region", region),
-			svc1log.SafeParam("securityGroupCount", len(securityGroups)))
+			svc1log.SafeParam("ec2SecurityGroupCount", len(ec2SecurityGroups)),
+			svc1log.SafeParam("rdsSecurityGroupCount", len(rdsSecurityGroups)))
 
-		allErrors = append(allErrors, errors...)
+		allErrors = append(allErrors, totalErrors...)
 	}
 
 	if len(allSecurityGroups) > 0 {
@@ -61,11 +77,11 @@ func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, config fernsec
 	return &report
 }
 
-// enumerateSecurityGroupForRegion lists all of the security groups available to the caller for a specific region.
+// enumerateEC2SecurityGroupForRegion lists all of the EC2 security groups available to the caller for a specific region.
 // If vpcID is not nil, it will only return security groups associated with that VPC.
-func enumerateSecurityGroupForRegion(ctx context.Context, cfg aws.Config, vpcID *string, region string) ([]ec2types.SecurityGroup, []string) {
+func enumerateEC2SecurityGroupForRegion(ctx context.Context, cfg aws.Config, vpcID *string, region string) ([]ec2types.SecurityGroup, []string) {
 	log := svc1log.FromContext(ctx)
-	log.Info("Enumerating SecurityGroups for region",
+	log.Info("Enumerating EC2 SecurityGroups for region",
 		svc1log.SafeParam("region", region),
 		svc1log.SafeParam("vpcId", vpcID))
 
@@ -87,7 +103,7 @@ func enumerateSecurityGroupForRegion(ctx context.Context, cfg aws.Config, vpcID 
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
 		if err != nil {
-			log.Warn("Failed to retrieve SecurityGroups page",
+			log.Warn("Failed to retrieve EC2 SecurityGroups page",
 				svc1log.SafeParam("region", region),
 				svc1log.Stacktrace(err))
 			errors = append(errors, fmt.Sprintf("Error in region %s: %v", region, err))
@@ -97,25 +113,62 @@ func enumerateSecurityGroupForRegion(ctx context.Context, cfg aws.Config, vpcID 
 	}
 
 	if len(securityGroups) > 0 {
-		log.Info("Successfully enumerated SecurityGroups",
+		log.Info("Successfully enumerated EC2 SecurityGroups",
 			svc1log.SafeParam("region", region),
 			svc1log.SafeParam("securityGroupCount", len(securityGroups)))
 	} else {
-		log.Info("No SecurityGroups found in region", svc1log.SafeParam("region", region))
+		log.Info("No EC2 SecurityGroups found in region", svc1log.SafeParam("region", region))
 	}
 	return securityGroups, errors
 }
 
-// convertAWSSecurityGroupToFern converts an AWS SDK SecurityGroup to a Fern SecurityGroup
-func convertAWSSecurityGroupToFern(awsSG ec2types.SecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
+// enumerateRDSSecurityGroupForRegion lists all of the RDS DB security groups available to the caller for a specific region.
+// Note: RDS DB security groups are mostly legacy for EC2-Classic which was retired August 15, 2022.
+func enumerateRDSSecurityGroupForRegion(ctx context.Context, cfg aws.Config, region string) ([]rdstypes.DBSecurityGroup, []string) {
+	log := svc1log.FromContext(ctx)
+	log.Info("Enumerating RDS DB SecurityGroups for region",
+		svc1log.SafeParam("region", region))
+
+	cfg.Region = region
+	svc := rds.NewFromConfig(cfg)
+	var securityGroups []rdstypes.DBSecurityGroup
+	var errors []string
+
+	paginator := rds.NewDescribeDBSecurityGroupsPaginator(svc, &rds.DescribeDBSecurityGroupsInput{})
+
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(ctx)
+		if err != nil {
+			log.Warn("Failed to retrieve RDS DB SecurityGroups page",
+				svc1log.SafeParam("region", region),
+				svc1log.Stacktrace(err))
+			errors = append(errors, fmt.Sprintf("Error in region %s: %v", region, err))
+			break
+		}
+		securityGroups = append(securityGroups, output.DBSecurityGroups...)
+	}
+
+	if len(securityGroups) > 0 {
+		log.Info("Successfully enumerated RDS DB SecurityGroups",
+			svc1log.SafeParam("region", region),
+			svc1log.SafeParam("securityGroupCount", len(securityGroups)))
+	} else {
+		log.Info("No RDS DB SecurityGroups found in region", svc1log.SafeParam("region", region))
+	}
+	return securityGroups, errors
+}
+
+// convertAWSEC2SecurityGroupToFern converts an AWS SDK EC2 SecurityGroup to a Fern SecurityGroup
+func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
 	fernSG := &fernsecuritygroup.SecurityGroup{
-		Region:           region,
-		Description:      awsSG.Description,
-		GroupId:          awsSG.GroupId,
-		GroupName:        awsSG.GroupName,
-		OwnerId:          awsSG.OwnerId,
-		SecurityGroupArn: awsSG.SecurityGroupArn,
-		VpcId:            awsSG.VpcId,
+		Region:          region,
+		Type:            "EC2",
+		Description:     awsSG.Description,
+		GroupId:         awsSG.GroupId,
+		GroupName:       awsSG.GroupName,
+		OwnerId:         awsSG.OwnerId,
+		SecurityGroupId: awsSG.GroupId,
+		VpcId:           awsSG.VpcId,
 	}
 
 	// Convert IP Permissions (Ingress)
@@ -169,6 +222,46 @@ func convertAWSSecurityGroupToFern(awsSG ec2types.SecurityGroup, region string) 
 			fernTags = append(fernTags, fernTag)
 		}
 		fernSG.Tags = fernTags
+	}
+
+	return fernSG
+}
+
+// convertAWSRDSSecurityGroupToFern converts an AWS SDK RDS DB SecurityGroup to a Fern SecurityGroup
+func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
+	fernSG := &fernsecuritygroup.SecurityGroup{
+		Region:              region,
+		Type:                "RDS",
+		Description:         awsSG.DBSecurityGroupDescription,
+		DbSecurityGroupName: awsSG.DBSecurityGroupName,
+		OwnerId:             awsSG.OwnerId,
+		VpcId:               awsSG.VpcId,
+	}
+
+	// Convert EC2 Security Groups references
+	if awsSG.EC2SecurityGroups != nil {
+		var ec2SecurityGroups []string
+		for _, ec2SG := range awsSG.EC2SecurityGroups {
+			if ec2SG.EC2SecurityGroupId != nil {
+				ec2SecurityGroups = append(ec2SecurityGroups, *ec2SG.EC2SecurityGroupId)
+			}
+		}
+		if len(ec2SecurityGroups) > 0 {
+			fernSG.Ec2SecurityGroups = ec2SecurityGroups
+		}
+	}
+
+	// Convert IP Ranges
+	if awsSG.IPRanges != nil {
+		var ipRanges []string
+		for _, ipRange := range awsSG.IPRanges {
+			if ipRange.CIDRIP != nil {
+				ipRanges = append(ipRanges, *ipRange.CIDRIP)
+			}
+		}
+		if len(ipRanges) > 0 {
+			fernSG.IpRanges = ipRanges
+		}
 	}
 
 	return fernSG

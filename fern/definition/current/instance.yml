@@ -1,0 +1,39 @@
+types:
+# Config
+  CurrentInstanceConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Instance Structs
+  InstanceIdentityDocument:
+    properties:
+      accountId: string
+      instanceId: string
+      architecture: optional<string>
+      availabilityZone: optional<string>
+      billingProducts: optional<list<string>>
+      devpayProductCodes: optional<list<string>>
+      marketplaceProductCodes: optional<list<string>>
+      imageId: optional<string>
+      instanceType: optional<string>
+      kernelId: optional<string>
+      pendingTime: optional<datetime>
+      privateIp: optional<string>
+      ramdiskId: optional<string>
+      region: optional<string>
+      version: optional<string>
+  CurrentInstanceResource:
+    properties:
+      identityDocument: InstanceIdentityDocument
+      hostname: string
+      publicIp: string
+      publicHostname: string
+  CurrentInstanceResult:
+    properties:
+      resource: optional<CurrentInstanceResource>
+# Report Struct
+  CurrentInstanceReport:
+    properties:
+      config: CurrentInstanceConfig
+      result: CurrentInstanceResult
+      errors: optional<list<string>>

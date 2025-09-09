@@ -1,7 +1,9 @@
 package cmd
 
 import (
-	"github.com/Method-Security/methodaws/internal/iam"
+	iam "github.com/Method-Security/methodaws/generated/go/iam"
+	iamInternal "github.com/Method-Security/methodaws/internal/iam/enumerate"
+	"github.com/Method-Security/methodaws/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -19,16 +21,29 @@ func (a *MethodAws) InitIamCommand() {
 		Short: "Enumerate IAM resources",
 		Long:  `Enumerate IAM resources`,
 		Run: func(cmd *cobra.Command, args []string) {
-			report, err := iam.EnumerateIamRoles(cmd.Context(), *a.AwsConfig)
+			accountID, err := utils.GetAccountID(cmd.Context(), *a.AwsConfig)
 			if err != nil {
-				errorMessage := err.Error()
-				a.OutputSignal.ErrorMessage = &errorMessage
-				a.OutputSignal.Status = 1
+				a.OutputSignal.AddError(err)
+				return
 			}
+
+			// Get Config
+			config := getIamEnumerateConfig(a.RootFlags.Regions, accountID)
+
+			// Get Report
+			report := iamInternal.EnumerateIam(cmd.Context(), *a.AwsConfig, config)
 			a.OutputSignal.Content = report
 		},
 	}
 
 	iamCmd.AddCommand(enumerateCmd)
 	a.RootCmd.AddCommand(iamCmd)
+}
+
+// getIamEnumerateConfig returns an IamEnumerateConfig with the given regions and account ID
+func getIamEnumerateConfig(regions []string, accountID string) iam.IamEnumerateConfig {
+	return iam.IamEnumerateConfig{
+		Regions:   regions,
+		AccountId: accountID,
+	}
 }

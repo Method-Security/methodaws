@@ -1,6 +1,6 @@
 types:
   # DNS Record Types Enum
-  RRType:
+  RecordType:
     enum:
       - A
       - AAAA
@@ -52,7 +52,7 @@ types:
   ResourceRecordSet:
     properties:
       name: string
-      type: RRType
+      type: RecordType
       aliasTarget: optional<AliasTarget>
       cidrRouting: optional<CidrRouting>
       failover: optional<string>

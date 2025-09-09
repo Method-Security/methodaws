@@ -2,9 +2,11 @@
 package rds
 
 import (
+	// Standard
 	"context"
-
+	// Generated
 	rdsfern "github.com/Method-Security/methodaws/generated/go/rds"
+	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
@@ -106,7 +108,7 @@ func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBIns
 func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfern.RdsInstance {
 	dbInstance := &rdsfern.DbInstance{}
 
-	// Map basic fields
+	// Map basic string fields
 	dbInstance.DbInstanceIdentifier = instance.DBInstanceIdentifier
 	dbInstance.DbInstanceClass = instance.DBInstanceClass
 	dbInstance.Engine = instance.Engine
@@ -117,6 +119,34 @@ func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfer
 	dbInstance.AvailabilityZone = instance.AvailabilityZone
 	dbInstance.DbInstanceArn = instance.DBInstanceArn
 	dbInstance.DbiResourceId = instance.DbiResourceId
+
+	// Additional basic string fields
+	dbInstance.ActivityStreamKinesisStreamName = instance.ActivityStreamKinesisStreamName
+	dbInstance.ActivityStreamKmsKeyId = instance.ActivityStreamKmsKeyId
+	dbInstance.AwsBackupRecoveryPointArn = instance.AwsBackupRecoveryPointArn
+	dbInstance.BackupTarget = instance.BackupTarget
+	dbInstance.CaCertificateIdentifier = instance.CACertificateIdentifier
+	dbInstance.CharacterSetName = instance.CharacterSetName
+	dbInstance.CustomIamInstanceProfile = instance.CustomIamInstanceProfile
+	dbInstance.DbClusterIdentifier = instance.DBClusterIdentifier
+	dbInstance.DbSystemId = instance.DBSystemId
+	dbInstance.EngineLifecycleSupport = instance.EngineLifecycleSupport
+	dbInstance.EnhancedMonitoringResourceArn = instance.EnhancedMonitoringResourceArn
+	dbInstance.KmsKeyId = instance.KmsKeyId
+	dbInstance.LicenseModel = instance.LicenseModel
+	dbInstance.MonitoringRoleArn = instance.MonitoringRoleArn
+	dbInstance.NcharCharacterSetName = instance.NcharCharacterSetName
+	dbInstance.NetworkType = instance.NetworkType
+	dbInstance.PercentProgress = instance.PercentProgress
+	dbInstance.PerformanceInsightsKmsKeyId = instance.PerformanceInsightsKMSKeyId
+	dbInstance.PreferredBackupWindow = instance.PreferredBackupWindow
+	dbInstance.PreferredMaintenanceWindow = instance.PreferredMaintenanceWindow
+	dbInstance.ReadReplicaSourceDbClusterIdentifier = instance.ReadReplicaSourceDBClusterIdentifier
+	dbInstance.ReadReplicaSourceDbInstanceIdentifier = instance.ReadReplicaSourceDBInstanceIdentifier
+	dbInstance.SecondaryAvailabilityZone = instance.SecondaryAvailabilityZone
+	dbInstance.StorageType = instance.StorageType
+	dbInstance.TdeCredentialArn = instance.TdeCredentialArn
+	dbInstance.Timezone = instance.Timezone
 
 	// Map integer fields
 	if instance.AllocatedStorage != nil {
@@ -131,12 +161,90 @@ func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfer
 		iops := int(*instance.Iops)
 		dbInstance.Iops = &iops
 	}
+	if instance.BackupRetentionPeriod != nil {
+		backupRetention := int(*instance.BackupRetentionPeriod)
+		dbInstance.BackupRetentionPeriod = &backupRetention
+	}
+	if instance.MaxAllocatedStorage != nil {
+		maxStorage := int(*instance.MaxAllocatedStorage)
+		dbInstance.MaxAllocatedStorage = &maxStorage
+	}
+	if instance.MonitoringInterval != nil {
+		monitoringInterval := int(*instance.MonitoringInterval)
+		dbInstance.MonitoringInterval = &monitoringInterval
+	}
+	if instance.PerformanceInsightsRetentionPeriod != nil {
+		retentionPeriod := int(*instance.PerformanceInsightsRetentionPeriod)
+		dbInstance.PerformanceInsightsRetentionPeriod = &retentionPeriod
+	}
+	if instance.PromotionTier != nil {
+		promotionTier := int(*instance.PromotionTier)
+		dbInstance.PromotionTier = &promotionTier
+	}
+	if instance.StorageThroughput != nil {
+		storageThroughput := int(*instance.StorageThroughput)
+		dbInstance.StorageThroughput = &storageThroughput
+	}
 
 	// Map boolean fields
 	dbInstance.MultiAz = instance.MultiAZ
 	dbInstance.PubliclyAccessible = instance.PubliclyAccessible
 	dbInstance.StorageEncrypted = instance.StorageEncrypted
 	dbInstance.AutoMinorVersionUpgrade = instance.AutoMinorVersionUpgrade
+	dbInstance.ActivityStreamEngineNativeAuditFieldsIncluded = instance.ActivityStreamEngineNativeAuditFieldsIncluded
+	dbInstance.CopyTagsToSnapshot = instance.CopyTagsToSnapshot
+	dbInstance.CustomerOwnedIpEnabled = instance.CustomerOwnedIpEnabled
+	dbInstance.DedicatedLogVolume = instance.DedicatedLogVolume
+	dbInstance.DeletionProtection = instance.DeletionProtection
+	dbInstance.IamDatabaseAuthenticationEnabled = instance.IAMDatabaseAuthenticationEnabled
+	dbInstance.IsStorageConfigUpgradeAvailable = instance.IsStorageConfigUpgradeAvailable
+	dbInstance.MultiTenant = instance.MultiTenant
+	dbInstance.PerformanceInsightsEnabled = instance.PerformanceInsightsEnabled
+
+	// Map enum fields
+	if instance.ActivityStreamMode != "" {
+		activityStreamMode := rdsfern.ActivityStreamMode(instance.ActivityStreamMode)
+		dbInstance.ActivityStreamMode = &activityStreamMode
+	}
+	if instance.ActivityStreamStatus != "" {
+		activityStreamStatus := rdsfern.ActivityStreamStatus(instance.ActivityStreamStatus)
+		dbInstance.ActivityStreamStatus = &activityStreamStatus
+	}
+	if instance.AutomationMode != "" {
+		automationMode := rdsfern.AutomationMode(instance.AutomationMode)
+		dbInstance.AutomationMode = &automationMode
+	}
+	if instance.DatabaseInsightsMode != "" {
+		databaseInsightsMode := rdsfern.DatabaseInsightsMode(instance.DatabaseInsightsMode)
+		dbInstance.DatabaseInsightsMode = &databaseInsightsMode
+	}
+	if instance.ReplicaMode != "" {
+		replicaMode := rdsfern.ReplicaMode(instance.ReplicaMode)
+		dbInstance.ReplicaMode = &replicaMode
+	}
+
+	// Map time fields
+	if instance.AutomaticRestartTime != nil {
+		automaticRestartTime := instance.AutomaticRestartTime.Format("2006-01-02T15:04:05Z07:00")
+		dbInstance.AutomaticRestartTime = &automaticRestartTime
+	}
+	if instance.InstanceCreateTime != nil {
+		instanceCreateTime := instance.InstanceCreateTime.Format("2006-01-02T15:04:05Z07:00")
+		dbInstance.InstanceCreateTime = &instanceCreateTime
+	}
+	if instance.LatestRestorableTime != nil {
+		latestRestorableTime := instance.LatestRestorableTime.Format("2006-01-02T15:04:05Z07:00")
+		dbInstance.LatestRestorableTime = &latestRestorableTime
+	}
+	if instance.ResumeFullAutomationModeTime != nil {
+		resumeTime := instance.ResumeFullAutomationModeTime.Format("2006-01-02T15:04:05Z07:00")
+		dbInstance.ResumeFullAutomationModeTime = &resumeTime
+	}
+
+	// Map string arrays
+	dbInstance.EnabledCloudwatchLogsExports = instance.EnabledCloudwatchLogsExports
+	dbInstance.ReadReplicaDbClusterIdentifiers = instance.ReadReplicaDBClusterIdentifiers
+	dbInstance.ReadReplicaDbInstanceIdentifiers = instance.ReadReplicaDBInstanceIdentifiers
 
 	// Map endpoint
 	if instance.Endpoint != nil {
@@ -152,6 +260,214 @@ func transformDBInstanceToFern(instance types.DBInstance, region string) *rdsfer
 			endpoint.HostedZoneId = instance.Endpoint.HostedZoneId
 		}
 		dbInstance.Endpoint = endpoint
+	}
+
+	// Map listener endpoint
+	if instance.ListenerEndpoint != nil {
+		listenerEndpoint := &rdsfern.Endpoint{}
+		if instance.ListenerEndpoint.Address != nil {
+			listenerEndpoint.Address = instance.ListenerEndpoint.Address
+		}
+		if instance.ListenerEndpoint.Port != nil {
+			port := int(*instance.ListenerEndpoint.Port)
+			listenerEndpoint.Port = &port
+		}
+		if instance.ListenerEndpoint.HostedZoneId != nil {
+			listenerEndpoint.HostedZoneId = instance.ListenerEndpoint.HostedZoneId
+		}
+		dbInstance.ListenerEndpoint = listenerEndpoint
+	}
+
+	// Map DB subnet group
+	if instance.DBSubnetGroup != nil {
+		dbSubnetGroup := &rdsfern.DbSubnetGroup{
+			DbSubnetGroupName:        instance.DBSubnetGroup.DBSubnetGroupName,
+			DbSubnetGroupDescription: instance.DBSubnetGroup.DBSubnetGroupDescription,
+			VpcId:                    instance.DBSubnetGroup.VpcId,
+			SubnetGroupStatus:        instance.DBSubnetGroup.SubnetGroupStatus,
+		}
+		dbInstance.DbSubnetGroup = dbSubnetGroup
+	}
+
+	// Map certificate details
+	if instance.CertificateDetails != nil {
+		certDetails := &rdsfern.CertificateDetails{
+			CaIdentifier: instance.CertificateDetails.CAIdentifier,
+		}
+		if instance.CertificateDetails.ValidTill != nil {
+			validTill := instance.CertificateDetails.ValidTill.Format("2006-01-02T15:04:05Z07:00")
+			certDetails.ValidTill = &validTill
+		}
+		dbInstance.CertificateDetails = certDetails
+	}
+
+	// Map master user secret
+	if instance.MasterUserSecret != nil {
+		masterUserSecret := &rdsfern.MasterUserSecret{
+			SecretArn:    instance.MasterUserSecret.SecretArn,
+			SecretStatus: instance.MasterUserSecret.SecretStatus,
+			KmsKeyId:     instance.MasterUserSecret.KmsKeyId,
+		}
+		dbInstance.MasterUserSecret = masterUserSecret
+	}
+
+	// Map associated roles
+	if len(instance.AssociatedRoles) > 0 {
+		var associatedRoles []*rdsfern.DbInstanceRole
+		for _, role := range instance.AssociatedRoles {
+			fernRole := &rdsfern.DbInstanceRole{
+				RoleArn:     role.RoleArn,
+				FeatureName: role.FeatureName,
+				Status:      role.Status,
+			}
+			associatedRoles = append(associatedRoles, fernRole)
+		}
+		dbInstance.AssociatedRoles = associatedRoles
+	}
+
+	// Map VPC security groups
+	if len(instance.VpcSecurityGroups) > 0 {
+		var vpcSecurityGroups []*rdsfern.VpcSecurityGroupMembership
+		for _, sg := range instance.VpcSecurityGroups {
+			fernSg := &rdsfern.VpcSecurityGroupMembership{
+				VpcSecurityGroupId: sg.VpcSecurityGroupId,
+				Status:             sg.Status,
+			}
+			vpcSecurityGroups = append(vpcSecurityGroups, fernSg)
+		}
+		dbInstance.VpcSecurityGroups = vpcSecurityGroups
+	}
+
+	// Map DB parameter groups
+	if len(instance.DBParameterGroups) > 0 {
+		var dbParameterGroups []*rdsfern.DbParameterGroupStatus
+		for _, pg := range instance.DBParameterGroups {
+			fernPg := &rdsfern.DbParameterGroupStatus{
+				DbParameterGroupName: pg.DBParameterGroupName,
+				ParameterApplyStatus: pg.ParameterApplyStatus,
+			}
+			dbParameterGroups = append(dbParameterGroups, fernPg)
+		}
+		dbInstance.DbParameterGroups = dbParameterGroups
+	}
+
+	// Map DB security groups
+	if len(instance.DBSecurityGroups) > 0 {
+		var dbSecurityGroups []*rdsfern.DbSecurityGroupMembership
+		for _, sg := range instance.DBSecurityGroups {
+			fernSg := &rdsfern.DbSecurityGroupMembership{
+				DbSecurityGroupName: sg.DBSecurityGroupName,
+				Status:              sg.Status,
+			}
+			dbSecurityGroups = append(dbSecurityGroups, fernSg)
+		}
+		dbInstance.DbSecurityGroups = dbSecurityGroups
+	}
+
+	// Map option group memberships
+	if len(instance.OptionGroupMemberships) > 0 {
+		var optionGroups []*rdsfern.OptionGroupMembership
+		for _, og := range instance.OptionGroupMemberships {
+			fernOg := &rdsfern.OptionGroupMembership{
+				OptionGroupName: og.OptionGroupName,
+				Status:          og.Status,
+			}
+			optionGroups = append(optionGroups, fernOg)
+		}
+		dbInstance.OptionGroupMemberships = optionGroups
+	}
+
+	// Map processor features
+	if len(instance.ProcessorFeatures) > 0 {
+		var processorFeatures []*rdsfern.ProcessorFeature
+		for _, pf := range instance.ProcessorFeatures {
+			fernPf := &rdsfern.ProcessorFeature{
+				Name:  pf.Name,
+				Value: pf.Value,
+			}
+			processorFeatures = append(processorFeatures, fernPf)
+		}
+		dbInstance.ProcessorFeatures = processorFeatures
+	}
+
+	// Map domain memberships
+	if len(instance.DomainMemberships) > 0 {
+		var domainMemberships []*rdsfern.DomainMembership
+		for _, dm := range instance.DomainMemberships {
+			fernDm := &rdsfern.DomainMembership{
+				Domain:              dm.Domain,
+				Status:              dm.Status,
+				Fqdn:                dm.FQDN,
+				IamRoleName:         dm.IAMRoleName,
+				OudistinguishedName: dm.OU,
+			}
+			domainMemberships = append(domainMemberships, fernDm)
+		}
+		dbInstance.DomainMemberships = domainMemberships
+	}
+
+	// Map status infos
+	if len(instance.StatusInfos) > 0 {
+		var statusInfos []*rdsfern.DbInstanceStatusInfo
+		for _, si := range instance.StatusInfos {
+			fernSi := &rdsfern.DbInstanceStatusInfo{
+				StatusType: si.StatusType,
+				Normal:     si.Normal,
+				Status:     si.Status,
+				Message:    si.Message,
+			}
+			statusInfos = append(statusInfos, fernSi)
+		}
+		dbInstance.StatusInfos = statusInfos
+	}
+
+	// Map DB instance automated backups replications
+	if len(instance.DBInstanceAutomatedBackupsReplications) > 0 {
+		var automatedBackupsReplications []*rdsfern.DbInstanceAutomatedBackupsReplication
+		for _, abr := range instance.DBInstanceAutomatedBackupsReplications {
+			fernAbr := &rdsfern.DbInstanceAutomatedBackupsReplication{
+				Arn: abr.DBInstanceAutomatedBackupsArn,
+			}
+			automatedBackupsReplications = append(automatedBackupsReplications, fernAbr)
+		}
+		dbInstance.DbInstanceAutomatedBackupsReplications = automatedBackupsReplications
+	}
+
+	// Map pending modified values
+	if instance.PendingModifiedValues != nil {
+		pmv := &rdsfern.PendingModifiedValues{
+			DbInstanceClass:         instance.PendingModifiedValues.DBInstanceClass,
+			MasterUserPassword:      instance.PendingModifiedValues.MasterUserPassword,
+			EngineVersion:           instance.PendingModifiedValues.EngineVersion,
+			LicenseModel:            instance.PendingModifiedValues.LicenseModel,
+			DbInstanceIdentifier:    instance.PendingModifiedValues.DBInstanceIdentifier,
+			StorageType:             instance.PendingModifiedValues.StorageType,
+			CaCertificateIdentifier: instance.PendingModifiedValues.CACertificateIdentifier,
+			DbSubnetGroupName:       instance.PendingModifiedValues.DBSubnetGroupName,
+			MultiAz:                 instance.PendingModifiedValues.MultiAZ,
+			DedicatedLogVolume:      instance.PendingModifiedValues.DedicatedLogVolume,
+		}
+		if instance.PendingModifiedValues.AllocatedStorage != nil {
+			allocatedStorage := int(*instance.PendingModifiedValues.AllocatedStorage)
+			pmv.AllocatedStorage = &allocatedStorage
+		}
+		if instance.PendingModifiedValues.Port != nil {
+			port := int(*instance.PendingModifiedValues.Port)
+			pmv.Port = &port
+		}
+		if instance.PendingModifiedValues.BackupRetentionPeriod != nil {
+			backupRetention := int(*instance.PendingModifiedValues.BackupRetentionPeriod)
+			pmv.BackupRetentionPeriod = &backupRetention
+		}
+		if instance.PendingModifiedValues.Iops != nil {
+			iops := int(*instance.PendingModifiedValues.Iops)
+			pmv.Iops = &iops
+		}
+		if instance.PendingModifiedValues.StorageThroughput != nil {
+			storageThroughput := int(*instance.PendingModifiedValues.StorageThroughput)
+			pmv.StorageThroughput = &storageThroughput
+		}
+		dbInstance.PendingModifiedValues = pmv
 	}
 
 	// Map tags

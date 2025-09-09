@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	// Internal
 	// Generated
 	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
 	// External
@@ -172,55 +173,36 @@ func getIAMRoles(ctx context.Context, iamSvc *iam.Client, instanceProfileArn str
 // convertAWSInstanceToFern converts an AWS SDK EC2 Instance to a Fern EC2Instance
 func convertAWSInstanceToFern(awsInstance ec2types.Instance) *ec2fern.Ec2Instance {
 	fernInstance := &ec2fern.Ec2Instance{}
+	if awsInstance.InstanceId == nil {
+		return nil
+	}
+	fernInstance.Id = *awsInstance.InstanceId
 
 	// Convert basic string fields
-	if awsInstance.InstanceId != nil {
-		fernInstance.InstanceId = awsInstance.InstanceId
-	}
-	if awsInstance.ImageId != nil {
-		fernInstance.ImageId = awsInstance.ImageId
-	}
-	if awsInstance.KeyName != nil {
-		fernInstance.KeyName = awsInstance.KeyName
-	}
-	if awsInstance.PrivateIpAddress != nil {
-		fernInstance.PrivateIpAddress = awsInstance.PrivateIpAddress
-	}
-	if awsInstance.PublicIpAddress != nil {
-		fernInstance.PublicIpAddress = awsInstance.PublicIpAddress
-	}
-	if awsInstance.PrivateDnsName != nil {
-		fernInstance.PrivateDnsName = awsInstance.PrivateDnsName
-	}
-	if awsInstance.PublicDnsName != nil {
-		fernInstance.PublicDnsName = awsInstance.PublicDnsName
-	}
-
-	// Convert boolean fields
-	if awsInstance.EbsOptimized != nil {
-		fernInstance.EbsOptimized = awsInstance.EbsOptimized
-	}
-
-	// Convert time fields
-	if awsInstance.LaunchTime != nil {
-		fernInstance.LaunchTime = awsInstance.LaunchTime
-	}
+	fernInstance.ImageId = awsInstance.ImageId
+	fernInstance.KeyName = awsInstance.KeyName
+	fernInstance.PrivateIpAddress = awsInstance.PrivateIpAddress
+	fernInstance.PublicIpAddress = awsInstance.PublicIpAddress
+	fernInstance.PrivateDnsName = awsInstance.PrivateDnsName
+	fernInstance.PublicDnsName = awsInstance.PublicDnsName
+	fernInstance.EbsOptimized = awsInstance.EbsOptimized
+	fernInstance.LaunchTime = awsInstance.LaunchTime
 
 	// Convert enum fields
 	if awsInstance.InstanceType != "" {
-		instanceType := ec2fern.InstanceType(string(awsInstance.InstanceType))
+		instanceType := ec2fern.InstanceType(strings.ToUpper(string(awsInstance.InstanceType)))
 		fernInstance.InstanceType = &instanceType
 	}
 	if awsInstance.Architecture != "" {
-		architecture := ec2fern.Architecture(string(awsInstance.Architecture))
+		architecture := ec2fern.Architecture(strings.ToUpper(string(awsInstance.Architecture)))
 		fernInstance.Architecture = &architecture
 	}
 	if awsInstance.Hypervisor != "" {
-		hypervisor := ec2fern.HypervisorType(string(awsInstance.Hypervisor))
+		hypervisor := ec2fern.HypervisorType(strings.ToUpper(string(awsInstance.Hypervisor)))
 		fernInstance.Hypervisor = &hypervisor
 	}
 	if awsInstance.Platform != "" {
-		platform := ec2fern.PlatformValues(string(awsInstance.Platform))
+		platform := ec2fern.PlatformValues(strings.ToUpper(string(awsInstance.Platform)))
 		fernInstance.Platform = &platform
 	}
 

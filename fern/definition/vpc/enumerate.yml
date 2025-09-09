@@ -22,6 +22,44 @@ types:
       - DISASSOCIATED
       - FAILING
       - FAILED
+  SubnetState:
+    enum:
+      - PENDING
+      - AVAILABLE
+      - UNAVAILABLE
+  AvailabilityZone:
+    properties:
+      zoneId: optional<string>
+      zoneName: optional<string>
+      networkBorderGroup: optional<string>
+      parentZoneId: optional<string>
+      parentZoneName: optional<string>
+      groupName: optional<string>
+      state: optional<string>
+      optInStatus: optional<string>
+  Subnet:
+    properties:
+      availabilityZone: optional<string>
+      availabilityZoneId: optional<string>
+      availableIpAddressCount: optional<integer>
+      cidrBlock: optional<string>
+      defaultForAz: optional<boolean>
+      enableLniAtDeviceIndex: optional<integer>
+      ipv6Native: optional<boolean>
+      mapCustomerOwnedIpOnLaunch: optional<boolean>
+      mapPublicIpOnLaunch: optional<boolean>
+      outpostArn: optional<string>
+      ownerId: optional<string>
+      state: optional<SubnetState>
+      subnetArn: optional<string>
+      subnetId: optional<string>
+      tags: optional<list<Tag>>
+      vpcId: optional<string>
+      assignIpv6AddressOnCreation: optional<boolean>
+      customerOwnedIpv4Pool: optional<string>
+      enableDns64: optional<boolean>
+      ipv6CidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
+      privateDnsNameOptionsOnLaunch: optional<string>
   Tag:
     properties:
       key: string
@@ -31,26 +69,20 @@ types:
       associationId: optional<string>
       cidrBlock: optional<string>
       cidrBlockState: optional<VpcCidrBlockState>
-  VpcIpv6CidrBlockAssociation:
+  Vpc:
     properties:
-      associationId: optional<string>
-      ipv6CidrBlock: optional<string>
-      ipv6CidrBlockState: optional<VpcCidrBlockState>
-  VPC:
-    properties:
-      cidrBlock: optional<string>
+      id: optional<string>
+      creationCidrBlock: optional<string>
       cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       dhcpOptionsId: optional<string>
       instanceTenancy: optional<Tenancy>
-      ipv6CidrBlockAssociationSet: optional<list<VpcIpv6CidrBlockAssociation>>
       isDefault: optional<boolean>
       ownerId: optional<string>
       state: optional<VpcState>
       tags: optional<list<Tag>>
-      vpcId: optional<string>
   VPCInstance:
     properties:
-      vpc: VPC
+      vpc: Vpc
       region: string
   VPCEnumerateResult:
     properties:

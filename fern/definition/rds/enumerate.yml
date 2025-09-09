@@ -1,6 +1,6 @@
 types:
 # Config
-  RDSEnumerateConfig:
+  RdsEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
@@ -37,27 +37,27 @@ types:
       address: optional<string>
       port: optional<integer>
       hostedZoneId: optional<string>
-  DBInstanceRole:
+  DbInstanceRole:
     properties:
       roleArn: optional<string>
       featureName: optional<string>
       status: optional<string>
-  DBInstanceAutomatedBackupsReplication:
+  DbInstanceAutomatedBackupsReplication:
     properties:
-      dbInstanceAutomatedBackupsArn: optional<string>
+      arn: optional<string>
   VpcSecurityGroupMembership:
     properties:
       vpcSecurityGroupId: optional<string>
       status: optional<string>
-  DBParameterGroupStatus:
+  DbParameterGroupStatus:
     properties:
       dbParameterGroupName: optional<string>
       parameterApplyStatus: optional<string>
-  DBSecurityGroupMembership:
+  DbSecurityGroupMembership:
     properties:
       dbSecurityGroupName: optional<string>
       status: optional<string>
-  DBSubnetGroup:
+  DbSubnetGroup:
     properties:
       dbSubnetGroupName: optional<string>
       dbSubnetGroupDescription: optional<string>
@@ -78,7 +78,7 @@ types:
     properties:
       name: optional<string>
       value: optional<string>
-  DBInstanceStatusInfo:
+  DbInstanceStatusInfo:
     properties:
       statusType: optional<string>
       normal: optional<boolean>
@@ -111,7 +111,7 @@ types:
       caIdentifier: optional<string>
       validTill: optional<string>
 # Core RDS Types
-  DBInstance:
+  DbInstance:
     properties:
       activityStreamEngineNativeAuditFieldsIncluded: optional<boolean>
       activityStreamKinesisStreamName: optional<string>
@@ -119,7 +119,7 @@ types:
       activityStreamMode: optional<ActivityStreamMode>
       activityStreamStatus: optional<ActivityStreamStatus>
       allocatedStorage: optional<integer>
-      associatedRoles: optional<list<DBInstanceRole>>
+      associatedRoles: optional<list<DbInstanceRole>>
       autoMinorVersionUpgrade: optional<boolean>
       automaticRestartTime: optional<string>
       automationMode: optional<AutomationMode>
@@ -135,14 +135,14 @@ types:
       customerOwnedIpEnabled: optional<boolean>
       dbClusterIdentifier: optional<string>
       dbInstanceArn: optional<string>
-      dbInstanceAutomatedBackupsReplications: optional<list<DBInstanceAutomatedBackupsReplication>>
+      dbInstanceAutomatedBackupsReplications: optional<list<DbInstanceAutomatedBackupsReplication>>
       dbInstanceClass: optional<string>
       dbInstanceIdentifier: optional<string>
       dbInstanceStatus: optional<string>
       dbName: optional<string>
-      dbParameterGroups: optional<list<DBParameterGroupStatus>>
-      dbSecurityGroups: optional<list<DBSecurityGroupMembership>>
-      dbSubnetGroup: optional<DBSubnetGroup>
+      dbParameterGroups: optional<list<DbParameterGroupStatus>>
+      dbSecurityGroups: optional<list<DbSecurityGroupMembership>>
+      dbSubnetGroup: optional<DbSubnetGroup>
       dbSystemId: optional<string>
       databaseInsightsMode: optional<DatabaseInsightsMode>
       dbInstancePort: optional<integer>
@@ -184,14 +184,14 @@ types:
       processorFeatures: optional<list<ProcessorFeature>>
       promotionTier: optional<integer>
       publiclyAccessible: optional<boolean>
-      readReplicaDBClusterIdentifiers: optional<list<string>>
-      readReplicaDBInstanceIdentifiers: optional<list<string>>
-      readReplicaSourceDBClusterIdentifier: optional<string>
-      readReplicaSourceDBInstanceIdentifier: optional<string>
+      readReplicaDbClusterIdentifiers: optional<list<string>>
+      readReplicaDbInstanceIdentifiers: optional<list<string>>
+      readReplicaSourceDbClusterIdentifier: optional<string>
+      readReplicaSourceDbInstanceIdentifier: optional<string>
       replicaMode: optional<ReplicaMode>
       resumeFullAutomationModeTime: optional<string>
       secondaryAvailabilityZone: optional<string>
-      statusInfos: optional<list<DBInstanceStatusInfo>>
+      statusInfos: optional<list<DbInstanceStatusInfo>>
       storageEncrypted: optional<boolean>
       storageThroughput: optional<integer>
       storageType: optional<string>
@@ -199,16 +199,16 @@ types:
       tdeCredentialArn: optional<string>
       timezone: optional<string>
       vpcSecurityGroups: optional<list<VpcSecurityGroupMembership>>
-  RDSInstance:
+  RdsInstance:
     properties:
-      dbInstance: DBInstance
+      dbInstance: DbInstance
       region: string
-  RDSEnumerateResult:
+  RdsEnumerateResult:
     properties:
-      rdsInstances: optional<list<RDSInstance>>
+      rdsInstances: optional<list<RdsInstance>>
   # Report Struct
-  RDSEnumerateReport:
+  RdsEnumerateReport:
     properties:
-      result: RDSEnumerateResult
-      config: RDSEnumerateConfig
+      result: RdsEnumerateResult
+      config: RdsEnumerateConfig
       errors: optional<list<string>>

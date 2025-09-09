@@ -11,12 +11,12 @@ types:
       permission: string
   BucketVersioningStatus:
     enum:
-      - Enabled
-      - Suspended
+      - ENABLED
+      - SUSPENDED
   S3MFADeleteStatus:
     enum:
-      - Enabled
-      - Disabled
+      - ENABLED
+      - DISABLED
   S3ServerSideEncryption:
     enum:
       - name: "AES256"

@@ -51,7 +51,7 @@ types:
   StatementInfo:
     properties:
       type: StatementType
-      rawStatement: optional<string>   
+      rawStatement: optional<string>
   RuleInfo:
     properties:
       name: string

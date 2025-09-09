@@ -4,6 +4,8 @@ package route53
 import (
 	// Standard
 	"context"
+	"strings"
+
 	// Generated
 	route53fern "github.com/Method-Security/methodaws/generated/go/route53"
 	// Internal
@@ -129,7 +131,7 @@ func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID s
 			// Convert AWS SDK ResourceRecordSet to fern ResourceRecordSet
 			fernRecord := &route53fern.ResourceRecordSet{
 				Name: *recordSet.Name,
-				Type: route53fern.RrType(string(recordSet.Type)),
+				Type: route53fern.RecordType(strings.ToUpper(string(recordSet.Type))),
 			}
 
 			// Handle optional fields

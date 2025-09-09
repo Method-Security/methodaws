@@ -57,7 +57,7 @@ types:
     properties:
       arn: optional<string>
       protocol: optional<Protocol>
-      port: integer
+      port: optional<integer>
       certificates: optional<list<Certificate>>
       loadBalancerArn: optional<string>
   Target:
@@ -71,8 +71,8 @@ types:
       arn: string
       name: string
       ipAddressType: TargetGroupIpAddressType
-      loadBalancerArns: list<string>
       port: integer
+      loadBalancerArns: optional<list<string>>
       protocol: optional<Protocol>
       vpcId: optional<string>
       targets: optional<list<Target>>

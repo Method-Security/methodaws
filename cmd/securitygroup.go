@@ -67,8 +67,8 @@ func (a *MethodAws) InitSecurityGroupCommand() {
 	a.RootCmd.AddCommand(securityGroupCmd)
 }
 
-func getSecurityGroupEnumerateConfig(accountID string, vpcID *string, regions []string) fernsecuritygroup.Ec2SecurityGroupsEnumerateConfig {
-	return fernsecuritygroup.Ec2SecurityGroupsEnumerateConfig{
+func getSecurityGroupEnumerateConfig(accountID string, vpcID *string, regions []string) fernsecuritygroup.SecurityGroupsEnumerateConfig {
+	return fernsecuritygroup.SecurityGroupsEnumerateConfig{
 		AccountId: accountID,
 		VpcId:     vpcID,
 		Regions:   regions,

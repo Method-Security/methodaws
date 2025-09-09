@@ -133,8 +133,9 @@ func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*
 	errorMessages := []string{}
 
 	for _, listener := range loadBalancer.ListenerDescriptions {
+		port := int(listener.Listener.LoadBalancerPort)
 		fernListener := &loadbalancerfern.Listener{
-			Port: int(listener.Listener.LoadBalancerPort),
+			Port: &port,
 		}
 
 		// Convert protocol

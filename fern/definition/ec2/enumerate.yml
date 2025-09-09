@@ -54,8 +54,8 @@ types:
 # Result Structs
   IamInstanceProfile:
     properties:
-      arn: optional<string>
       id: optional<string>
+      arn: optional<string>
   Placement:
     properties:
       availabilityZone: optional<string>
@@ -81,7 +81,7 @@ types:
       sourceDestCheck: optional<boolean>
   EC2Instance:
     properties:
-      instanceId: optional<string>
+      id: string
       imageId: optional<string>
       keyName: optional<string>
       instanceType: optional<InstanceType>
@@ -103,9 +103,6 @@ types:
       instance: EC2Instance
       iamRoles: optional<list<string>>
       region: optional<string>
-  Instances:
-    properties:
-      ec2Instances: list<InstanceWithIAMRole>
   EC2EnumerateResult:
     properties:
       instances: optional<list<InstanceWithIAMRole>>

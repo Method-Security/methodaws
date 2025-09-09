@@ -2,7 +2,7 @@
 
 types:
 # Config
-  EC2SecurityGroupsEnumerateConfig:
+  SecurityGroupsEnumerateConfig:
     properties:
       accountId: string
       vpcId: optional<string>
@@ -20,21 +20,26 @@ types:
   SecurityGroup:
     properties:
       region: string
+      type: string  # "EC2" or "RDS"
       description: optional<string>
       groupId: optional<string>
       groupName: optional<string>
       ipPermissions: optional<list<IpPermission>>
       ipPermissionsEgress: optional<list<IpPermission>>
       ownerId: optional<string>
-      securityGroupArn: optional<string>
+      securityGroupId: optional<string>
       tags: optional<list<Tag>>
       vpcId: optional<string>
-  EC2SecurityGroupsEnumerateResult:
+      # RDS-specific fields
+      dbSecurityGroupName: optional<string>
+      ec2SecurityGroups: optional<list<string>>
+      ipRanges: optional<list<string>>
+  SecurityGroupsEnumerateResult:
     properties:
       securityGroups: optional<list<SecurityGroup>>
   # Report Struct
-  EC2SecurityGroupsEnumerateReport:
+  SecurityGroupsEnumerateReport:
     properties:
-      result: EC2SecurityGroupsEnumerateResult
-      config: EC2SecurityGroupsEnumerateConfig
+      result: SecurityGroupsEnumerateResult
+      config: SecurityGroupsEnumerateConfig
       errors: optional<list<string>>

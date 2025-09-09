@@ -152,9 +152,14 @@ func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancin
 		}
 
 		for _, listener := range page.Listeners {
+			var port *int
+			if listener.Port != nil {
+				portValue := int(*listener.Port)
+				port = &portValue
+			}
 			fernListener := &loadbalancerfern.Listener{
 				Arn:             listener.ListenerArn,
-				Port:            int(aws.ToInt32(listener.Port)),
+				Port:            port,
 				Certificates:    certificatesForListenerV2(listener.Certificates),
 				LoadBalancerArn: listener.LoadBalancerArn,
 			}

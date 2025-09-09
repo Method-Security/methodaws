@@ -1,0 +1,85 @@
+types:
+# Config
+  IamEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Result Structs
+  DecodedPolicyVersion:
+    properties:
+      createDate: optional<datetime>
+      document: optional<string>
+      isDefaultVersion: optional<boolean>
+      versionId: optional<string>
+  PolicyTag:
+    properties:
+      key: string
+      value: string
+  InlinePolicy:
+    properties:
+      name: string
+      policy: string
+  AttachedPermissionsBoundary:
+    properties:
+      permissionsBoundaryArn: optional<string>
+      permissionsBoundaryType: optional<string>
+  RoleLastUsed:
+    properties:
+      lastUsedDate: optional<datetime>
+      region: optional<string>
+  RoleTag:
+    properties:
+      key: string
+      value: string
+  PolicyResource:
+    properties:
+      # AWS native policy fields
+      arn: optional<string>
+      attachmentCount: optional<integer>
+      createDate: optional<datetime>
+      defaultVersionId: optional<string>
+      description: optional<string>
+      isAttachable: optional<boolean>
+      path: optional<string>
+      permissionsBoundaryUsageCount: optional<integer>
+      policyId: optional<string>
+      policyName: optional<string>
+      tags: optional<list<PolicyTag>>
+      updateDate: optional<datetime>
+      policyVersion: optional<DecodedPolicyVersion>
+  DecodedRole:
+    properties:
+      # AWS native role fields
+      arn: optional<string>
+      assumeRolePolicyDocument: optional<string>
+      createDate: optional<datetime>
+      description: optional<string>
+      maxSessionDuration: optional<integer>
+      path: optional<string>
+      permissionsBoundary: optional<AttachedPermissionsBoundary>
+      roleId: optional<string>
+      roleName: optional<string>
+      roleLastUsed: optional<RoleLastUsed>
+      tags: optional<list<RoleTag>>
+      decodedAssumeRolePolicyDocument: optional<string>
+  RoleResource:
+    properties:
+      role: optional<DecodedRole>
+      attachedPoliciesArns: optional<list<string>>
+      inlinePolicies: optional<list<InlinePolicy>>
+  PolicyReport:
+    properties:
+      policies: optional<list<PolicyResource>>
+  IamResources:
+    properties:
+      roles: optional<list<RoleResource>>
+      policies: PolicyReport
+  IamEnumerateResult:
+    properties:
+      resources: optional<IamResources>
+# Report struct
+  IamEnumerateReport:
+    properties:
+      config: IamEnumerateConfig
+      result: IamEnumerateResult
+      errors: optional<list<string>>

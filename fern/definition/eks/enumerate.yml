@@ -1,0 +1,112 @@
+types:
+# Config
+  EksEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# EKS Structs
+  Ec2Instance:
+    properties:
+      instanceId: string
+  NodeGroup:
+    properties:
+      name: optional<string>
+      nodeRole: optional<string>
+      instances: optional<list<Ec2Instance>>
+  EksVpcConfig:
+    properties:
+      vpcId: optional<string>
+      clusterSecurityGroupId: optional<string>
+      endpointConfigResponse: optional<EksEndpointConfigResponse>
+      publicAccessCidrs: optional<list<string>>
+      securityGroupIds: optional<list<string>>
+      subnetIds: optional<list<string>>
+  EksEndpointConfigResponse:
+    properties:
+      privateAccess: optional<boolean>
+      publicAccess: optional<boolean>
+  EksKubernetesNetworkConfig:
+    properties:
+      ipFamily: optional<string>
+      serviceIpv4Cidr: optional<string>
+      serviceIpv6Cidr: optional<string>
+  EksLogging:
+    properties:
+      clusterLogging: optional<list<EksClusterLogging>>
+  EksClusterLogging:
+    properties:
+      enabled: optional<boolean>
+      types: optional<list<string>>
+  EksIdentity:
+    properties:
+      oidc: optional<EksOidc>
+  EksOidc:
+    properties:
+      issuer: optional<string>
+  EksEncryptionConfig:
+    properties:
+      provider: optional<EksProvider>
+      resources: optional<list<string>>
+  EksProvider:
+    properties:
+      keyArn: optional<string>
+  EksConnectorConfig:
+    properties:
+      activationCode: optional<string>
+      activationExpiry: optional<datetime>
+      activationId: optional<string>
+      provider: optional<string>
+      roleArn: optional<string>
+  EksClusterHealth:
+    properties:
+      issues: optional<list<EksClusterIssue>>
+  EksClusterIssue:
+    properties:
+      code: optional<string>
+      message: optional<string>
+      resourceIds: optional<list<string>>
+  EksOutpostConfig:
+    properties:
+      controlPlaneInstanceType: optional<string>
+      controlPlanePlacement: optional<EksControlPlanePlacement>
+      outpostArns: optional<list<string>>
+  EksControlPlanePlacement:
+    properties:
+      groupName: optional<string>
+  EksAccessConfig:
+    properties:
+      authenticationMode: optional<string>
+      bootstrapClusterCreatorAdminPermissions: optional<boolean>
+  EksCluster:
+    properties:
+      # Core cluster properties from eksTypes.Cluster
+      arn: string
+      name: string
+      region: string
+      status: string
+      endpoint: optional<string>
+      roleArn: optional<string>
+      resourcesVpcConfig: optional<EksVpcConfig>
+      kubernetesNetworkConfig: optional<EksKubernetesNetworkConfig>
+      logging: optional<EksLogging>
+      identity: optional<EksIdentity>
+      platformVersion: optional<string>
+      tags: optional<map<string, string>>
+      encryptionConfig: optional<list<EksEncryptionConfig>>
+      connectorConfig: optional<EksConnectorConfig>
+      id: optional<string>
+      health: optional<EksClusterHealth>
+      outpostConfig: optional<EksOutpostConfig>
+      accessConfig: optional<EksAccessConfig>
+      nodeGroups: optional<list<NodeGroup>>
+      version: optional<string>
+      createdAt: optional<datetime>
+  EksEnumerateResult:
+    properties:
+      eksClusters: optional<list<EksCluster>>
+# Report Struct  
+  EksEnumerateReport:
+    properties:
+      config: EksEnumerateConfig
+      result: EksEnumerateResult
+      errors: optional<list<string>>
