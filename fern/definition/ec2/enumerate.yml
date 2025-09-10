@@ -1,6 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
+# Config
+  Ec2EnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
+# Enums
   InstanceState:
     enum:
       - PENDING
@@ -41,12 +47,7 @@ types:
     properties:
       key: optional<string>
       value: optional<string>
-# Config
-  Ec2EnumerateConfig:
-    properties:
-      accountId: string
-      regions: list<string>
-# Result Structs
+# Supporting Structs
   IamInstanceProfile:
     properties:
       id: optional<string>
@@ -66,11 +67,14 @@ types:
     properties:
       id: string
       subnetIds: optional<list<string>>
-  InstanceNetworkInterface:
+# Network Interface High level Structs
+  InstanceNetworkInterfaceIdentificationInfo:
     properties:
-    # Core fields
       id: string
-    # Instance Network Interface fields
+      arn: optional<string>
+      region: string
+  InstanceNetworkInterfaceConfigurationInfo:
+    properties:
       description: optional<string>
       ownerId: optional<string>
       status: optional<string>
@@ -78,15 +82,22 @@ types:
       privateIpAddress: optional<string>
       privateDnsName: optional<string>
       sourceDestCheck: optional<boolean>
-    # Linked primatives
-      vpc: VpcInstance
-  Ec2Instance:
+  InstanceNetworkInterfaceResourceInfo:
     properties:
-    # Core fields
+      vpc: VpcInstance
+# Main Network Interface Structs
+  InstanceNetworkInterface:
+    properties:
+      identification: InstanceNetworkInterfaceIdentificationInfo
+      configuration: InstanceNetworkInterfaceConfigurationInfo
+      resources: optional<InstanceNetworkInterfaceResourceInfo>
+# EC2 Instance High level Structs
+  Ec2InstanceIdentificationInfo:
+    properties:
       id: string
-      arn: optional<string>
       region: string
-    # EC2 Instance fields
+  Ec2InstanceConfigurationInfo:
+    properties:
       state: optional<InstanceState>
       imageId: optional<string>
       keyName: optional<string>
@@ -103,9 +114,16 @@ types:
       ebsOptimized: optional<boolean>
       name: optional<string>
       tags: optional<list<Tag>>
-    # Linked primatives
+  Ec2InstanceResourceInfo:
+    properties:
       networkInterfaces: optional<list<InstanceNetworkInterface>>
       iamInstanceProfile: optional<IamInstanceProfile>
+# EC2 Main Structs
+  Ec2Instance:
+    properties:
+      identification: Ec2InstanceIdentificationInfo
+      configuration: Ec2InstanceConfigurationInfo
+      resources: optional<Ec2InstanceResourceInfo>
   Ec2EnumerateResult:
     properties:
       instances: optional<list<Ec2Instance>>

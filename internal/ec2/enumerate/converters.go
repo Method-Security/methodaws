@@ -13,50 +13,66 @@ import (
 func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, region string) (*ec2fern.Ec2Instance, []string) {
 	var errors []string
 
-	instance := &ec2fern.Ec2Instance{
-		Id:               *awsInstance.InstanceId,
-		Region:           region,
-		ImageId:          awsInstance.ImageId,
-		KeyName:          awsInstance.KeyName,
-		InstanceType:     convertInstanceType(awsInstance.InstanceType),
-		Architecture:     convertArchitecture(awsInstance.Architecture),
-		Hypervisor:       convertHypervisor(awsInstance.Hypervisor),
-		Platform:         convertPlatform(awsInstance.Platform),
-		EbsOptimized:     awsInstance.EbsOptimized,
-		LaunchTime:       awsInstance.LaunchTime,
-		PrivateIpAddress: awsInstance.PrivateIpAddress,
-		PublicIpAddress:  awsInstance.PublicIpAddress,
-		PrivateDnsName:   awsInstance.PrivateDnsName,
-		PublicDnsName:    awsInstance.PublicDnsName,
-	}
-
 	// Convert instance state
+	var state *ec2fern.InstanceState
 	if awsInstance.State != nil {
-		state := convertInstanceState(awsInstance.State.Name)
-		if state != nil {
-			instance.State = state
-		}
-	}
-
-	// Convert IAM instance profile
-	if awsInstance.IamInstanceProfile != nil {
-		instance.IamInstanceProfile = convertIamInstanceProfile(awsInstance.IamInstanceProfile)
+		state = convertInstanceState(awsInstance.State.Name)
 	}
 
 	// Convert placement
+	var placement *ec2fern.Placement
 	if awsInstance.Placement != nil {
-		instance.Placement = convertPlacement(awsInstance.Placement)
-	}
-
-	// Convert network interfaces
-	if len(awsInstance.NetworkInterfaces) > 0 {
-		instance.NetworkInterfaces, errors = convertNetworkInterfaces(ctx, awsInstance.NetworkInterfaces)
+		placement = convertPlacement(awsInstance.Placement)
 	}
 
 	// Convert tags and extract name
+	var tags []*ec2fern.Tag
+	var name *string
 	if len(awsInstance.Tags) > 0 {
-		instance.Tags = convertTags(awsInstance.Tags)
-		instance.Name = extractNameFromTags(awsInstance.Tags)
+		tags = convertTags(awsInstance.Tags)
+		name = extractNameFromTags(awsInstance.Tags)
+	}
+
+	// Convert IAM instance profile
+	var iamInstanceProfile *ec2fern.IamInstanceProfile
+	if awsInstance.IamInstanceProfile != nil {
+		iamInstanceProfile = convertIamInstanceProfile(awsInstance.IamInstanceProfile)
+	}
+
+	// Convert network interfaces
+	var networkInterfaces []*ec2fern.InstanceNetworkInterface
+	if len(awsInstance.NetworkInterfaces) > 0 {
+		networkInterfaces, errors = convertNetworkInterfaces(ctx, awsInstance.NetworkInterfaces, region)
+	}
+
+	// Create instance with nested structure
+	instance := &ec2fern.Ec2Instance{
+		Identification: &ec2fern.Ec2InstanceIdentificationInfo{
+			Id:     *awsInstance.InstanceId,
+			Region: region,
+		},
+		Configuration: &ec2fern.Ec2InstanceConfigurationInfo{
+			State:            state,
+			ImageId:          awsInstance.ImageId,
+			KeyName:          awsInstance.KeyName,
+			InstanceType:     convertInstanceType(awsInstance.InstanceType),
+			LaunchTime:       awsInstance.LaunchTime,
+			Placement:        placement,
+			PrivateIpAddress: awsInstance.PrivateIpAddress,
+			PublicIpAddress:  awsInstance.PublicIpAddress,
+			PrivateDnsName:   awsInstance.PrivateDnsName,
+			PublicDnsName:    awsInstance.PublicDnsName,
+			Architecture:     convertArchitecture(awsInstance.Architecture),
+			Hypervisor:       convertHypervisor(awsInstance.Hypervisor),
+			Platform:         convertPlatform(awsInstance.Platform),
+			EbsOptimized:     awsInstance.EbsOptimized,
+			Name:             name,
+			Tags:             tags,
+		},
+		Resources: &ec2fern.Ec2InstanceResourceInfo{
+			NetworkInterfaces:  networkInterfaces,
+			IamInstanceProfile: iamInstanceProfile,
+		},
 	}
 
 	return instance, errors
@@ -144,7 +160,7 @@ func convertPlacement(placement *types.Placement) *ec2fern.Placement {
 }
 
 // convertNetworkInterfaces converts AWS network interfaces to Fern format
-func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNetworkInterface) ([]*ec2fern.InstanceNetworkInterface, []string) {
+func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNetworkInterface, region string) ([]*ec2fern.InstanceNetworkInterface, []string) {
 	var fernInterfaces []*ec2fern.InstanceNetworkInterface
 	var errors []string
 	log := svc1log.FromContext(ctx)
@@ -160,27 +176,44 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 			continue
 		}
 
-		fernNI := &ec2fern.InstanceNetworkInterface{
-			Id:               *ni.NetworkInterfaceId,
-			Description:      ni.Description,
-			OwnerId:          ni.OwnerId,
-			MacAddress:       ni.MacAddress,
-			PrivateIpAddress: ni.PrivateIpAddress,
-			PrivateDnsName:   ni.PrivateDnsName,
-			SourceDestCheck:  ni.SourceDestCheck,
-			Vpc: &ec2fern.VpcInstance{
-				Id: *ni.VpcId,
-			},
-		}
-
+		// Prepare status
+		var status *string
 		if ni.Status != "" {
-			status := string(ni.Status)
-			fernNI.Status = &status
+			statusStr := string(ni.Status)
+			status = &statusStr
 		}
 
-		// Add subnet IDs if available
+		// Prepare subnet IDs if available
+		var subnetIds []string
 		if ni.SubnetId != nil {
-			fernNI.Vpc.SubnetIds = []string{*ni.SubnetId}
+			subnetIds = []string{*ni.SubnetId}
+		}
+
+		// Create VPC instance
+		vpcInstance := &ec2fern.VpcInstance{
+			Id:        *ni.VpcId,
+			SubnetIds: subnetIds,
+		}
+
+		// Create network interface with nested structure
+		fernNI := &ec2fern.InstanceNetworkInterface{
+			Identification: &ec2fern.InstanceNetworkInterfaceIdentificationInfo{
+				Id:     *ni.NetworkInterfaceId,
+				Arn:    ni.NetworkInterfaceId, // Using the ID as placeholder for ARN
+				Region: region,
+			},
+			Configuration: &ec2fern.InstanceNetworkInterfaceConfigurationInfo{
+				Description:      ni.Description,
+				OwnerId:          ni.OwnerId,
+				Status:           status,
+				MacAddress:       ni.MacAddress,
+				PrivateIpAddress: ni.PrivateIpAddress,
+				PrivateDnsName:   ni.PrivateDnsName,
+				SourceDestCheck:  ni.SourceDestCheck,
+			},
+			Resources: &ec2fern.InstanceNetworkInterfaceResourceInfo{
+				Vpc: vpcInstance,
+			},
 		}
 
 		fernInterfaces = append(fernInterfaces, fernNI)

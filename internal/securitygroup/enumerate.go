@@ -161,15 +161,6 @@ func enumerateRDSSecurityGroupForRegion(ctx context.Context, cfg aws.Config, reg
 
 // convertAWSEC2SecurityGroupToFern converts an AWS SDK EC2 SecurityGroup to a Fern SecurityGroup
 func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
-	fernSG := &fernsecuritygroup.SecurityGroup{
-		Id:                *awsSG.GroupId,
-		Name:              awsSG.GroupName,
-		Region:            region,
-		SecurityGroupType: fernsecuritygroup.SecurityGroupTypeEc2,
-		Description:       awsSG.Description,
-		OwnerId:           awsSG.OwnerId,
-		VpcId:             awsSG.VpcId,
-	}
 
 	// Convert IP Permissions (combining Ingress and Egress)
 	var fernPermissions []*fernsecuritygroup.IpPermission
@@ -212,13 +203,9 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 		}
 	}
 
-	if len(fernPermissions) > 0 {
-		fernSG.Permissions = fernPermissions
-	}
-
 	// Convert Tags
+	var fernTags []*fernsecuritygroup.Tag
 	if awsSG.Tags != nil {
-		var fernTags []*fernsecuritygroup.Tag
 		for _, tag := range awsSG.Tags {
 			fernTag := &fernsecuritygroup.Tag{
 				Key:   *tag.Key,
@@ -226,7 +213,38 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 			}
 			fernTags = append(fernTags, fernTag)
 		}
-		fernSG.Tags = fernTags
+	}
+
+	// Create VPC instance if VPC ID exists
+	var vpcInstance *fernsecuritygroup.VpcInstance
+	if awsSG.VpcId != nil {
+		vpcInstance = &fernsecuritygroup.VpcInstance{
+			Id: *awsSG.VpcId,
+		}
+	}
+
+	// Create the SecurityGroup with nested structure
+	fernSG := &fernsecuritygroup.SecurityGroup{
+		Identification: &fernsecuritygroup.SecurityGroupIdentificationInfo{
+			Id:     *awsSG.GroupId,
+			Region: region,
+		},
+		Configuration: &fernsecuritygroup.SecurityGroupConfigurationInfo{
+			Name:              awsSG.GroupName,
+			Description:       awsSG.Description,
+			SecurityGroupType: fernsecuritygroup.SecurityGroupTypeEc2,
+			OwnerId:           awsSG.OwnerId,
+			Tags:              fernTags,
+		},
+	}
+
+	// Add resources if we have VPC or permissions
+	if vpcInstance != nil || len(fernPermissions) > 0 {
+		resourceInfo := &fernsecuritygroup.SecurityGroupResourceInfo{
+			Vpc:   vpcInstance,
+			Rules: fernPermissions,
+		}
+		fernSG.Resources = []*fernsecuritygroup.SecurityGroupResourceInfo{resourceInfo}
 	}
 
 	return fernSG
@@ -234,15 +252,38 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 
 // convertAWSRDSSecurityGroupToFern converts an AWS SDK RDS DB SecurityGroup to a Fern SecurityGroup
 func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
-	fernSG := &fernsecuritygroup.SecurityGroup{
-		Id:                *awsSG.DBSecurityGroupName,
-		Arn:               awsSG.DBSecurityGroupArn,
-		Region:            region,
-		SecurityGroupType: fernsecuritygroup.SecurityGroupTypeRds,
-		Description:       awsSG.DBSecurityGroupDescription,
-		OwnerId:           awsSG.OwnerId,
-		VpcId:             awsSG.VpcId,
+	// Create VPC instance if VPC ID exists
+	var vpcInstance *fernsecuritygroup.VpcInstance
+	if awsSG.VpcId != nil {
+		vpcInstance = &fernsecuritygroup.VpcInstance{
+			Id: *awsSG.VpcId,
+		}
 	}
+
+	// Create the SecurityGroup with nested structure
+	fernSG := &fernsecuritygroup.SecurityGroup{
+		Identification: &fernsecuritygroup.SecurityGroupIdentificationInfo{
+			Id:     *awsSG.DBSecurityGroupName,
+			Arn:    awsSG.DBSecurityGroupArn,
+			Region: region,
+		},
+		Configuration: &fernsecuritygroup.SecurityGroupConfigurationInfo{
+			Name:              awsSG.DBSecurityGroupName,
+			Description:       awsSG.DBSecurityGroupDescription,
+			SecurityGroupType: fernsecuritygroup.SecurityGroupTypeRds,
+			OwnerId:           awsSG.OwnerId,
+		},
+	}
+
+	// Add resources if we have VPC
+	if vpcInstance != nil {
+		resourceInfo := &fernsecuritygroup.SecurityGroupResourceInfo{
+			Vpc:   vpcInstance,
+			Rules: nil, // RDS DB security group rules are not mapped in the unified schema
+		}
+		fernSG.Resources = []*fernsecuritygroup.SecurityGroupResourceInfo{resourceInfo}
+	}
+
 	// Note: EC2SecurityGroups and IPRanges are not included in the Fern SecurityGroup definition
 	// These fields exist in the RDS DB SecurityGroup but are not mapped to the unified SecurityGroup schema
 

@@ -38,62 +38,75 @@ func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]rout
 		log.Info("Retrieved hosted zones page", svc1log.SafeParam("zoneCount", len(page.HostedZones)))
 
 		for _, hostedZone := range page.HostedZones {
-			// Convert AWS SDK HostedZone to fern HostedZoneDetails
-			zoneDetails := route53fern.HostedZoneDetails{
+			// Prepare identification info
+			identification := &route53fern.HostedZoneIdentificationInfo{
 				CallerReference: *hostedZone.CallerReference,
 				Id:              *hostedZone.Id,
 				Name:            *hostedZone.Name,
 			}
 
-			// Add optional fields if they exist
+			// Prepare configuration info
+			configuration := &route53fern.HostedZoneConfigurationInfo{}
+
+			// Add optional hosted zone config if it exists
 			if hostedZone.Config != nil {
 				if hostedZone.Config.Comment != nil {
-					hostedZoneConfig := route53fern.HostedZone{
+					hostedZoneConfig := &route53fern.HostedZone{
 						Comment:     hostedZone.Config.Comment,
 						PrivateZone: hostedZone.Config.PrivateZone,
 					}
-					zoneDetails.HostedZone = &hostedZoneConfig
+					configuration.HostedZone = hostedZoneConfig
 				} else {
-					hostedZoneConfig := route53fern.HostedZone{
+					hostedZoneConfig := &route53fern.HostedZone{
 						PrivateZone: hostedZone.Config.PrivateZone,
 					}
-					zoneDetails.HostedZone = &hostedZoneConfig
+					configuration.HostedZone = hostedZoneConfig
 				}
 			}
 
+			// Add resource record set count if it exists
 			if hostedZone.ResourceRecordSetCount != nil {
 				recordCount := int(*hostedZone.ResourceRecordSetCount)
-				zoneDetails.ResourceRecordSetCount = &recordCount
+				configuration.ResourceRecordSetCount = &recordCount
 			}
 
+			// Add linked service if it exists
 			if hostedZone.LinkedService != nil {
-				linkedService := route53fern.LinkedService{
+				linkedService := &route53fern.LinkedService{
 					ServicePrincipal: hostedZone.LinkedService.ServicePrincipal,
 					Description:      hostedZone.LinkedService.Description,
 				}
-				zoneDetails.LinkedService = &linkedService
+				configuration.LinkedService = linkedService
 			}
 
+			// Create the enriched hosted zone with nested structure
 			zone := route53fern.EnrichedHostedZone{
-				ZoneDetails: &zoneDetails,
+				Identification: identification,
+				Configuration:  configuration,
 			}
 
-			log.Info("Processing hosted zone", svc1log.SafeParam("zoneName", zoneDetails.Name), svc1log.SafeParam("zoneId", zoneDetails.Id))
+			log.Info("Processing hosted zone", svc1log.SafeParam("zoneName", identification.Name), svc1log.SafeParam("zoneId", identification.Id))
 
-			resourceRecordSets, err := listDNSRecords(ctx, route53Client, zoneDetails.Id)
+			resourceRecordSets, err := listDNSRecords(ctx, route53Client, identification.Id)
 			if err != nil {
 				log.Error("Failed to get DNS records for hosted zone",
-					svc1log.SafeParam("zoneName", zoneDetails.Name),
-					svc1log.SafeParam("zoneId", zoneDetails.Id),
+					svc1log.SafeParam("zoneName", identification.Name),
+					svc1log.SafeParam("zoneId", identification.Id),
 					svc1log.Stacktrace(err))
 				return nil, err
 			}
 
-			zone.ResourceRecordSets = resourceRecordSets
+			// Add resources if there are record sets
+			if len(resourceRecordSets) > 0 {
+				zone.Resources = &route53fern.HostedZoneResourceInfo{
+					ResourceRecordSets: resourceRecordSets,
+				}
+			}
+
 			zones = append(zones, zone)
 
 			log.Info("Successfully processed hosted zone",
-				svc1log.SafeParam("zoneName", zoneDetails.Name),
+				svc1log.SafeParam("zoneName", identification.Name),
 				svc1log.SafeParam("recordCount", len(resourceRecordSets)))
 		}
 	}

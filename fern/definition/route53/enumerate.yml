@@ -64,18 +64,26 @@ types:
       setIdentifier: optional<string>
       ttl: optional<integer>
       weight: optional<integer>
-  HostedZoneDetails:
+# Hosted Zone High level Structs
+  HostedZoneIdentificationInfo:
     properties:
       callerReference: string
       id: string
       name: string
+  HostedZoneConfigurationInfo:
+    properties:
       hostedZone: optional<HostedZone>
       linkedService: optional<LinkedService>
       resourceRecordSetCount: optional<integer>
+  HostedZoneResourceInfo:
+    properties:
+      resourceRecordSets: list<ResourceRecordSet>
+# Main Hosted Zone Structs
   EnrichedHostedZone:
     properties:
-      zoneDetails: HostedZoneDetails
-      resourceRecordSets: list<ResourceRecordSet>
+      identification: HostedZoneIdentificationInfo
+      configuration: HostedZoneConfigurationInfo
+      resources: optional<HostedZoneResourceInfo>
   Route53Result:
     properties:
       hostedZones: optional<list<EnrichedHostedZone>>

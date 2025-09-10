@@ -59,7 +59,7 @@ types:
       - EVENTBRIDGE_RULE
       - HTTP_ENDPOINT
       - OTHER
-# Resource Relationship Modeling
+# Supporting Types
   ResourceReference:
     properties:
       arn: optional<string>
@@ -69,7 +69,6 @@ types:
       region: optional<string>
       name: optional<string>
       description: optional<string>
-# API Gateway Structs
   AwsProxyIntegration:
     properties:
       arn: string
@@ -153,20 +152,42 @@ types:
       tlsVersions: list<SecurityPolicy>
       corsConfigured: boolean
       apiKeysRequired: boolean
-  ApiGatewayBase:
+# API Gateway High level structs
+  ApiGatewayIdentificationInfo:
     properties:
-      version: ApiGatewayVersion
-      # Common properties
-      region: string
       id: string
       name: optional<string>
-      createdTime: optional<datetime>
+      region: string
+  ApiGatewayConfigurationInfo:
+    properties:
+      version: ApiGatewayVersion
       description: optional<string>
-      # Security properties (common)
+      createdTime: optional<datetime>
       endpointConfiguration: optional<EndpointType>
+      executionRoleArn: optional<string>
+      # V1 (REST API) specific configuration
+      baseUrl: optional<string>
+      apiKeySource: optional<string>
+      stage: optional<string>
+      clientCertificateId: optional<string>
+      minimumCompressionSize: optional<integer>
+      # V2 (HTTP API) specific configuration
+      apiEndpoint: optional<string>
+      protocolType: optional<string>
+      disableExecuteApiEndpoint: optional<boolean>
+  ApiGatewayResourceInfo:
+    properties:
       certificates: optional<list<Certificate>>
       accessLogSettings: optional<AccessLogSettings>
-      executionRoleArn: optional<string>
+      # V1 (REST API) specific resources
+      paths: optional<list<Route>>
+      apiKeys: optional<list<string>>
+      usagePlans: optional<list<string>>
+      # V2 (HTTP API) specific resources
+      routes: optional<list<Route>>
+      corsConfiguration: optional<CorsConfiguration>
+      mutualTlsAuthentication: optional<MutualTlsAuthentication>
+      authorizers: optional<list<Authorizer>>
       # Resource relationships
       relatedResources: optional<list<ResourceReference>>
       lambdaFunctions: optional<list<ResourceReference>>
@@ -174,39 +195,18 @@ types:
       iamRoles: optional<list<ResourceReference>>
       # Security analysis
       securityAnalysis: optional<ApiGatewaySecurity>
-  RestApiGateway:
-    extends: ApiGatewayBase
+# Main API Gateway structs
+  ApiGatewayInstance:
     properties:
-      # V1 (REST API) specific properties
-      baseUrl: string
-      apiKeySource: optional<string>
-      stage: string
-      paths: optional<list<Route>>
-      apiKeys: optional<list<string>>
-      usagePlans: optional<list<string>>
-      clientCertificateId: optional<string>
-      minimumCompressionSize: optional<integer>
-  HttpApiGateway:
-    extends: ApiGatewayBase
+      identification: ApiGatewayIdentificationInfo
+      configuration: ApiGatewayConfigurationInfo
+      resources: optional<ApiGatewayResourceInfo>
+  ApiGatewayEnumerateResult:
     properties:
-      # V2 (HTTP API) specific properties  
-      apiEndpoint: string
-      protocolType: string
-      routes: optional<list<Route>>
-      corsConfiguration: optional<CorsConfiguration>
-      disableExecuteApiEndpoint: optional<boolean>
-      mutualTlsAuthentication: optional<MutualTlsAuthentication>
-      authorizers: optional<list<Authorizer>>
-  ApiGateway:
-    union:
-      rest: RestApiGateway
-      http: HttpApiGateway
-  ApiGatewayResult:
-    properties:
-      apis: optional<list<ApiGateway>>
+      apis: optional<list<ApiGatewayInstance>>
 # Report Struct
   ApiGatewayEnumerateReport:
     properties:
+      result: ApiGatewayEnumerateResult
       config: ApiGatewayEnumerateConfig
-      result: ApiGatewayResult
       errors: optional<list<string>>

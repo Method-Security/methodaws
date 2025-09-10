@@ -13,9 +13,9 @@ import (
 )
 
 // enumerateV1ApiGatewaysAllRegions enumerates v1 API Gateways (REST APIs) across all specified regions
-func enumerateV1ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*apigatewayfern.ApiGateway, []string) {
+func enumerateV1ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*apigatewayfern.ApiGatewayInstance, []string) {
 	log := svc1log.FromContext(ctx)
-	var allAPIGateways []*apigatewayfern.ApiGateway
+	var allAPIGateways []*apigatewayfern.ApiGatewayInstance
 	var allErrors []string
 
 	for _, region := range regions {
@@ -40,7 +40,7 @@ func enumerateV1ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config,
 }
 
 // enumerateV1ApiGatewaysForRegion enumerates v1 API Gateways (REST APIs) for a specific region
-func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region string) ([]*apigatewayfern.ApiGateway, []string) {
+func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region string) ([]*apigatewayfern.ApiGatewayInstance, []string) {
 	log := svc1log.FromContext(ctx)
 	regionCfg := cfg.Copy()
 	regionCfg.Region = region
@@ -48,7 +48,7 @@ func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 	client := apigateway.NewFromConfig(regionCfg)
 	paginator := apigateway.NewGetRestApisPaginator(client, &apigateway.GetRestApisInput{})
 
-	var apiGateways []*apigatewayfern.ApiGateway
+	var apiGateways []*apigatewayfern.ApiGatewayInstance
 	var errors []string
 
 	for paginator.HasMorePages() {
@@ -94,7 +94,7 @@ func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 }
 
 // convertV1RestAPIToFern converts AWS REST API to Fern RestApiGateway struct
-func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api types.RestApi, stage types.Stage, region string) (*apigatewayfern.ApiGateway, []string) {
+func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api types.RestApi, stage types.Stage, region string) (*apigatewayfern.ApiGatewayInstance, []string) {
 	var errors []string
 
 	// Construct base URL for this stage
@@ -142,32 +142,52 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 		stageName = *stage.StageName
 	}
 
-	restAPIGateway := &apigatewayfern.RestApiGateway{
-		Version:                apigatewayfern.ApiGatewayVersionV1,
-		Region:                 region,
-		Id:                     *api.Id,
-		Name:                   api.Name,
-		CreatedTime:            api.CreatedDate,
-		Description:            api.Description,
-		EndpointConfiguration:  endpointType,
-		Certificates:           certificates,
-		AccessLogSettings:      accessLogSettings,
-		RelatedResources:       relatedResources,
-		LambdaFunctions:        lambdaFunctions,
-		CloudwatchLogs:         cloudwatchLogs,
-		IamRoles:               iamRoles,
-		SecurityAnalysis:       securityAnalysis,
-		BaseUrl:                baseURL,
-		Stage:                  stageName,
-		Paths:                  routes,
+	// Create identification info
+	identification := &apigatewayfern.ApiGatewayIdentificationInfo{
+		Id:     *api.Id,
+		Name:   api.Name,
+		Region: region,
+	}
+
+	// Create configuration info
+	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
+		Version:               apigatewayfern.ApiGatewayVersionV1,
+		Description:           api.Description,
+		CreatedTime:           api.CreatedDate,
+		EndpointConfiguration: endpointType,
+		// V1 specific configuration
+		BaseUrl:                &baseURL,
 		ApiKeySource:           apiKeySource,
-		ApiKeys:                apiKeys,
-		UsagePlans:             usagePlans,
+		Stage:                  &stageName,
 		ClientCertificateId:    stage.ClientCertificateId,
 		MinimumCompressionSize: convertInt32PtrToIntPtr(api.MinimumCompressionSize),
 	}
 
-	return apigatewayfern.NewApiGatewayFromRest(restAPIGateway), errors
+	// Create resource info
+	resources := &apigatewayfern.ApiGatewayResourceInfo{
+		Certificates:      certificates,
+		AccessLogSettings: accessLogSettings,
+		// V1 specific resources
+		Paths:      routes,
+		ApiKeys:    apiKeys,
+		UsagePlans: usagePlans,
+		// Resource relationships
+		RelatedResources: relatedResources,
+		LambdaFunctions:  lambdaFunctions,
+		CloudwatchLogs:   cloudwatchLogs,
+		IamRoles:         iamRoles,
+		// Security analysis
+		SecurityAnalysis: securityAnalysis,
+	}
+
+	// Create ApiGatewayInstance
+	apiGatewayInstance := &apigatewayfern.ApiGatewayInstance{
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
+	}
+
+	return apiGatewayInstance, errors
 }
 
 // getRestAPIRoutes retrieves routes/paths for a REST API

@@ -1,6 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
+# Config
+  SecurityGroupsEnumerateConfig:
+    properties:
+      accountId: string
+      regions: list<string>
   SecurityGroupType:
     enum:
       - EC2
@@ -9,12 +14,7 @@ types:
     enum:
       - INGRESS
       - EGRESS
-# Config
-  SecurityGroupsEnumerateConfig:
-    properties:
-      accountId: string
-      regions: list<string>
-# Security Group Structs
+# Supporting Structs
   Tag:
     properties:
       key: string
@@ -25,25 +25,36 @@ types:
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
-  SecurityGroup:
+  VpcInstance:
     properties:
-    # Core fields
+      id: string
+# Security Group High level structs
+  SecurityGroupIdentificationInfo:
+    properties:
       id: string
       arn: optional<string>
-      name: optional<string>
       region: string
-    # Security Group fields
-      securityGroupType: SecurityGroupType
+  SecurityGroupConfigurationInfo:
+    properties:
+      name: optional<string>
       description: optional<string>
-      permissions: optional<list<IpPermission>>
+      securityGroupType: SecurityGroupType
       ownerId: optional<string>
       tags: optional<list<Tag>>
-    # Linked primatives
-      vpcId: optional<string>
+  SecurityGroupResourceInfo:
+    properties:
+      vpc: optional<VpcInstance>
+      rules: optional<list<IpPermission>>
+# Main Security Group Structs
+  SecurityGroup:
+    properties:
+      identification: SecurityGroupIdentificationInfo
+      configuration: SecurityGroupConfigurationInfo
+      resources: optional<list<SecurityGroupResourceInfo>>
   SecurityGroupsEnumerateResult:
     properties:
       securityGroups: optional<list<SecurityGroup>>
-  # Report Struct
+# Report Struct
   SecurityGroupsEnumerateReport:
     properties:
       result: SecurityGroupsEnumerateResult

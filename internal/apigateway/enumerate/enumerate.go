@@ -19,11 +19,11 @@ func EnumerateAPIGateway(ctx context.Context, awsConfig aws.Config, config apiga
 
 	// Initialize report
 	report := &apigatewayfern.ApiGatewayEnumerateReport{
+		Result: &apigatewayfern.ApiGatewayEnumerateResult{},
 		Config: &config,
-		Result: &apigatewayfern.ApiGatewayResult{},
 	}
 
-	var allAPIGateways []*apigatewayfern.ApiGateway
+	var allAPIGateways []*apigatewayfern.ApiGatewayInstance
 	var allErrors []string
 
 	// Process each version requested

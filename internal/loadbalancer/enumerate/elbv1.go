@@ -13,9 +13,9 @@ import (
 )
 
 // enumerateV1LoadBalancersAllRegions enumerates v1 load balancers across all specified regions
-func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancer, []string) {
+func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancerInstance, []string) {
 	log := svc1log.FromContext(ctx)
-	var allLoadBalancers []*loadbalancerfern.LoadBalancer
+	var allLoadBalancers []*loadbalancerfern.LoadBalancerInstance
 	var allErrors []string
 
 	for _, region := range regions {
@@ -40,14 +40,14 @@ func enumerateV1LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Confi
 }
 
 // enumerateV1LoadBalancersForRegion enumerates v1 load balancers for a specific region
-func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancer, []string) {
+func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancerInstance, []string) {
 	log := svc1log.FromContext(ctx)
 	cfg.Region = region
 
 	client := elasticloadbalancing.NewFromConfig(cfg)
 	paginator := elasticloadbalancing.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancing.DescribeLoadBalancersInput{})
 
-	var loadBalancers []*loadbalancerfern.LoadBalancer
+	var loadBalancers []*loadbalancerfern.LoadBalancerInstance
 	var errorMessages []string
 
 	for paginator.HasMorePages() {
@@ -65,32 +65,61 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 				errorMessages = append(errorMessages, "LoadBalancer name is nil")
 				continue
 			}
-			lbV1 := &loadbalancerfern.LoadBalancerV1{
-				Id:               aws.ToString(lb.LoadBalancerName),
+
+			// Create identification info
+			identification := &loadbalancerfern.LoadBalancerIdentificationInfo{
+				Id:     aws.ToString(lb.LoadBalancerName),
+				Region: region,
+			}
+
+			// Create configuration info
+			configuration := &loadbalancerfern.LoadBalancerConfigurationInfo{
+				Name:             lb.LoadBalancerName,
 				LoadBalancerType: loadbalancerfern.LoadBalancerTypeClassic,
-				Region:           region,
-				CreatedTime:      lb.CreatedTime,
 				DnsName:          lb.DNSName,
-				SecurityGroupIds: lb.SecurityGroups,
-				VpcId:            lb.VPCId,
-				SubnetIds:        lb.Subnets,
+				CreatedTime:      lb.CreatedTime,
 				HostedZoneId:     lb.CanonicalHostedZoneNameID,
 			}
 
+			// Get targets and listeners
 			targets, errors := targetsForLoadBalancerV1(lb)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			lbV1.Targets = targets
 
 			listeners, errors := listenersForLoadBalancerV1(lb)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			lbV1.Listeners = listeners
 
-			// Create union LoadBalancer
-			loadBalancer := loadbalancerfern.NewLoadBalancerFromV1(lbV1)
+			// Create VPC instance if VPCId exists
+			var vpc *loadbalancerfern.VpcInstance
+			if lb.VPCId != nil {
+				vpc = &loadbalancerfern.VpcInstance{
+					Identification: &loadbalancerfern.VpcIdentificationInfo{
+						Id: aws.ToString(lb.VPCId),
+					},
+					Resources: &loadbalancerfern.VpcResourceInfo{
+						SubnetIds: lb.Subnets,
+					},
+				}
+			}
+
+			// Create resource info
+			resources := &loadbalancerfern.LoadBalancerResourceInfo{
+				Listeners:        listeners,
+				Targets:          targets,
+				Vpc:              vpc,
+				SecurityGroupIds: lb.SecurityGroups,
+			}
+
+			// Create LoadBalancerInstance
+			loadBalancer := &loadbalancerfern.LoadBalancerInstance{
+				Identification: identification,
+				Configuration:  configuration,
+				Resources:      resources,
+			}
+
 			loadBalancers = append(loadBalancers, loadBalancer)
 		}
 	}

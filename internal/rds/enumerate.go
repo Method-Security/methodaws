@@ -124,21 +124,22 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		return nil, errors
 	}
 	dbInstance := &rdsfern.RdsInstance{
-		// Core Identity & Status
-		Id:     *instance.DBInstanceIdentifier,
-		Arn:    instance.DBInstanceArn,
-		Status: instance.DBInstanceStatus,
-		Class:  instance.DBInstanceClass,
-		Region: region,
-		// Database Configuration
-		Engine:         instance.Engine,
-		EngineVersion:  instance.EngineVersion,
-		Name:           instance.DBName,
-		MasterUsername: instance.MasterUsername,
-		// Network & Availability
-		AvailabilityZone:   instance.AvailabilityZone,
-		MultiAz:            instance.MultiAZ,
-		PubliclyAccessible: instance.PubliclyAccessible,
+		Identification: &rdsfern.RdsIdentificationInfo{
+			Id:     *instance.DBInstanceIdentifier,
+			Arn:    instance.DBInstanceArn,
+			Name:   instance.DBName,
+			Region: region,
+		},
+		Configuration: &rdsfern.RdsConfigurationInfo{
+			Status:             instance.DBInstanceStatus,
+			Class:              instance.DBInstanceClass,
+			Engine:             instance.Engine,
+			EngineVersion:      instance.EngineVersion,
+			MasterUsername:     instance.MasterUsername,
+			AvailabilityZone:   instance.AvailabilityZone,
+			MultiAz:            instance.MultiAZ,
+			PubliclyAccessible: instance.PubliclyAccessible,
+		},
 	}
 
 	// Network & Availability
@@ -148,7 +149,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			val := int(*instance.Endpoint.Port)
 			port = &val
 		}
-		dbInstance.Endpoint = &rdsfern.Endpoint{
+		dbInstance.Configuration.Endpoint = &rdsfern.Endpoint{
 			Address:      instance.Endpoint.Address,
 			Port:         port,
 			HostedZoneId: instance.Endpoint.HostedZoneId,
@@ -165,10 +166,20 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			}
 		}
 
-		dbInstance.Vpc = &rdsfern.VpcInstance{
-			Id:        *instance.DBSubnetGroup.VpcId,
-			SubnetIds: subnetIds,
+		vpc := &rdsfern.VpcInstance{
+			Identification: &rdsfern.VpcIdentificationInfo{
+				Id: *instance.DBSubnetGroup.VpcId,
+			},
+			Resources: &rdsfern.VpcResourceInfo{
+				SubnetIds: subnetIds,
+			},
 		}
+
+		// Initialize resources if not already initialized
+		if dbInstance.Resources == nil {
+			dbInstance.Resources = &rdsfern.RdsResourceInfo{}
+		}
+		dbInstance.Resources.Vpc = vpc
 	}
 
 	// Storage Configuration
@@ -189,7 +200,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		val := int(*instance.Iops)
 		iops = &val
 	}
-	dbInstance.Storage = &rdsfern.StorageConfig{
+	dbInstance.Configuration.Storage = &rdsfern.StorageConfig{
 		AllocatedStorage:    allocatedStorage,
 		MaxAllocatedStorage: maxStorage,
 		StorageType:         instance.StorageType,
@@ -205,7 +216,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			vpcSecurityGroupIds = append(vpcSecurityGroupIds, *sg.VpcSecurityGroupId)
 		}
 	}
-	dbInstance.Security = &rdsfern.SecurityConfig{
+	dbInstance.Configuration.Security = &rdsfern.SecurityConfig{
 		DeletionProtection:               instance.DeletionProtection,
 		IamDatabaseAuthenticationEnabled: instance.IAMDatabaseAuthenticationEnabled,
 		KmsKeyId:                         instance.KmsKeyId,
@@ -218,7 +229,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		val := int(*instance.MonitoringInterval)
 		monitoringInterval = &val
 	}
-	dbInstance.Monitoring = &rdsfern.MonitoringConfig{
+	dbInstance.Configuration.Monitoring = &rdsfern.MonitoringConfig{
 		MonitoringInterval:          monitoringInterval,
 		MonitoringRoleArn:           instance.MonitoringRoleArn,
 		PerformanceInsightsEnabled:  instance.PerformanceInsightsEnabled,
@@ -232,7 +243,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		backupRetention = &val
 	}
 
-	dbInstance.Backup = &rdsfern.BackupConfig{
+	dbInstance.Configuration.Backup = &rdsfern.BackupConfig{
 		BackupRetentionPeriod:      backupRetention,
 		PreferredBackupWindow:      instance.PreferredBackupWindow,
 		PreferredMaintenanceWindow: instance.PreferredMaintenanceWindow,
@@ -241,7 +252,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 	}
 
 	// Metadata
-	dbInstance.InstanceCreateTime = instance.InstanceCreateTime
+	dbInstance.Configuration.InstanceCreateTime = instance.InstanceCreateTime
 
 	// Tags
 	var tags []*rdsfern.Tag
@@ -251,7 +262,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			Value: tag.Value,
 		})
 	}
-	dbInstance.Tags = tags
+	dbInstance.Configuration.Tags = tags
 
 	return dbInstance, errors
 }

@@ -26,13 +26,14 @@ types:
     properties:
       logFormat: LambdaLoggingFormat
       logGroup: string
-  LambdaFunction:
+# Lambda High level structs
+  LambdaIdentificationInfo:
     properties:
-    # Core fields
       name: string
       arn: string
       region: string
-    # Lambda fields
+  LambdaConfigurationInfo:
+    properties:
       revisionId: string
       runtime: string
       handler: string
@@ -46,13 +47,20 @@ types:
       codeSha256: optional<string>
       architectures: optional<list<LambdaArchitecture>>
       loggingConfig: optional<LambdaLoggingConfig>
-    # Linked primatives
+  LambdaResourceInfo:
+    properties:
       vpc: optional<LambdaVpcConfig>
-      roleArn: string
+      iamRoleArn: string
+# Lambda Main Structs
+  LambdaFunction:
+    properties:
+      identification: LambdaIdentificationInfo
+      configuration: LambdaConfigurationInfo
+      resources: optional<LambdaResourceInfo>
   LambdaEnumerateResult:
     properties:
       functions: optional<list<LambdaFunction>>
-  # Report Struct
+# Report Struct
   LambdaEnumerateReport:
     properties:
       result: LambdaEnumerateResult

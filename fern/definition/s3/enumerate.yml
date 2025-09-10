@@ -4,11 +4,7 @@ types:
     properties:
       accountId: string
       regions: list<string>
-# Report structs
-  S3BucketACL:
-    properties:
-      granteeURI: string
-      permission: string
+# Enums
   BucketVersioningStatus:
     enum:
       - ENABLED
@@ -17,6 +13,11 @@ types:
     enum:
       - ENABLED
       - DISABLED
+# Supporting Types
+  S3BucketACL:
+    properties:
+      granteeURI: string
+      permission: string
   S3ServerSideEncryption:
     enum:
       - name: "AES256"
@@ -35,14 +36,15 @@ types:
     properties:
       sseAlgorithm: optional<S3ServerSideEncryption>
       kmsMasterKeyID: optional<string>
-  S3Bucket:
+# S3 High level structs
+  S3BucketIdentificationInfo:
     properties:
-    # Core fields
       name: string
       arn: string
       url: string
       region: string
-    # S3 Bucket fields
+  S3BucketConfigurationInfo:
+    properties:
       creationDate: datetime
       ownerID: string
       ownerName: string
@@ -52,6 +54,11 @@ types:
       mfaDelete: optional<S3MFADeleteStatus>
       encryptionRules: optional<list<EncryptionRule>>
       acls: optional<list<S3BucketACL>>
+# Main S3 Bucket Structs
+  S3Bucket:
+    properties:
+      identification: S3BucketIdentificationInfo
+      configuration: S3BucketConfigurationInfo
   S3EnumerateResult:
     properties:
       s3Buckets: optional<list<S3Bucket>>

@@ -13,9 +13,9 @@ import (
 )
 
 // enumerateV2ApiGatewaysAllRegions enumerates v2 API Gateways (HTTP APIs) across all specified regions
-func enumerateV2ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*apigatewayfern.ApiGateway, []string) {
+func enumerateV2ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*apigatewayfern.ApiGatewayInstance, []string) {
 	log := svc1log.FromContext(ctx)
-	var allAPIGateways []*apigatewayfern.ApiGateway
+	var allAPIGateways []*apigatewayfern.ApiGatewayInstance
 	var allErrors []string
 
 	for _, region := range regions {
@@ -40,14 +40,14 @@ func enumerateV2ApiGatewaysAllRegions(ctx context.Context, awsConfig aws.Config,
 }
 
 // enumerateV2ApiGatewaysForRegion enumerates v2 API Gateways (HTTP APIs) for a specific region
-func enumerateV2ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region string) ([]*apigatewayfern.ApiGateway, []string) {
+func enumerateV2ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region string) ([]*apigatewayfern.ApiGatewayInstance, []string) {
 	log := svc1log.FromContext(ctx)
 	regionCfg := cfg.Copy()
 	regionCfg.Region = region
 
 	client := apigatewayv2.NewFromConfig(regionCfg)
 
-	var apiGateways []*apigatewayfern.ApiGateway
+	var apiGateways []*apigatewayfern.ApiGatewayInstance
 	var errors []string
 
 	// Manual pagination since GetApis doesn't have a built-in paginator
@@ -91,8 +91,8 @@ func enumerateV2ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 	return apiGateways, errors
 }
 
-// convertV2HttpAPIToFern converts AWS HTTP API to Fern HttpApiGateway struct
-func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, api types.Api, region string) (*apigatewayfern.ApiGateway, []string) {
+// convertV2HttpAPIToFern converts AWS HTTP API to Fern ApiGatewayInstance struct
+func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, api types.Api, region string) (*apigatewayfern.ApiGatewayInstance, []string) {
 	log := svc1log.FromContext(ctx)
 
 	var errors []string
@@ -157,29 +157,49 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 		apiEndpoint = *api.ApiEndpoint
 	}
 
-	httpAPIGateway := &apigatewayfern.HttpApiGateway{
-		Version:                   apigatewayfern.ApiGatewayVersionV2,
-		Region:                    region,
-		Id:                        *api.ApiId,
-		Name:                      api.Name,
-		CreatedTime:               api.CreatedDate,
-		Description:               api.Description,
-		Certificates:              certificates,
-		AccessLogSettings:         accessLogSettings,
-		RelatedResources:          relatedResources,
-		LambdaFunctions:           lambdaFunctions,
-		CloudwatchLogs:            cloudwatchLogs,
-		IamRoles:                  iamRoles,
-		SecurityAnalysis:          securityAnalysis,
-		ApiEndpoint:               apiEndpoint,
-		ProtocolType:              protocolType,
-		Routes:                    routes,
-		CorsConfiguration:         corsConfig,
-		DisableExecuteApiEndpoint: api.DisableExecuteApiEndpoint,
-		Authorizers:               authorizers,
+	// Create identification info
+	identification := &apigatewayfern.ApiGatewayIdentificationInfo{
+		Id:     *api.ApiId,
+		Name:   api.Name,
+		Region: region,
 	}
 
-	return apigatewayfern.NewApiGatewayFromHttp(httpAPIGateway), errors
+	// Create configuration info
+	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
+		Version:     apigatewayfern.ApiGatewayVersionV2,
+		Description: api.Description,
+		CreatedTime: api.CreatedDate,
+		// V2 specific configuration
+		ApiEndpoint:               &apiEndpoint,
+		ProtocolType:              &protocolType,
+		DisableExecuteApiEndpoint: api.DisableExecuteApiEndpoint,
+	}
+
+	// Create resource info
+	resources := &apigatewayfern.ApiGatewayResourceInfo{
+		Certificates:      certificates,
+		AccessLogSettings: accessLogSettings,
+		// V2 specific resources
+		Routes:            routes,
+		CorsConfiguration: corsConfig,
+		Authorizers:       authorizers,
+		// Resource relationships
+		RelatedResources: relatedResources,
+		LambdaFunctions:  lambdaFunctions,
+		CloudwatchLogs:   cloudwatchLogs,
+		IamRoles:         iamRoles,
+		// Security analysis
+		SecurityAnalysis: securityAnalysis,
+	}
+
+	// Create ApiGatewayInstance
+	apiGatewayInstance := &apigatewayfern.ApiGatewayInstance{
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
+	}
+
+	return apiGatewayInstance, errors
 }
 
 // getHTTPAPIRoutes retrieves routes for an HTTP API

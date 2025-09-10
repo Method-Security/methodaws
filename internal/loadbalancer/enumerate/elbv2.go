@@ -27,9 +27,9 @@ func convertAWSLoadBalancerType(awsType types.LoadBalancerTypeEnum) (loadbalance
 }
 
 // enumerateV2LoadBalancersAllRegions enumerates v2 load balancers across all specified regions
-func enumerateV2LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancer, []string) {
+func enumerateV2LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Config, regions []string) ([]*loadbalancerfern.LoadBalancerInstance, []string) {
 	log := svc1log.FromContext(ctx)
-	var allLoadBalancers []*loadbalancerfern.LoadBalancer
+	var allLoadBalancers []*loadbalancerfern.LoadBalancerInstance
 	var allErrors []string
 
 	for _, region := range regions {
@@ -54,14 +54,14 @@ func enumerateV2LoadBalancersAllRegions(ctx context.Context, awsConfig aws.Confi
 }
 
 // enumerateV2LoadBalancersForRegion enumerates v2 load balancers for a specific region
-func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancer, []string) {
+func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, region string) ([]*loadbalancerfern.LoadBalancerInstance, []string) {
 	log := svc1log.FromContext(ctx)
 	cfg.Region = region
 
 	client := elasticloadbalancingv2.NewFromConfig(cfg)
 	paginator := elasticloadbalancingv2.NewDescribeLoadBalancersPaginator(client, &elasticloadbalancingv2.DescribeLoadBalancersInput{})
 
-	var loadBalancers []*loadbalancerfern.LoadBalancer
+	var loadBalancers []*loadbalancerfern.LoadBalancerInstance
 	var errorMessages []string
 
 	for paginator.HasMorePages() {
@@ -80,55 +80,85 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 				continue
 			}
 
-			lbV2 := &loadbalancerfern.LoadBalancerV2{
-				Id:               aws.ToString(lb.LoadBalancerName),
-				Arn:              lb.LoadBalancerArn,
-				Region:           region,
-				CreatedTime:      lb.CreatedTime,
-				DnsName:          lb.DNSName,
-				SecurityGroupIds: lb.SecurityGroups,
-				VpcId:            lb.VpcId,
-				SubnetIds:        getSubnetIds(lb.AvailabilityZones),
-				HostedZoneId:     lb.CanonicalHostedZoneId,
+			// Create identification info
+			identification := &loadbalancerfern.LoadBalancerIdentificationInfo{
+				Id:     aws.ToString(lb.LoadBalancerName),
+				Arn:    lb.LoadBalancerArn,
+				Region: region,
+			}
+
+			// Create configuration info
+			configuration := &loadbalancerfern.LoadBalancerConfigurationInfo{
+				Name:         lb.LoadBalancerName,
+				DnsName:      lb.DNSName,
+				CreatedTime:  lb.CreatedTime,
+				HostedZoneId: lb.CanonicalHostedZoneId,
 			}
 
 			// Convert LoadBalancerType from AWS SDK
 			if lbType, err := convertAWSLoadBalancerType(lb.Type); err == nil {
-				lbV2.LoadBalancerType = lbType
+				configuration.LoadBalancerType = lbType
 			} else {
 				errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert load balancer type for %s in region %s: %s", aws.ToString(lb.LoadBalancerName), region, err.Error()))
 			}
 
 			// Convert IP address type
-			if ipType, err := loadbalancerfern.NewIpAddressTypeFromString(strings.ToUpper(string(lb.IpAddressType))); err == nil {
-				lbV2.IpAddressType = &ipType
-			} else {
-				errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert IP address type for %s in region %s: %s", aws.ToString(lb.LoadBalancerName), region, err.Error()))
+			if lb.IpAddressType != "" {
+				if ipType, err := loadbalancerfern.NewIpAddressTypeFromString(strings.ToUpper(string(lb.IpAddressType))); err == nil {
+					configuration.IpAddressType = &ipType
+				} else {
+					errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert IP address type for %s in region %s: %s", aws.ToString(lb.LoadBalancerName), region, err.Error()))
+				}
 			}
 
 			// Convert state
 			if lb.State != nil {
 				if state, err := loadbalancerfern.NewLoadBalancerStateFromString(strings.ToUpper(string(lb.State.Code))); err == nil {
-					lbV2.State = &state
+					configuration.State = &state
 				} else {
 					errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert load balancer state for %s in region %s: %s", aws.ToString(lb.LoadBalancerName), region, err.Error()))
 				}
 			}
 
-			listeners, errors := listenersForLoadBalancerV2(ctx, client, lbV2)
+			// Get listeners and target groups
+			listeners, errors := listenersForLoadBalancerV2(ctx, client, identification.Arn)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			lbV2.Listeners = listeners
 
-			targetGroups, errors := targetGroupForLoadBalancerV2(ctx, client, lbV2)
+			targetGroups, errors := targetGroupForLoadBalancerV2(ctx, client, identification.Arn, region)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
-			lbV2.TargetGroups = targetGroups
 
-			// Create union LoadBalancer
-			loadBalancer := loadbalancerfern.NewLoadBalancerFromV2(lbV2)
+			// Create VPC instance if VpcId exists
+			var vpc *loadbalancerfern.VpcInstance
+			if lb.VpcId != nil {
+				vpc = &loadbalancerfern.VpcInstance{
+					Identification: &loadbalancerfern.VpcIdentificationInfo{
+						Id: aws.ToString(lb.VpcId),
+					},
+					Resources: &loadbalancerfern.VpcResourceInfo{
+						SubnetIds: getSubnetIds(lb.AvailabilityZones),
+					},
+				}
+			}
+
+			// Create resource info
+			resources := &loadbalancerfern.LoadBalancerResourceInfo{
+				Listeners:        listeners,
+				TargetGroups:     targetGroups,
+				Vpc:              vpc,
+				SecurityGroupIds: lb.SecurityGroups,
+			}
+
+			// Create LoadBalancerInstance
+			loadBalancer := &loadbalancerfern.LoadBalancerInstance{
+				Identification: identification,
+				Configuration:  configuration,
+				Resources:      resources,
+			}
+
 			loadBalancers = append(loadBalancers, loadBalancer)
 		}
 	}
@@ -136,13 +166,13 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 	return loadBalancers, errorMessages
 }
 
-func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancer *loadbalancerfern.LoadBalancerV2) ([]*loadbalancerfern.Listener, []string) {
+func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancerArn *string) ([]*loadbalancerfern.Listener, []string) {
 	log := svc1log.FromContext(ctx)
 
 	listeners := []*loadbalancerfern.Listener{}
 	errorMessages := []string{}
 	paginator := elasticloadbalancingv2.NewDescribeListenersPaginator(client, &elasticloadbalancingv2.DescribeListenersInput{
-		LoadBalancerArn: loadBalancer.Arn,
+		LoadBalancerArn: loadBalancerArn,
 	})
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
@@ -163,10 +193,9 @@ func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancin
 				port = &portValue
 			}
 			fernListener := &loadbalancerfern.Listener{
-				Arn:             *listener.ListenerArn,
-				Port:            port,
-				Certificates:    certificatesForListenerV2(listener.Certificates),
-				LoadBalancerArn: listener.LoadBalancerArn,
+				Arn:          *listener.ListenerArn,
+				Port:         port,
+				Certificates: certificatesForListenerV2(listener.Certificates),
 			}
 
 			// Convert protocol
@@ -184,9 +213,9 @@ func listenersForLoadBalancerV2(ctx context.Context, client *elasticloadbalancin
 	return listeners, errorMessages
 }
 
-func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancer *loadbalancerfern.LoadBalancerV2) ([]*loadbalancerfern.TargetGroup, []string) {
+func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalancingv2.Client, loadBalancerArn *string, region string) ([]*loadbalancerfern.TargetGroupInstance, []string) {
 	log := svc1log.FromContext(ctx)
-	targetGroups := []*loadbalancerfern.TargetGroup{}
+	targetGroups := []*loadbalancerfern.TargetGroupInstance{}
 	errorMessages := []string{}
 	paginator := elasticloadbalancingv2.NewDescribeTargetGroupsPaginator(client, &elasticloadbalancingv2.DescribeTargetGroupsInput{})
 
@@ -206,7 +235,7 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			// Filter target groups by current load balancer ARN
 			isAttachedToLB := false
 			for _, lbArn := range awsTargetGroup.LoadBalancerArns {
-				if lbArn == aws.ToString(loadBalancer.Arn) {
+				if lbArn == aws.ToString(loadBalancerArn) {
 					isAttachedToLB = true
 					break
 				}
@@ -214,19 +243,24 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			if !isAttachedToLB {
 				continue
 			}
+
+			// Create identification info
+			identification := &loadbalancerfern.TargetGroupIdentificationInfo{
+				Arn:    aws.ToString(awsTargetGroup.TargetGroupArn),
+				Name:   awsTargetGroup.TargetGroupName,
+				Region: region,
+			}
+
+			// Create configuration info
 			portValue := int(*awsTargetGroup.Port)
-			targetGroup := &loadbalancerfern.TargetGroup{
-				Arn:              aws.ToString(awsTargetGroup.TargetGroupArn),
-				Name:             awsTargetGroup.TargetGroupName,
-				Port:             &portValue,
-				VpcId:            awsTargetGroup.VpcId,
-				LoadBalancerArns: awsTargetGroup.LoadBalancerArns,
+			configuration := &loadbalancerfern.TargetGroupConfigurationInfo{
+				Port: &portValue,
 			}
 
 			// Convert IP address type
 			if awsTargetGroup.IpAddressType != "" {
 				if ipType, err := loadbalancerfern.NewTargetGroupIpAddressTypeFromString(strings.ToUpper(string(awsTargetGroup.IpAddressType))); err == nil {
-					targetGroup.IpAddressType = &ipType
+					configuration.IpAddressType = &ipType
 				} else {
 					errorMessages = append(errorMessages, fmt.Sprintf("Failed to convert target group IP address type '%s': %s", awsTargetGroup.IpAddressType, err.Error()))
 				}
@@ -235,18 +269,33 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			// Convert protocol
 			if awsTargetGroup.Protocol != "" {
 				if protocol, err := loadbalancerfern.NewProtocolFromString(strings.ToUpper(string(awsTargetGroup.Protocol))); err == nil {
-					targetGroup.Protocol = &protocol
+					configuration.Protocol = &protocol
 				} else {
 					errorMessages = append(errorMessages, "Failed to convert target group protocol: "+err.Error())
 				}
 			}
 
+			// Get targets
 			targets, err := targetsForTargetGroupV2(ctx, client, awsTargetGroup)
 			if err != nil {
 				errorMessages = append(errorMessages, err.Error())
 				continue
 			}
-			targetGroup.Targets = targets
+
+			// Create TargetGroupInstance
+			targetGroup := &loadbalancerfern.TargetGroupInstance{
+				Identification: identification,
+				Configuration:  configuration,
+			}
+
+			// Only create resource info if there are targets
+			if len(targets) > 0 {
+				resources := &loadbalancerfern.TargetGroupResourceInfo{
+					Targets: targets,
+				}
+				targetGroup.Resources = resources
+			}
+
 			targetGroups = append(targetGroups, targetGroup)
 		}
 	}
