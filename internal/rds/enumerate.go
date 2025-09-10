@@ -72,7 +72,7 @@ func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region str
 	// List RDS instances
 	instances, err := listRDSInstances(ctx, rdsClient)
 	if err != nil {
-		errorMsg := "Failed to list RDS instances: " + err.Error()
+		errorMsg := "Failed to list RDS instances in region " + region + ": " + err.Error()
 		log.Error("Error listing RDS instances", svc1log.SafeParam("error", err.Error()))
 		errors = append(errors, errorMsg)
 		return nil, errors
@@ -83,9 +83,9 @@ func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region str
 	var rdsInstances []*rdsfern.RdsInstance
 	for _, instance := range instances {
 		// Check for required DBInstanceIdentifier
-		if instance.DBInstanceIdentifier == nil {
-			log.Warn("RDS DB Instance Identifier is nil", svc1log.SafeParam("instance", instance))
-			errors = append(errors, "RDS DB Instance Identifier is nil")
+		if instance.DBInstanceArn == nil {
+			log.Warn("RDS DB Instance ARN is nil", svc1log.SafeParam("instance", instance))
+			errors = append(errors, "RDS DB Instance ARN is nil")
 			continue
 		}
 
@@ -125,8 +125,8 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 	}
 	dbInstance := &rdsfern.RdsInstance{
 		Identification: &rdsfern.RdsIdentificationInfo{
-			Id:     *instance.DBInstanceIdentifier,
-			Arn:    instance.DBInstanceArn,
+			Arn:    *instance.DBInstanceArn,
+			Id:     instance.DBInstanceIdentifier,
 			Name:   instance.DBName,
 			Region: region,
 		},
@@ -140,6 +140,7 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			MultiAz:            instance.MultiAZ,
 			PubliclyAccessible: instance.PubliclyAccessible,
 		},
+		Resources: &rdsfern.RdsResourceInfo{},
 	}
 
 	// Network & Availability
@@ -166,20 +167,12 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 			}
 		}
 
-		vpc := &rdsfern.VpcInstance{
-			Identification: &rdsfern.VpcIdentificationInfo{
-				Id: *instance.DBSubnetGroup.VpcId,
-			},
-			Resources: &rdsfern.VpcResourceInfo{
+		if instance.DBSubnetGroup.VpcId != nil {
+			dbInstance.Resources.Vpc = &rdsfern.VpcInstance{
+				Id:        *instance.DBSubnetGroup.VpcId,
 				SubnetIds: subnetIds,
-			},
+			}
 		}
-
-		// Initialize resources if not already initialized
-		if dbInstance.Resources == nil {
-			dbInstance.Resources = &rdsfern.RdsResourceInfo{}
-		}
-		dbInstance.Resources.Vpc = vpc
 	}
 
 	// Storage Configuration

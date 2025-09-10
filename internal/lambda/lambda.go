@@ -55,7 +55,9 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 	}
 
 	var securityGroupIds []string
-	securityGroupIds = append(securityGroupIds, function.VpcConfig.SecurityGroupIds...)
+	if function.VpcConfig != nil {
+		securityGroupIds = append(securityGroupIds, function.VpcConfig.SecurityGroupIds...)
+	}
 
 	var loggingConfig *lambdafern.LambdaLoggingConfig
 	if function.LoggingConfig != nil {

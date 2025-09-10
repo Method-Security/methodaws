@@ -42,21 +42,15 @@ types:
       copyTagsToSnapshot: optional<boolean>
       latestRestorableTime: optional<datetime>
 # VPC High level structs
-  VpcIdentificationInfo:
-    properties:
-      id: string
-  VpcResourceInfo:
-    properties:
-      subnetIds: optional<list<string>>
   VpcInstance:
     properties:
-      identification: VpcIdentificationInfo 
-      resources: optional<VpcResourceInfo>
+      id: string 
+      subnetIds: optional<list<string>>
 # RDS High level structs
   RdsIdentificationInfo:
     properties:
-      id: string
-      arn: optional<string>
+      arn: string
+      id: optional<string>
       name: optional<string>
       region: string
   RdsConfigurationInfo:
