@@ -68,13 +68,12 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 
 			// Create identification info
 			identification := &loadbalancerfern.LoadBalancerIdentificationInfo{
-				Id:     aws.ToString(lb.LoadBalancerName),
+				Name:   lb.LoadBalancerName,
 				Region: region,
 			}
 
 			// Create configuration info
 			configuration := &loadbalancerfern.LoadBalancerConfigurationInfo{
-				Name:             lb.LoadBalancerName,
 				LoadBalancerType: loadbalancerfern.LoadBalancerTypeClassic,
 				DnsName:          lb.DNSName,
 				CreatedTime:      lb.CreatedTime,

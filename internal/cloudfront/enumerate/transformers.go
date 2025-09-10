@@ -47,8 +47,8 @@ func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist
 	// Create distribution with nested structure
 	return &cloudfrontfern.CloudFrontDistribution{
 		Identification: &cloudfrontfern.CloudFrontDistributionIdentificationInfo{
-			Id:         aws.ToString(dist.Id),
-			Arn:        dist.ARN,
+			Arn:        *dist.ARN,
+			Id:         dist.Id,
 			DomainName: dist.DomainName,
 		},
 		Configuration: &cloudfrontfern.CloudFrontDistributionConfigurationInfo{
@@ -77,8 +77,8 @@ func transformDistributionSummaryToFern(ctx context.Context, awsConfig aws.Confi
 	// Create distribution with nested structure
 	return &cloudfrontfern.CloudFrontDistribution{
 		Identification: &cloudfrontfern.CloudFrontDistributionIdentificationInfo{
-			Id:         aws.ToString(dist.Id),
-			Arn:        dist.ARN,
+			Arn:        *dist.ARN,
+			Id:         dist.Id,
 			DomainName: dist.DomainName,
 		},
 		Configuration: &cloudfrontfern.CloudFrontDistributionConfigurationInfo{

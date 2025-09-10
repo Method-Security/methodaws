@@ -36,8 +36,8 @@ types:
 # CloudFront Distribution High level Structs
   CloudFrontDistributionIdentificationInfo:
     properties:
-      id: string
-      arn: optional<string>
+      arn: string
+      id: optional<string>
       domainName: optional<string>
   CloudFrontDistributionConfigurationInfo:
     properties:

@@ -17,7 +17,6 @@ types:
     properties:
       vpcId: string
       subnetIds: list<string>
-      securityGroupIds: list<string>
   LambdaLoggingFormat:
     enum:
       - TEXT
@@ -51,6 +50,7 @@ types:
     properties:
       vpc: optional<LambdaVpcConfig>
       iamRoleArn: string
+      securityGroupIds: list<string>
 # Lambda Main Structs
   LambdaFunction:
     properties:

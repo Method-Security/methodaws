@@ -228,9 +228,9 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 		Identification: &fernsecuritygroup.SecurityGroupIdentificationInfo{
 			Id:     *awsSG.GroupId,
 			Region: region,
+			Name:   awsSG.GroupName,
 		},
 		Configuration: &fernsecuritygroup.SecurityGroupConfigurationInfo{
-			Name:              awsSG.GroupName,
 			Description:       awsSG.Description,
 			SecurityGroupType: fernsecuritygroup.SecurityGroupTypeEc2,
 			OwnerId:           awsSG.OwnerId,
@@ -265,10 +265,10 @@ func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region str
 		Identification: &fernsecuritygroup.SecurityGroupIdentificationInfo{
 			Id:     *awsSG.DBSecurityGroupName,
 			Arn:    awsSG.DBSecurityGroupArn,
+			Name:   awsSG.DBSecurityGroupName,
 			Region: region,
 		},
 		Configuration: &fernsecuritygroup.SecurityGroupConfigurationInfo{
-			Name:              awsSG.DBSecurityGroupName,
 			Description:       awsSG.DBSecurityGroupDescription,
 			SecurityGroupType: fernsecuritygroup.SecurityGroupTypeRds,
 			OwnerId:           awsSG.OwnerId,

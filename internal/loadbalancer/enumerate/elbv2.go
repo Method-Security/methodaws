@@ -74,7 +74,7 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 		}
 
 		for _, lb := range page.LoadBalancers {
-			if lb.LoadBalancerName == nil {
+			if lb.LoadBalancerArn == nil {
 				log.Warn("LoadBalancer name is nil for load balancer", svc1log.SafeParam("loadBalancer", lb))
 				errorMessages = append(errorMessages, "LoadBalancer name is nil")
 				continue
@@ -82,14 +82,13 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 
 			// Create identification info
 			identification := &loadbalancerfern.LoadBalancerIdentificationInfo{
-				Id:     aws.ToString(lb.LoadBalancerName),
 				Arn:    lb.LoadBalancerArn,
+				Name:   lb.LoadBalancerName,
 				Region: region,
 			}
 
 			// Create configuration info
 			configuration := &loadbalancerfern.LoadBalancerConfigurationInfo{
-				Name:         lb.LoadBalancerName,
 				DnsName:      lb.DNSName,
 				CreatedTime:  lb.CreatedTime,
 				HostedZoneId: lb.CanonicalHostedZoneId,
@@ -121,12 +120,12 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 			}
 
 			// Get listeners and target groups
-			listeners, errors := listenersForLoadBalancerV2(ctx, client, identification.Arn)
+			listeners, errors := listenersForLoadBalancerV2(ctx, client, lb.LoadBalancerArn)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}
 
-			targetGroups, errors := targetGroupForLoadBalancerV2(ctx, client, identification.Arn, region)
+			targetGroups, errors := targetGroupForLoadBalancerV2(ctx, client, lb.LoadBalancerArn, region)
 			if len(errors) > 0 {
 				errorMessages = append(errorMessages, errors...)
 			}

@@ -99,12 +99,11 @@ types:
 # LoadBalancer High level structs
   LoadBalancerIdentificationInfo:
     properties:
-      id: string
-      arn: optional<string>
+      arn: optional<string> # Only for ELB v2
+      name: optional<string> # Needed for ELB v1
       region: string
   LoadBalancerConfigurationInfo:
     properties:
-      name: optional<string>
       loadBalancerType: LoadBalancerType
       dnsName: optional<string>
       createdTime: optional<datetime>

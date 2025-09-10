@@ -95,6 +95,7 @@ types:
   Ec2InstanceIdentificationInfo:
     properties:
       id: string
+      name: optional<string>
       region: string
   Ec2InstanceConfigurationInfo:
     properties:
@@ -112,12 +113,12 @@ types:
       hypervisor: optional<HypervisorType>
       platform: optional<PlatformValues>
       ebsOptimized: optional<boolean>
-      name: optional<string>
       tags: optional<list<Tag>>
   Ec2InstanceResourceInfo:
     properties:
       networkInterfaces: optional<list<InstanceNetworkInterface>>
       iamInstanceProfile: optional<IamInstanceProfile>
+      securityGroupIds: optional<list<string>>
 # EC2 Main Structs
   Ec2Instance:
     properties:

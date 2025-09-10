@@ -39,6 +39,7 @@ func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]rout
 
 		for _, hostedZone := range page.HostedZones {
 			// Prepare identification info
+			// These always exist
 			identification := &route53fern.HostedZoneIdentificationInfo{
 				CallerReference: *hostedZone.CallerReference,
 				Id:              *hostedZone.Id,
