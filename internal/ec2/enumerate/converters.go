@@ -45,11 +45,18 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 		networkInterfaces, errors = convertNetworkInterfaces(ctx, awsInstance.NetworkInterfaces, region)
 	}
 
+	// Extract security group IDs
+	var securityGroupIds []string
+	if len(awsInstance.SecurityGroups) > 0 {
+		securityGroupIds = extractSecurityGroupIds(awsInstance.SecurityGroups)
+	}
+
 	// Create instance with nested structure
 	instance := &ec2fern.Ec2Instance{
 		Identification: &ec2fern.Ec2InstanceIdentificationInfo{
 			Id:     *awsInstance.InstanceId,
 			Region: region,
+			Name:   name,
 		},
 		Configuration: &ec2fern.Ec2InstanceConfigurationInfo{
 			State:            state,
@@ -66,12 +73,12 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 			Hypervisor:       convertHypervisor(awsInstance.Hypervisor),
 			Platform:         convertPlatform(awsInstance.Platform),
 			EbsOptimized:     awsInstance.EbsOptimized,
-			Name:             name,
 			Tags:             tags,
 		},
 		Resources: &ec2fern.Ec2InstanceResourceInfo{
 			NetworkInterfaces:  networkInterfaces,
 			IamInstanceProfile: iamInstanceProfile,
+			SecurityGroupIds:   securityGroupIds,
 		},
 	}
 
@@ -245,4 +252,17 @@ func extractNameFromTags(tags []types.Tag) *string {
 		}
 	}
 	return nil
+}
+
+// extractSecurityGroupIds extracts security group IDs from AWS security groups
+func extractSecurityGroupIds(securityGroups []types.GroupIdentifier) []string {
+	var securityGroupIds []string
+
+	for _, sg := range securityGroups {
+		if sg.GroupId != nil {
+			securityGroupIds = append(securityGroupIds, *sg.GroupId)
+		}
+	}
+
+	return securityGroupIds
 }

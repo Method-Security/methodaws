@@ -33,10 +33,10 @@ types:
     properties:
       id: string
       arn: optional<string>
+      name: optional<string>
       region: string
   SecurityGroupConfigurationInfo:
     properties:
-      name: optional<string>
       description: optional<string>
       securityGroupType: SecurityGroupType
       ownerId: optional<string>

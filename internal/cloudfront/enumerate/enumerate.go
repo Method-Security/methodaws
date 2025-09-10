@@ -66,9 +66,9 @@ func enumerateCloudFrontDistributions(ctx context.Context, awsConfig aws.Config,
 
 	var cloudFrontDistributions []*cloudfrontfern.CloudFrontDistribution
 	for _, dist := range distributions {
-		if dist.Id == nil {
-			log.Warn("Distribution ID is nil for distribution", svc1log.SafeParam("distribution", dist))
-			errors = append(errors, "Distribution ID is nil")
+		if dist.ARN == nil {
+			log.Warn("Distribution ARN is nil for distribution", svc1log.SafeParam("distribution", dist))
+			errors = append(errors, "Distribution ARN is nil")
 			continue
 		}
 		distribution, errs := processDistribution(ctx, awsConfig, cloudfrontClient, dist, config.AccountId)

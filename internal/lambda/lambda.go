@@ -49,11 +49,13 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 	var vpcConfig *lambdafern.LambdaVpcConfig
 	if function.VpcConfig != nil {
 		vpcConfig = &lambdafern.LambdaVpcConfig{
-			VpcId:            *function.VpcConfig.VpcId,
-			SubnetIds:        function.VpcConfig.SubnetIds,
-			SecurityGroupIds: function.VpcConfig.SecurityGroupIds,
+			VpcId:     *function.VpcConfig.VpcId,
+			SubnetIds: function.VpcConfig.SubnetIds,
 		}
 	}
+
+	var securityGroupIds []string
+	securityGroupIds = append(securityGroupIds, function.VpcConfig.SecurityGroupIds...)
 
 	var loggingConfig *lambdafern.LambdaLoggingConfig
 	if function.LoggingConfig != nil {
@@ -111,8 +113,9 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 			LoggingConfig:        loggingConfig,
 		},
 		Resources: &lambdafern.LambdaResourceInfo{
-			Vpc:        vpcConfig,
-			IamRoleArn: *function.Role,
+			Vpc:              vpcConfig,
+			IamRoleArn:       *function.Role,
+			SecurityGroupIds: securityGroupIds,
 		},
 	}
 	return result, nil
