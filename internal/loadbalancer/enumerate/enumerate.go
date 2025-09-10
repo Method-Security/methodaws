@@ -18,11 +18,11 @@ func EnumerateLoadBalancers(ctx context.Context, awsConfig aws.Config, config lo
 
 	// Initialize report
 	report := &loadbalancerfern.LoadBalancerEnumerateReport{
+		Result: &loadbalancerfern.LoadBalancerEnumerateResult{},
 		Config: &config,
-		Result: &loadbalancerfern.LoadBalancerResult{},
 	}
 
-	var allLoadBalancers []*loadbalancerfern.LoadBalancer
+	var allLoadBalancers []*loadbalancerfern.LoadBalancerInstance
 	var allErrors []string
 
 	// Process each version requested

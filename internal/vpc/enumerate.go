@@ -41,8 +41,8 @@ func EnumerateVPC(ctx context.Context, awsConfig aws.Config, config vpcfern.VpcE
 
 		totalSubnets := 0
 		for _, vpcInstance := range vpcs {
-			if vpcInstance.Subnets != nil {
-				totalSubnets += len(vpcInstance.Subnets)
+			if vpcInstance.Resources != nil && vpcInstance.Resources.Subnets != nil {
+				totalSubnets += len(vpcInstance.Resources.Subnets)
 			}
 		}
 
@@ -93,7 +93,7 @@ func enumerateVPCWithSubnetsForRegion(ctx context.Context, cfg aws.Config, regio
 			vpcInstance, errs := convertAWSVPCToFern(vpc, region)
 			if vpcInstance != nil {
 				vpcs = append(vpcs, vpcInstance)
-				vpcMap[vpcInstance.Id] = vpcInstance
+				vpcMap[vpcInstance.Identification.Id] = vpcInstance
 			}
 			errors = append(errors, errs...)
 		}
@@ -125,10 +125,13 @@ func enumerateVPCWithSubnetsForRegion(ctx context.Context, cfg aws.Config, regio
 			if subnetConverted != nil && subnet.VpcId != nil {
 				// Find the VPC this subnet belongs to using the AWS subnet's VPC ID
 				if vpcInstance, exists := vpcMap[*subnet.VpcId]; exists {
-					if vpcInstance.Subnets == nil {
-						vpcInstance.Subnets = []*vpcfern.Subnet{}
+					if vpcInstance.Resources == nil {
+						vpcInstance.Resources = &vpcfern.VpcResourceInfo{}
 					}
-					vpcInstance.Subnets = append(vpcInstance.Subnets, subnetConverted)
+					if vpcInstance.Resources.Subnets == nil {
+						vpcInstance.Resources.Subnets = []*vpcfern.Subnet{}
+					}
+					vpcInstance.Resources.Subnets = append(vpcInstance.Resources.Subnets, subnetConverted)
 				}
 			}
 			errors = append(errors, errs...)
@@ -166,8 +169,8 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 			}
 		}
 		cidrAssociations = append(cidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  assoc.AssociationId,
-			CidrBlock:      assoc.CidrBlock,
+			AssociationId:  aws.ToString(assoc.AssociationId),
+			CidrBlock:      aws.ToString(assoc.CidrBlock),
 			CidrBlockState: statePtr,
 		})
 	}
@@ -184,8 +187,8 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 			}
 		}
 		ipv6CidrAssociations = append(ipv6CidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  assoc.AssociationId,
-			CidrBlock:      assoc.Ipv6CidrBlock,
+			AssociationId:  aws.ToString(assoc.AssociationId),
+			CidrBlock:      aws.ToString(assoc.Ipv6CidrBlock),
 			CidrBlockState: statePtr,
 		})
 	}
@@ -212,18 +215,24 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 
 	cidrAssociations = append(cidrAssociations, ipv6CidrAssociations...)
 	vpc := &vpcfern.VpcInstance{
-		Id:                      *awsVPC.VpcId,
-		Arn:                     nil, // AWS VPC doesn't provide ARN directly in DescribeVpcs response
-		Region:                  region,
-		CreationCidrBlock:       awsVPC.CidrBlock,
-		CidrBlockAssociationSet: cidrAssociations,
-		DhcpOptionsId:           awsVPC.DhcpOptionsId,
-		InstanceTenancy:         tenancy,
-		IsDefault:               awsVPC.IsDefault,
-		OwnerId:                 awsVPC.OwnerId,
-		State:                   state,
-		Tags:                    tags,
-		Subnets:                 []*vpcfern.Subnet{}, // Initialize empty subnets slice
+		Identification: &vpcfern.VpcIdentificationInfo{
+			Id:     *awsVPC.VpcId,
+			Region: region,
+		},
+		Configuration: &vpcfern.VpcConfigurationInfo{
+			Name:                    nil, // Name is typically extracted from tags
+			CreationCidrBlock:       awsVPC.CidrBlock,
+			CidrBlockAssociationSet: cidrAssociations,
+			DhcpOptionsId:           awsVPC.DhcpOptionsId,
+			InstanceTenancy:         tenancy,
+			IsDefault:               awsVPC.IsDefault,
+			OwnerId:                 awsVPC.OwnerId,
+			State:                   state,
+			Tags:                    tags,
+		},
+		Resources: &vpcfern.VpcResourceInfo{
+			Subnets: []*vpcfern.Subnet{},
+		},
 	}
 
 	return vpc, errors
@@ -263,8 +272,8 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 			}
 		}
 		ipv6CidrAssociations = append(ipv6CidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  assoc.AssociationId,
-			CidrBlock:      assoc.Ipv6CidrBlock,
+			AssociationId:  aws.ToString(assoc.AssociationId),
+			CidrBlock:      aws.ToString(assoc.Ipv6CidrBlock),
 			CidrBlockState: statePtr,
 		})
 	}
@@ -302,26 +311,33 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 	}
 
 	subnet := &vpcfern.Subnet{
-		Id:                            *awsSubnet.SubnetId,
-		Arn:                           awsSubnet.SubnetArn,
-		Region:                        region,
-		AvailabilityZone:              availabilityZone,
-		AvailableIpAddressCount:       availableIPCount,
-		CidrBlock:                     awsSubnet.CidrBlock,
-		DefaultForAz:                  awsSubnet.DefaultForAz,
-		EnableLniAtDeviceIndex:        enableLni,
-		Ipv6Native:                    awsSubnet.Ipv6Native,
-		MapCustomerOwnedIpOnLaunch:    awsSubnet.MapCustomerOwnedIpOnLaunch,
-		MapPublicIpOnLaunch:           awsSubnet.MapPublicIpOnLaunch,
-		OutpostArn:                    awsSubnet.OutpostArn,
-		OwnerId:                       awsSubnet.OwnerId,
-		State:                         state,
-		Tags:                          tags,
-		AssignIpv6AddressOnCreation:   awsSubnet.AssignIpv6AddressOnCreation,
-		CustomerOwnedIpv4Pool:         awsSubnet.CustomerOwnedIpv4Pool,
-		EnableDns64:                   awsSubnet.EnableDns64,
-		Ipv6CidrBlockAssociationSet:   ipv6CidrAssociations,
-		PrivateDnsNameOptionsOnLaunch: privateDNSOptions,
+		Identification: &vpcfern.SubnetIdentificationInfo{
+			Id:     *awsSubnet.SubnetId,
+			Arn:    awsSubnet.SubnetArn,
+			Region: region,
+		},
+		Configuration: &vpcfern.SubnetConfigurationInfo{
+			AssignIpv6AddressOnCreation:   awsSubnet.AssignIpv6AddressOnCreation,
+			AvailabilityZone:              availabilityZone,
+			AvailableIpAddressCount:       availableIPCount,
+			CustomerOwnedIpv4Pool:         awsSubnet.CustomerOwnedIpv4Pool,
+			DefaultForAz:                  awsSubnet.DefaultForAz,
+			EnableDns64:                   awsSubnet.EnableDns64,
+			EnableLniAtDeviceIndex:        enableLni,
+			Ipv6CidrBlockAssociationSet:   ipv6CidrAssociations,
+			Ipv6Native:                    awsSubnet.Ipv6Native,
+			MapCustomerOwnedIpOnLaunch:    awsSubnet.MapCustomerOwnedIpOnLaunch,
+			MapPublicIpOnLaunch:           awsSubnet.MapPublicIpOnLaunch,
+			Name:                          nil, // Name is typically extracted from tags
+			OutpostArn:                    awsSubnet.OutpostArn,
+			OwnerId:                       awsSubnet.OwnerId,
+			PrivateDnsNameOptionsOnLaunch: privateDNSOptions,
+			State:                         state,
+			Tags:                          tags,
+		},
+		Resources: &vpcfern.SubnetResourceInfo{
+			CidrBlock: awsSubnet.CidrBlock,
+		},
 	}
 
 	return subnet, errors

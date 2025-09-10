@@ -90,24 +90,30 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 	}
 
 	var result = &lambdafern.LambdaFunction{
-		Name:                 *function.FunctionName,
-		Arn:                  *function.FunctionArn,
-		Description:          function.Description,
-		Region:               region,
-		RoleArn:              *function.Role,
-		RevisionId:           *function.RevisionId,
-		Runtime:              string(function.Runtime),
-		Handler:              *function.Handler,
-		CodeSizeInBytes:      function.CodeSize,
-		PackageType:          lambdaPackageType,
-		TimeoutInSeconds:     int(*function.Timeout),
-		MemorySizeInMb:       int(*function.MemorySize),
-		EphemeralStorageInMb: int(*function.EphemeralStorage.Size),
-		LastModified:         lastModified,
-		CodeSha256:           function.CodeSha256,
-		Architectures:        lambdaArchitectures,
-		Vpc:                  vpcConfig,
-		LoggingConfig:        loggingConfig,
+		Identification: &lambdafern.LambdaIdentificationInfo{
+			Name:   *function.FunctionName,
+			Arn:    *function.FunctionArn,
+			Region: region,
+		},
+		Configuration: &lambdafern.LambdaConfigurationInfo{
+			RevisionId:           *function.RevisionId,
+			Runtime:              string(function.Runtime),
+			Handler:              *function.Handler,
+			CodeSizeInBytes:      function.CodeSize,
+			TimeoutInSeconds:     int(*function.Timeout),
+			MemorySizeInMb:       int(*function.MemorySize),
+			EphemeralStorageInMb: int(*function.EphemeralStorage.Size),
+			LastModified:         lastModified,
+			PackageType:          lambdaPackageType,
+			Description:          function.Description,
+			CodeSha256:           function.CodeSha256,
+			Architectures:        lambdaArchitectures,
+			LoggingConfig:        loggingConfig,
+		},
+		Resources: &lambdafern.LambdaResourceInfo{
+			Vpc:        vpcConfig,
+			IamRoleArn: *function.Role,
+		},
 	}
 	return result, nil
 }

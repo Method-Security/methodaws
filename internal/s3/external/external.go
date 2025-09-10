@@ -187,10 +187,19 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 
 	// Initialize variables
 	report := s3fern.ExternalS3BucketResult{}
+
+	// Construct ARN for the bucket
+	bucketARN := fmt.Sprintf("arn:aws:s3:::%s", bucketName)
+
 	externalBucket := s3fern.ExternalBucket{
-		Name:   bucketName,
-		Region: region,
-		Url:    bucketURL,
+		Identification: &s3fern.ExternalBucketIdentificationInfo{
+			Name:   bucketName,
+			Region: region,
+			Url:    bucketURL,
+			Arn:    bucketARN,
+		},
+		Configuration: &s3fern.ExternalBucketConfigurationInfo{},
+		Resources:     &s3fern.ExternalBucketResourceInfo{},
 	}
 	errors := []string{}
 
@@ -211,22 +220,22 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 	client := s3.NewFromConfig(cfg)
 
 	// Check if listing is allowed and get directory contents
-	externalBucket.AllowDirectoryListing = checkListingAllowed(ctx, client, bucketName)
-	if externalBucket.AllowDirectoryListing {
+	externalBucket.Configuration.AllowDirectoryListing = checkListingAllowed(ctx, client, bucketName)
+	if externalBucket.Configuration.AllowDirectoryListing {
 		directoryContents, err := listBucketContents(ctx, client, bucketName)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("error listing bucket contents: %v", err))
 		} else {
-			externalBucket.DirectoryContents = directoryContents
+			externalBucket.Resources.DirectoryContents = directoryContents
 			// Check anonymous read access if we found any objects
-			externalBucket.AllowAnonymousRead = checkAnonymousReadAllowed(ctx, client, bucketName, directoryContents)
+			externalBucket.Configuration.AllowAnonymousRead = checkAnonymousReadAllowed(ctx, client, bucketName, directoryContents)
 		}
 	}
 
 	// Check bucket policy
 	policy, err := checkPolicy(ctx, client, bucketName)
 	if err == nil {
-		externalBucket.Policy = &policy
+		externalBucket.Configuration.Policy = &policy
 	} else {
 		log.Warn("Failed to get bucket policy",
 			svc1log.SafeParam("bucketName", bucketName),
@@ -237,9 +246,9 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 	// Check bucket ACL and get owner information
 	acls, ownerID, ownerName, err := checkACL(ctx, client, bucketName)
 	if err == nil {
-		externalBucket.Acls = acls
-		externalBucket.OwnerId = ownerID
-		externalBucket.OwnerName = ownerName
+		externalBucket.Configuration.Acls = acls
+		externalBucket.Configuration.OwnerId = ownerID
+		externalBucket.Configuration.OwnerName = ownerName
 	} else {
 		log.Warn("Failed to get bucket ACL",
 			svc1log.SafeParam("bucketName", bucketName),
@@ -252,8 +261,8 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 	log.Info("External S3 bucket enumeration completed",
 		svc1log.SafeParam("bucketName", bucketName),
 		svc1log.SafeParam("region", region),
-		svc1log.SafeParam("allowDirectoryListing", externalBucket.AllowDirectoryListing),
-		svc1log.SafeParam("allowAnonymousRead", externalBucket.AllowAnonymousRead),
+		svc1log.SafeParam("allowDirectoryListing", externalBucket.Configuration.AllowDirectoryListing),
+		svc1log.SafeParam("allowAnonymousRead", externalBucket.Configuration.AllowAnonymousRead),
 		svc1log.SafeParam("errorCount", len(errors)))
 
 	return &report, errors

@@ -4,7 +4,7 @@ types:
     properties:
       accountId: string
       regions: list<string>
-# Result Structs
+# Supporting Structs
   RoleLastUsed:
     properties:
       lastUsedDate: optional<datetime>
@@ -15,20 +15,27 @@ types:
       policyName: string
       policyDocument: optional<string>
       isCustomerManaged: optional<boolean>
-  IamRole:
+# IAM Role High level structs
+  IamRoleIdentificationInfo:
     properties:
-      # Essential role fields only
       arn: string
       roleName: string
+  IamRoleConfigurationInfo:
+    properties:
       createDate: optional<datetime>
       roleLastUsed: optional<RoleLastUsed>
-      attachedPolicies: optional<list<AttachedPolicy>>
-  IamResources:
+  IamRoleResourceInfo:
     properties:
-      roles: optional<list<IamRole>>
+      attachedPolicies: optional<list<AttachedPolicy>>
+# Main IAM Role Structs
+  IamRoles:
+    properties:
+      identification: IamRoleIdentificationInfo
+      configuration: IamRoleConfigurationInfo
+      resources: optional<IamRoleResourceInfo>
   IamEnumerateResult:
     properties:
-      resources: optional<IamResources>
+      resources: optional<list<IamRoles>>
 # Report struct
   IamEnumerateReport:
     properties:

@@ -89,49 +89,63 @@ func processOrigins(ctx context.Context, awsConfig aws.Config, origins []types.O
 
 // processOrigin converts a single AWS CloudFront origin to Fern format
 func processOrigin(ctx context.Context, awsConfig aws.Config, origin types.Origin, accountID string) *cloudfrontfern.CloudFrontDistributionOrigin {
-	fernOrigin := &cloudfrontfern.CloudFrontDistributionOrigin{}
-
+	// Determine resource type and domain name
+	var resourceType cloudfrontfern.CloudFrontResourceType
+	var domainName *string
 	if origin.DomainName != nil {
-		fernOrigin.DomainName = *origin.DomainName
-		fernOrigin.ResourceType = classifyOriginType(*origin.DomainName)
+		domainName = origin.DomainName
+		resourceType = classifyOriginType(*origin.DomainName)
 	}
 
 	// Set basic origin ID as fallback
+	originID := ""
 	if origin.Id != nil {
-		fernOrigin.Id = *origin.Id
+		originID = *origin.Id
 	}
 
 	// Only attempt identifier resolution for resource types where it makes sense
-	if origin.DomainName != nil && shouldResolveIdentifier(fernOrigin.ResourceType) {
-		if identifier, err := resolveOriginIdentifier(ctx, awsConfig, *origin.DomainName, fernOrigin.ResourceType, accountID); err == nil && identifier != "" {
-			fernOrigin.Id = identifier
+	if domainName != nil && shouldResolveIdentifier(resourceType) {
+		if identifier, err := resolveOriginIdentifier(ctx, awsConfig, *domainName, resourceType, accountID); err == nil && identifier != "" {
+			originID = identifier
 		}
 	}
 
-	if origin.OriginPath != nil && len(*origin.OriginPath) > 0 {
-		fernOrigin.Path = origin.OriginPath
-	}
-
-	// Process connection timeout
+	// Process connection timeout and attempts
+	var connectionTimeout *int
+	var connectionAttempts *int
 	if origin.CustomOriginConfig != nil {
-		timeout := origin.CustomOriginConfig.OriginReadTimeout
-		timeoutInt := int(*timeout)
-		if origin.CustomOriginConfig.OriginKeepaliveTimeout != nil {
-			fernOrigin.ConnectionTimeout = &timeoutInt
+		if origin.CustomOriginConfig.OriginReadTimeout != nil {
+			timeout := origin.CustomOriginConfig.OriginReadTimeout
+			timeoutInt := int(*timeout)
+			connectionTimeout = &timeoutInt
 		}
+		// Note: ConnectionAttempts is not directly available in CloudFront Origin config
+		// This would typically be a retry configuration that might be available elsewhere
 	}
 
 	// Process custom headers
+	var customHeaders []string
 	if origin.CustomHeaders != nil {
-		var customHeaders []string
 		for _, header := range origin.CustomHeaders.Items {
 			if header.HeaderName != nil {
 				customHeaders = append(customHeaders, *header.HeaderName)
 			}
 		}
-		if len(customHeaders) > 0 {
-			fernOrigin.CustomHeaders = customHeaders
-		}
+	}
+
+	// Create origin with nested structure
+	fernOrigin := &cloudfrontfern.CloudFrontDistributionOrigin{
+		Identification: &cloudfrontfern.CloudFrontDistributionOriginIdentificationInfo{
+			Id:         originID,
+			DomainName: domainName,
+		},
+		Configuration: &cloudfrontfern.CloudFrontDistributionOriginConfigurationInfo{
+			ResourceType:       resourceType,
+			Path:               origin.OriginPath,
+			CustomHeaders:      customHeaders,
+			ConnectionAttempts: connectionAttempts,
+			ConnectionTimeout:  connectionTimeout,
+		},
 	}
 
 	return fernOrigin

@@ -1,10 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
 types:
 # Config
   VpcEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
-# VPC Structs
+# Enums
   VpcState:
     enum:
       - PENDING
@@ -27,6 +29,11 @@ types:
       - PENDING
       - AVAILABLE
       - UNAVAILABLE
+# Supporting Types
+  Tag:
+    properties:
+      key: string
+      value: string
   AvailabilityZone:
     properties:
       zoneId: optional<string>
@@ -37,46 +44,52 @@ types:
       groupName: optional<string>
       state: optional<string>
       optInStatus: optional<string>
-  Subnet:
+  VpcCidrBlockAssociation:
     properties:
-    # Core fields
+      associationId: string
+      cidrBlock: string
+      cidrBlockState: optional<VpcCidrBlockState>
+# Subnet High level structs
+  SubnetIdentificationInfo:
+    properties:
       id: string
       arn: optional<string>
       region: string
-    # Subnet fields
+  SubnetConfigurationInfo:
+    properties:
+      assignIpv6AddressOnCreation: optional<boolean>
       availabilityZone: optional<AvailabilityZone>
       availableIpAddressCount: optional<integer>
-      cidrBlock: optional<string>
+      customerOwnedIpv4Pool: optional<string>
       defaultForAz: optional<boolean>
+      enableDns64: optional<boolean>
       enableLniAtDeviceIndex: optional<integer>
+      ipv6CidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       ipv6Native: optional<boolean>
       mapCustomerOwnedIpOnLaunch: optional<boolean>
       mapPublicIpOnLaunch: optional<boolean>
+      name: optional<string>
       outpostArn: optional<string>
       ownerId: optional<string>
+      privateDnsNameOptionsOnLaunch: optional<string>
       state: optional<SubnetState>
       tags: optional<list<Tag>>
-      assignIpv6AddressOnCreation: optional<boolean>
-      customerOwnedIpv4Pool: optional<string>
-      enableDns64: optional<boolean>
-      ipv6CidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
-      privateDnsNameOptionsOnLaunch: optional<string>
-  Tag:
+  SubnetResourceInfo:
     properties:
-      key: string
-      value: string
-  VpcCidrBlockAssociation:
-    properties:
-      associationId: optional<string>
       cidrBlock: optional<string>
-      cidrBlockState: optional<VpcCidrBlockState>
-  VpcInstance:
+#  Subnet Main Struct
+  Subnet:
     properties:
-    # Core fields
-      id: string
-      arn: optional<string>
-      region: string
-    # VPC fields
+      identification: SubnetIdentificationInfo
+      configuration: SubnetConfigurationInfo
+      resources: optional<SubnetResourceInfo>
+# VPC High level structs
+  VpcResourceInfo:
+    properties:
+      subnets: optional<list<Subnet>>
+  VpcConfigurationInfo:
+    properties:
+      name: optional<string>
       creationCidrBlock: optional<string>
       cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       dhcpOptionsId: optional<string>
@@ -85,12 +98,20 @@ types:
       ownerId: optional<string>
       state: optional<VpcState>
       tags: optional<list<Tag>>
-    # Linked primatives
-      subnets: optional<list<Subnet>>
+  VpcIdentificationInfo:
+    properties:
+      id: string
+      region: string
+# Main VPC structs
+  VpcInstance:
+    properties:
+      identification: VpcIdentificationInfo
+      configuration: VpcConfigurationInfo
+      resources: optional<VpcResourceInfo>
   VpcEnumerateResult:
     properties:
       vpcs: optional<list<VpcInstance>>
-  # Report Struct
+# Report Struct
   VpcEnumerateReport:
     properties:
       result: VpcEnumerateResult

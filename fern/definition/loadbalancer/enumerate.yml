@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
 types:
-  # Config
+# Config
   LoadBalancerEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
       versions: optional<list<LoadBalancerVersion>>
-  # Enums
+# Enums
   LoadBalancerVersion:
     enum:
       - V1
@@ -48,7 +48,7 @@ types:
       - IP
       - LAMBDA
       - ALB
-# Result Structs
+# Supporting Types
   Certificate:
     properties:
       arn: string
@@ -59,64 +59,77 @@ types:
       protocol: optional<Protocol>
       port: optional<integer>
       certificates: optional<list<Certificate>>
-      loadBalancerArn: optional<string>
   Target:
     properties:
-    # Core fields
       id: string
-    # Target fields
       type: optional<TargetType>
       port: optional<integer>
       availabilityZone: optional<string>
-  TargetGroup:
+# TargetGroup High level structs
+  TargetGroupIdentificationInfo:
     properties:
-    # Core fields
       arn: string
       name: optional<string>
-    # Target Group fields
+      region: string
+  TargetGroupConfigurationInfo:
+    properties:
       ipAddressType: optional<TargetGroupIpAddressType>
       port: optional<integer>
-      loadBalancerArns: optional<list<string>>
       protocol: optional<Protocol>
-      vpcId: optional<string>
-      targets: optional<list<Target>>
-  BaseLoadBalancer:
+  TargetGroupResourceInfo:
     properties:
-    # Core properties
-      loadBalancerType: LoadBalancerType
+      targets: optional<list<Target>>
+# TargetGroup Main Structs
+  TargetGroupInstance:
+    properties:
+      identification: TargetGroupIdentificationInfo
+      configuration: TargetGroupConfigurationInfo
+      resources: optional<TargetGroupResourceInfo>
+# VPC High level structs
+  VpcIdentificationInfo:
+    properties:
       id: string
-      region: string
-      createdTime: optional<datetime>
-    # Common LB properties
-      dnsName: optional<string>
-      securityGroupIds: optional<list<string>>
-      vpcId: optional<string>
+  VpcResourceInfo:
+    properties:
       subnetIds: optional<list<string>>
-      hostedZoneId: optional<string>
-      listeners: optional<list<Listener>>
-  LoadBalancerV1:
-    extends: BaseLoadBalancer
+  VpcInstance:
     properties:
-      # V1-specific properties
-      targets: optional<list<Target>>
-  LoadBalancerV2:
-    extends: BaseLoadBalancer
+      identification: VpcIdentificationInfo
+      resources: optional<VpcResourceInfo>
+# LoadBalancer High level structs
+  LoadBalancerIdentificationInfo:
     properties:
-      # V2-specific properties
+      id: string
       arn: optional<string>
-      ipAddressType: optional<IpAddressType>
-      state: optional<LoadBalancerState>
-      targetGroups: optional<list<TargetGroup>>
-  LoadBalancer:
-    union:
-      v1: LoadBalancerV1
-      v2: LoadBalancerV2
-  LoadBalancerResult:
+      region: string
+  LoadBalancerConfigurationInfo:
     properties:
-      loadBalancers: optional<list<LoadBalancer>>
-  # Report Struct
+      name: optional<string>
+      loadBalancerType: LoadBalancerType
+      dnsName: optional<string>
+      createdTime: optional<datetime>
+      hostedZoneId: optional<string>
+      state: optional<LoadBalancerState>
+      ipAddressType: optional<IpAddressType>
+  LoadBalancerResourceInfo:
+    properties:
+      listeners: optional<list<Listener>>
+      targets: optional<list<Target>> # ELB v1 only
+      targetGroups: optional<list<TargetGroupInstance>>
+      vpc: optional<VpcInstance>
+      securityGroupIds: optional<list<string>>
+# Main LoadBalancer structs
+  LoadBalancerInstance:
+    properties:
+      identification: LoadBalancerIdentificationInfo
+      configuration: LoadBalancerConfigurationInfo
+      resources: optional<LoadBalancerResourceInfo>
+  LoadBalancerEnumerateResult:
+    properties:
+      loadBalancers: optional<list<LoadBalancerInstance>>
+# Report Struct
   LoadBalancerEnumerateReport:
     properties:
+      result: LoadBalancerEnumerateResult
       config: LoadBalancerEnumerateConfig
-      result: LoadBalancerResult
       errors: optional<list<string>>

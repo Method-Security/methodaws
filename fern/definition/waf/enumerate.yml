@@ -60,28 +60,35 @@ types:
       action: optional<ActionInfo>
       labels: optional<list<string>>
       rawRule: string 
-  ResourceInfo:
+  WafResource:
     properties:
       arn: string
       type: WafResourceType
-# Main WAF structs
-  WafInstance:
+# High level structs
+  WafIdentificationInfo:
     properties:
-    # Core fields
       arn: string
       name: optional<string>
       region: string
-    # WAF fields
+  WafConfigurationInfo:
+    properties:
       scope: ScopeType
       description: optional<string>
       defaultAction: optional<ActionType>
+  WafResourceInfo:
+    properties:
+      frontedResources: list<WafResource>
       rules: optional<list<RuleInfo>>
-    # Linked primatives
-      resources: optional<list<ResourceInfo>>
-# Report Structs
+# Main WAF structs
+  WafInstance:
+    properties:
+      identification: WafIdentificationInfo
+      configuration: WafConfigurationInfo
+      resources: optional<WafResourceInfo>
   WafEnumerateResult:
     properties:
       wafs: optional<list<WafInstance>>
+# Report Struct
   WafEnumerateReport:
     properties:
       result: WafEnumerateResult

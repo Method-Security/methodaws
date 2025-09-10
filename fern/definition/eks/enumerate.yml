@@ -4,15 +4,16 @@ types:
     properties:
       accountId: string
       regions: list<string>
+# Enums
   ClusterStatus:
     enum:
-    - CREATING
-    - ACTIVE
-    - DELETING
-    - FAILED
-    - UPDATING
-    - PENDING
-# EKS Structs
+      - CREATING
+      - ACTIVE
+      - DELETING
+      - FAILED
+      - UPDATING
+      - PENDING
+# Supporting Types
   Ec2Instance:
     properties:
       id: string
@@ -21,6 +22,10 @@ types:
       name: optional<string>
       nodeRole: optional<string>
       instances: optional<list<Ec2Instance>>
+  EksEndpointConfigResponse:
+    properties:
+      privateAccess: optional<boolean>
+      publicAccess: optional<boolean>
   EksVpcConfig:
     properties:
       vpcId: optional<string>
@@ -29,35 +34,31 @@ types:
       publicAccessCidrs: optional<list<string>>
       securityGroupIds: optional<list<string>>
       subnetIds: optional<list<string>>
-  EksEndpointConfigResponse:
-    properties:
-      privateAccess: optional<boolean>
-      publicAccess: optional<boolean>
   EksKubernetesNetworkConfig:
     properties:
       ipFamily: optional<string>
       serviceIpv4Cidr: optional<string>
       serviceIpv6Cidr: optional<string>
-  EksLogging:
-    properties:
-      clusterLogging: optional<list<EksClusterLogging>>
   EksClusterLogging:
     properties:
       enabled: optional<boolean>
       types: optional<list<string>>
-  EksIdentity:
+  EksLogging:
     properties:
-      oidc: optional<EksOidc>
+      clusterLogging: optional<list<EksClusterLogging>>
   EksOidc:
     properties:
       issuer: optional<string>
+  EksIdentity:
+    properties:
+      oidc: optional<EksOidc>
+  EksProvider:
+    properties:
+      keyArn: optional<string>
   EksEncryptionConfig:
     properties:
       provider: optional<EksProvider>
       resources: optional<list<string>>
-  EksProvider:
-    properties:
-      keyArn: optional<string>
   EksConnectorConfig:
     properties:
       activationCode: optional<string>
@@ -65,58 +66,66 @@ types:
       activationId: optional<string>
       provider: optional<string>
       roleArn: optional<string>
-  EksClusterHealth:
-    properties:
-      issues: optional<list<EksClusterIssue>>
   EksClusterIssue:
     properties:
       code: optional<string>
       message: optional<string>
       resourceIds: optional<list<string>>
+  EksClusterHealth:
+    properties:
+      issues: optional<list<EksClusterIssue>>
+  EksControlPlanePlacement:
+    properties:
+      groupName: optional<string>
   EksOutpostConfig:
     properties:
       controlPlaneInstanceType: optional<string>
       controlPlanePlacement: optional<EksControlPlanePlacement>
       outpostArns: optional<list<string>>
-  EksControlPlanePlacement:
-    properties:
-      groupName: optional<string>
   EksAccessConfig:
     properties:
       authenticationMode: optional<string>
       bootstrapClusterCreatorAdminPermissions: optional<boolean>
-  EksCluster:
+# EKS High level structs
+  EksIdentificationInfo:
     properties:
-      # Core Fields
       arn: string
       id: optional<string>
       name: string
       region: string
-    # EKS Cluster fields
+  EksConfigurationInfo:
+    properties:
       status: ClusterStatus
       endpoint: optional<string>
+      version: optional<string>
+      platformVersion: optional<string>
+      createdAt: optional<datetime>
+      roleArn: optional<string>
+      tags: optional<map<string, string>>
+      accessConfig: optional<EksAccessConfig>
+  EksResourceInfo:
+    properties:
+      resourcesVpcConfig: optional<EksVpcConfig>
+      nodeGroups: optional<list<NodeGroup>>
       kubernetesNetworkConfig: optional<EksKubernetesNetworkConfig>
       logging: optional<EksLogging>
       identity: optional<EksIdentity>
-      platformVersion: optional<string>
-      tags: optional<map<string, string>>
       encryptionConfig: optional<list<EksEncryptionConfig>>
       connectorConfig: optional<EksConnectorConfig>
       health: optional<EksClusterHealth>
       outpostConfig: optional<EksOutpostConfig>
-      accessConfig: optional<EksAccessConfig>
-      version: optional<string>
-      createdAt: optional<datetime>
-      # Linked primatives
-      roleArn: optional<string>
-      resourcesVpcConfig: optional<EksVpcConfig>
-      nodeGroups: optional<list<NodeGroup>>
+# Main EKS structs
+  EksInstance:
+    properties:
+      identification: EksIdentificationInfo
+      configuration: EksConfigurationInfo
+      resources: optional<EksResourceInfo>
   EksEnumerateResult:
     properties:
-      eksClusters: optional<list<EksCluster>>
-# Report Struct  
+      eksClusters: optional<list<EksInstance>>
+# Report Struct
   EksEnumerateReport:
     properties:
-      config: EksEnumerateConfig
       result: EksEnumerateResult
+      config: EksEnumerateConfig
       errors: optional<list<string>>

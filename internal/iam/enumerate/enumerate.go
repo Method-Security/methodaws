@@ -17,9 +17,7 @@ func EnumerateIam(ctx context.Context, awsConfig aws.Config, config iam.IamEnume
 	// Initialize report
 	report := &iam.IamEnumerateReport{
 		Config: &config,
-		Result: &iam.IamEnumerateResult{
-			Resources: &iam.IamResources{},
-		},
+		Result: &iam.IamEnumerateResult{},
 	}
 
 	var allErrors []string
@@ -35,13 +33,11 @@ func EnumerateIam(ctx context.Context, awsConfig aws.Config, config iam.IamEnume
 
 	// Only populate roles if we have any
 	if len(roles) > 0 {
-		report.Result.Resources.Roles = roles
+		report.Result.Resources = roles
 		log.Info("Successfully enumerated IAM roles",
 			svc1log.SafeParam("roleCount", len(roles)))
 	} else {
 		log.Info("No IAM roles found or accessible")
-		// Still initialize empty slice instead of nil
-		report.Result.Resources.Roles = []*iam.IamRole{}
 	}
 
 	// Add errors to report if any occurred

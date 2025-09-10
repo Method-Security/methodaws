@@ -16,29 +16,42 @@ types:
       - VPC_ORIGIN
       - API_GATEWAY
       - UNKNOWN
-# Result Structs
-  CloudFrontDistributionOrigin:
+# Origin High level Structs
+  CloudFrontDistributionOriginIdentificationInfo:
     properties:
-    # Core fields
       id: string
-    # CloudFront Distribution Origin fields
-      domainName: string
+      domainName: optional<string>
+  CloudFrontDistributionOriginConfigurationInfo:
+    properties:
       resourceType: CloudFrontResourceType
       path: optional<string>
       customHeaders: optional<list<string>>
       connectionAttempts: optional<integer>
       connectionTimeout: optional<integer>
+# Origin Main Struct
+  CloudFrontDistributionOrigin:
+    properties:
+      identification: CloudFrontDistributionOriginIdentificationInfo
+      configuration: CloudFrontDistributionOriginConfigurationInfo
+# CloudFront Distribution High level Structs
+  CloudFrontDistributionIdentificationInfo:
+    properties:
+      id: string
+      arn: optional<string>
+      domainName: optional<string>
+  CloudFrontDistributionConfigurationInfo:
+    properties:
+      status: CloudFrontDistributionStatus
+      comment: optional<string>
+  CloudFrontDistributionResourceInfo:
+    properties:
+      origins: optional<list<CloudFrontDistributionOrigin>>
+# Main CloudFront Distribution Structs
   CloudFrontDistribution:
     properties:
-    # Core fields
-      id: string
-    # CloudFront Distribution fields
-      domainName: optional<string>
-      status: optional<CloudFrontDistributionStatus>
-      arn: optional<string>
-      comment: optional<string>
-    # Linked primatives
-      origins: optional<list<CloudFrontDistributionOrigin>>
+      identification: CloudFrontDistributionIdentificationInfo
+      configuration: CloudFrontDistributionConfigurationInfo
+      resources: optional<CloudFrontDistributionResourceInfo>
   CloudFrontEnumerateResult:
     properties:
       distributions: optional<list<CloudFrontDistribution>>

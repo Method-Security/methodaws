@@ -14,10 +14,10 @@ import (
 )
 
 // enumerateIamRoles retrieves all IAM roles with their attached policies
-func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRole, []string) {
+func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRoles, []string) {
 	log := svc1log.FromContext(ctx)
 	client := iamaws.NewFromConfig(cfg)
-	var iamRoles []*iam.IamRole
+	var iamRoles []*iam.IamRoles
 	var errors []string
 
 	// Get all roles
@@ -67,34 +67,35 @@ func getAllRoles(ctx context.Context, client *iamaws.Client) ([]types.Role, erro
 }
 
 // processRole converts a role and enriches it with policy information
-func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*iam.IamRole, []string) {
+func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*iam.IamRoles, []string) {
 	var errors []string
-
-	// Create simplified IAM role
-	iamRole := &iam.IamRole{
-		Arn:      *role.Arn,
-		RoleName: *role.RoleName,
-	}
-
-	// Add optional fields
-	if role.CreateDate != nil {
-		iamRole.CreateDate = role.CreateDate
-	}
-
-	// Add role last used if present
-	if role.RoleLastUsed != nil {
-		iamRole.RoleLastUsed = &iam.RoleLastUsed{
-			LastUsedDate: role.RoleLastUsed.LastUsedDate,
-			Region:       role.RoleLastUsed.Region,
-		}
-	}
 
 	// Get attached policies
 	attachedPolicies, errs := getAttachedPoliciesForRole(ctx, client, *role.RoleName)
 	errors = append(errors, errs...)
 
-	if len(attachedPolicies) > 0 {
-		iamRole.AttachedPolicies = attachedPolicies
+	// Convert role last used if present
+	var roleLastUsed *iam.RoleLastUsed
+	if role.RoleLastUsed != nil {
+		roleLastUsed = &iam.RoleLastUsed{
+			LastUsedDate: role.RoleLastUsed.LastUsedDate,
+			Region:       role.RoleLastUsed.Region,
+		}
+	}
+
+	// Create IAM role with nested structure
+	iamRole := &iam.IamRoles{
+		Identification: &iam.IamRoleIdentificationInfo{
+			Arn:      *role.Arn,
+			RoleName: *role.RoleName,
+		},
+		Configuration: &iam.IamRoleConfigurationInfo{
+			CreateDate:   role.CreateDate,
+			RoleLastUsed: roleLastUsed,
+		},
+		Resources: &iam.IamRoleResourceInfo{
+			AttachedPolicies: attachedPolicies,
+		},
 	}
 
 	return iamRole, errors

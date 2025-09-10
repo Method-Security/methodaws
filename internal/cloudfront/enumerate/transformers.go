@@ -44,13 +44,20 @@ func transformDistributionToFern(ctx context.Context, awsConfig aws.Config, dist
 		status = cloudfrontfern.CloudFrontDistributionStatusEnabled
 	}
 
+	// Create distribution with nested structure
 	return &cloudfrontfern.CloudFrontDistribution{
-		Id:         aws.ToString(dist.Id),
-		Arn:        dist.ARN,
-		DomainName: dist.DomainName,
-		Comment:    comment,
-		Origins:    origins,
-		Status:     &status,
+		Identification: &cloudfrontfern.CloudFrontDistributionIdentificationInfo{
+			Id:         aws.ToString(dist.Id),
+			Arn:        dist.ARN,
+			DomainName: dist.DomainName,
+		},
+		Configuration: &cloudfrontfern.CloudFrontDistributionConfigurationInfo{
+			Status:  status,
+			Comment: comment,
+		},
+		Resources: &cloudfrontfern.CloudFrontDistributionResourceInfo{
+			Origins: origins,
+		},
 	}, errors
 }
 
@@ -67,12 +74,19 @@ func transformDistributionSummaryToFern(ctx context.Context, awsConfig aws.Confi
 	comment := extractDistributionComment(dist.Comment)
 	status := extractDistributionStatus(dist.Enabled)
 
+	// Create distribution with nested structure
 	return &cloudfrontfern.CloudFrontDistribution{
-		Id:         aws.ToString(dist.Id),
-		Arn:        dist.ARN,
-		DomainName: dist.DomainName,
-		Comment:    comment,
-		Origins:    origins,
-		Status:     &status,
+		Identification: &cloudfrontfern.CloudFrontDistributionIdentificationInfo{
+			Id:         aws.ToString(dist.Id),
+			Arn:        dist.ARN,
+			DomainName: dist.DomainName,
+		},
+		Configuration: &cloudfrontfern.CloudFrontDistributionConfigurationInfo{
+			Status:  status,
+			Comment: comment,
+		},
+		Resources: &cloudfrontfern.CloudFrontDistributionResourceInfo{
+			Origins: origins,
+		},
 	}, errors
 }

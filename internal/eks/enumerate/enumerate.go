@@ -23,13 +23,13 @@ func EnumerateEks(ctx context.Context, awsConfig aws.Config, config eksfern.EksE
 
 	// Initialize report
 	report := &eksfern.EksEnumerateReport{
-		Config: &config,
 		Result: &eksfern.EksEnumerateResult{
-			EksClusters: []*eksfern.EksCluster{},
+			EksClusters: []*eksfern.EksInstance{},
 		},
+		Config: &config,
 	}
 
-	var allClusters []*eksfern.EksCluster
+	var allClusters []*eksfern.EksInstance
 	var allErrors []string
 
 	// Process each region
@@ -57,11 +57,11 @@ func EnumerateEks(ctx context.Context, awsConfig aws.Config, config eksfern.EksE
 }
 
 // enumerateEksForRegion enumerates all EKS clusters in a specified region
-func enumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) ([]*eksfern.EksCluster, []string) {
+func enumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) ([]*eksfern.EksInstance, []string) {
 	cfg.Region = region
 
 	eksSvc := eks.NewFromConfig(cfg)
-	var clusters []*eksfern.EksCluster
+	var clusters []*eksfern.EksInstance
 	var errors []string
 
 	// List clusters
@@ -84,7 +84,7 @@ func enumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) (
 }
 
 // processCluster processes a single EKS cluster and its node groups
-func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clusterName string, region string) (*eksfern.EksCluster, []string) {
+func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clusterName string, region string) (*eksfern.EksInstance, []string) {
 	var errors []string
 	log := svc1log.FromContext(ctx)
 
@@ -111,12 +111,12 @@ func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clu
 		errors = append(errors, "Cluster ARN is nil")
 		return nil, errors
 	}
-	cluster := convertClusterToFern(clusterDetail.Cluster, region)
-
 	// Get node groups
 	nodeGroups, errs := getNodeGroupsForCluster(ctx, cfg, eksSvc, clusterName)
 	errors = append(errors, errs...)
-	cluster.NodeGroups = nodeGroups
+
+	// Convert cluster to Fern format with new structure
+	cluster := convertClusterToFern(clusterDetail.Cluster, region, nodeGroups)
 
 	return cluster, errors
 }
@@ -251,78 +251,96 @@ func getInstancesForNodeGroup(ctx context.Context, cfg aws.Config, clusterName, 
 	return instances, errors
 }
 
-// convertClusterToFern converts AWS EKS cluster to Fern format
-func convertClusterToFern(cluster *eksTypes.Cluster, region string) *eksfern.EksCluster {
+// convertClusterToFern converts AWS EKS cluster to Fern format with new structure
+func convertClusterToFern(cluster *eksTypes.Cluster, region string, nodeGroups []*eksfern.NodeGroup) *eksfern.EksInstance {
 	if cluster == nil || cluster.Arn == nil || cluster.Name == nil {
 		return nil
 	}
 
-	fernCluster := &eksfern.EksCluster{
-		Arn:             *cluster.Arn,
-		Name:            *cluster.Name,
+	// Create identification info
+	identification := &eksfern.EksIdentificationInfo{
+		Arn:    *cluster.Arn,
+		Name:   *cluster.Name,
+		Id:     cluster.Id,
+		Region: region,
+	}
+
+	// Create configuration info
+	configuration := &eksfern.EksConfigurationInfo{
 		Status:          eksfern.ClusterStatus(string(cluster.Status)),
 		Endpoint:        cluster.Endpoint,
-		RoleArn:         cluster.RoleArn,
-		PlatformVersion: cluster.PlatformVersion,
-		Id:              cluster.Id,
-		Region:          region,
 		Version:         cluster.Version,
+		PlatformVersion: cluster.PlatformVersion,
 		CreatedAt:       cluster.CreatedAt,
+		RoleArn:         cluster.RoleArn,
 	}
 
-	// Convert VPC config
-	if cluster.ResourcesVpcConfig != nil {
-		fernCluster.ResourcesVpcConfig = convertVpcConfigToFern(cluster.ResourcesVpcConfig)
-	}
-
-	// Convert Kubernetes network config
-	if cluster.KubernetesNetworkConfig != nil {
-		fernCluster.KubernetesNetworkConfig = convertKubernetesNetworkConfigToFern(cluster.KubernetesNetworkConfig)
-	}
-
-	// Convert logging
-	if cluster.Logging != nil {
-		fernCluster.Logging = convertLoggingToFern(cluster.Logging)
-	}
-
-	// Convert identity
-	if cluster.Identity != nil {
-		fernCluster.Identity = convertIdentityToFern(cluster.Identity)
-	}
-
-	// Convert tags
+	// Add tags to configuration
 	if cluster.Tags != nil {
-		fernCluster.Tags = cluster.Tags
+		configuration.Tags = cluster.Tags
 	}
 
-	// Convert encryption config
+	// Add access config to configuration
+	if cluster.AccessConfig != nil {
+		configuration.AccessConfig = convertAccessConfigToFern(cluster.AccessConfig)
+	}
+
+	// Create resource info
+	resources := &eksfern.EksResourceInfo{
+		NodeGroups: nodeGroups,
+	}
+
+	// Add VPC config to resources
+	if cluster.ResourcesVpcConfig != nil {
+		resources.ResourcesVpcConfig = convertVpcConfigToFern(cluster.ResourcesVpcConfig)
+	}
+
+	// Add Kubernetes network config to resources
+	if cluster.KubernetesNetworkConfig != nil {
+		resources.KubernetesNetworkConfig = convertKubernetesNetworkConfigToFern(cluster.KubernetesNetworkConfig)
+	}
+
+	// Add logging to resources
+	if cluster.Logging != nil {
+		resources.Logging = convertLoggingToFern(cluster.Logging)
+	}
+
+	// Add identity to resources
+	if cluster.Identity != nil {
+		resources.Identity = convertIdentityToFern(cluster.Identity)
+	}
+
+	// Add encryption config to resources
 	if cluster.EncryptionConfig != nil {
 		var encryptionConfigs []*eksfern.EksEncryptionConfig
 		for _, config := range cluster.EncryptionConfig {
 			encryptionConfigs = append(encryptionConfigs, convertEncryptionConfigToFern(&config))
 		}
-		fernCluster.EncryptionConfig = encryptionConfigs
+		resources.EncryptionConfig = encryptionConfigs
 	}
 
-	// Convert connector config
+	// Add connector config to resources
 	if cluster.ConnectorConfig != nil {
-		fernCluster.ConnectorConfig = convertConnectorConfigToFern(cluster.ConnectorConfig)
+		resources.ConnectorConfig = convertConnectorConfigToFern(cluster.ConnectorConfig)
 	}
 
-	// Convert health
+	// Add health to resources
 	if cluster.Health != nil {
-		fernCluster.Health = convertClusterHealthToFern(cluster.Health)
+		resources.Health = convertClusterHealthToFern(cluster.Health)
 	}
 
-	// Convert outpost config
+	// Add outpost config to resources
 	if cluster.OutpostConfig != nil {
-		fernCluster.OutpostConfig = convertOutpostConfigToFern(cluster.OutpostConfig)
+		resources.OutpostConfig = convertOutpostConfigToFern(cluster.OutpostConfig)
 	}
 
-	// Convert access config
-	if cluster.AccessConfig != nil {
-		fernCluster.AccessConfig = convertAccessConfigToFern(cluster.AccessConfig)
+	// Create EksInstance
+	fernCluster := &eksfern.EksInstance{
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
 	}
+
 	return fernCluster
 }
 

@@ -41,18 +41,26 @@ types:
       preferredMaintenanceWindow: optional<string>
       copyTagsToSnapshot: optional<boolean>
       latestRestorableTime: optional<datetime>
-  VpcInstance:
+# VPC High level structs
+  VpcIdentificationInfo:
     properties:
       id: string
-      subnetIds: optional<list<string>>
-# Core RDS Types
-  RdsInstance:
+  VpcResourceInfo:
     properties:
-      # Core Identity & Status
+      subnetIds: optional<list<string>>
+  VpcInstance:
+    properties:
+      identification: VpcIdentificationInfo 
+      resources: optional<VpcResourceInfo>
+# RDS High level structs
+  RdsIdentificationInfo:
+    properties:
       id: string
       arn: optional<string>
       name: optional<string>
       region: string
+  RdsConfigurationInfo:
+    properties:
       status: optional<string>
       class: optional<string>
       # Database Configuration
@@ -64,9 +72,6 @@ types:
       availabilityZone: optional<string>
       multiAZ: optional<boolean>
       publiclyAccessible: optional<boolean>
-      # VPC References
-      vpc: optional<VpcInstance>
-      # Grouped Configurations
       storage: optional<StorageConfig>
       security: optional<SecurityConfig>
       monitoring: optional<MonitoringConfig>
@@ -74,10 +79,19 @@ types:
       # Metadata
       instanceCreateTime: optional<datetime>
       tags: optional<list<Tag>>
+  RdsResourceInfo:
+    properties:
+      vpc: optional<VpcInstance>
+# Main RDS Structs
+  RdsInstance:
+    properties:
+      identification: RdsIdentificationInfo
+      configuration: RdsConfigurationInfo
+      resources: optional<RdsResourceInfo>
   RdsEnumerateResult:
     properties:
       rdsInstances: optional<list<RdsInstance>>
-  # Report Struct
+# Report Struct
   RdsEnumerateReport:
     properties:
       result: RdsEnumerateResult

@@ -21,18 +21,18 @@ func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Buc
 	log := svc1log.FromContext(ctx)
 
 	input := &s3.GetPublicAccessBlockInput{
-		Bucket: aws.String(bucket.Name),
+		Bucket: aws.String(bucket.Identification.Name),
 	}
 
 	result, err := s3Client.GetPublicAccessBlock(ctx, input)
 	if err != nil {
 		log.Warn("Failed to get public access block configuration",
-			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.SafeParam("bucketName", bucket.Identification.Name),
 			svc1log.Stacktrace(err))
 		return bucket, err
 	}
 
-	bucket.PublicAccessConfig = &s3fern.S3PublicAccessBlockConfiguration{
+	bucket.Configuration.PublicAccessConfig = &s3fern.S3PublicAccessBlockConfiguration{
 		BlockPublicAcls:       *result.PublicAccessBlockConfiguration.BlockPublicAcls,
 		IgnorePublicAcls:      *result.PublicAccessBlockConfiguration.IgnorePublicAcls,
 		BlockPublicPolicy:     *result.PublicAccessBlockConfiguration.BlockPublicPolicy,
@@ -46,14 +46,14 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S
 	log := svc1log.FromContext(ctx)
 
 	input := &s3.GetBucketEncryptionInput{
-		Bucket: aws.String(bucket.Name),
+		Bucket: aws.String(bucket.Identification.Name),
 	}
 
 	result, err := s3Client.GetBucketEncryption(ctx, input)
 
 	if err != nil {
 		log.Warn("Failed to get bucket encryption configuration",
-			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.SafeParam("bucketName", bucket.Identification.Name),
 			svc1log.Stacktrace(err))
 		return bucket, err
 	}
@@ -67,50 +67,59 @@ func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S
 			encryptionRule.KmsMasterKeyId = rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
 			encryptionRules = append(encryptionRules, &encryptionRule)
 		}
-		bucket.EncryptionRules = encryptionRules
+		bucket.Configuration.EncryptionRules = encryptionRules
 	}
 	return bucket, nil
 }
 
-func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, error) {
-	log := svc1log.FromContext(ctx)
-
+func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, []string) {
+	errors := []string{}
 	input := &s3.GetBucketVersioningInput{
-		Bucket: aws.String(bucket.Name),
+		Bucket: aws.String(bucket.Identification.Name),
 	}
 
 	result, err := s3Client.GetBucketVersioning(ctx, input)
 	if err != nil {
-		log.Warn("Failed to get bucket versioning configuration",
-			svc1log.SafeParam("bucketName", bucket.Name),
-			svc1log.Stacktrace(err))
-		return bucket, err
+		errors = append(errors, err.Error())
 	}
 
-	bucketVersioning, _ := s3fern.NewBucketVersioningStatusFromString(strings.ToUpper(string(result.Status)))
-	bucket.BucketVersioning = &bucketVersioning
-	mfaDelete, _ := s3fern.NewS3MfaDeleteStatusFromString(strings.ToUpper(string(result.MFADelete)))
-	bucket.MfaDelete = &mfaDelete
+	if result.Status != "" {
+		bucketVersioning, err := s3fern.NewBucketVersioningStatusFromString(strings.ToUpper(string(result.Status)))
+		if err != nil {
+			errors = append(errors, err.Error())
+		} else {
+			bucket.Configuration.BucketVersioning = &bucketVersioning
+		}
+	}
 
-	return bucket, nil
+	if result.MFADelete != "" {
+		mfaDelete, err := s3fern.NewS3MfaDeleteStatusFromString(strings.ToUpper(string(result.MFADelete)))
+		if err != nil {
+			errors = append(errors, err.Error())
+		} else {
+			bucket.Configuration.MfaDelete = &mfaDelete
+		}
+	}
+
+	return bucket, errors
 }
 
 func bucketPolicy(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, error) {
 	log := svc1log.FromContext(ctx)
 
 	input := s3.GetBucketPolicyInput{
-		Bucket: aws.String(bucket.Name),
+		Bucket: aws.String(bucket.Identification.Name),
 	}
 
 	result, err := s3Client.GetBucketPolicy(ctx, &input)
 	if err != nil {
 		log.Warn("Failed to get bucket policy",
-			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.SafeParam("bucketName", bucket.Identification.Name),
 			svc1log.Stacktrace(err))
 		return bucket, err
 	}
 
-	bucket.Policy = result.Policy
+	bucket.Configuration.Policy = result.Policy
 
 	return bucket, nil
 }
@@ -119,13 +128,13 @@ func bucketACL(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket
 	log := svc1log.FromContext(ctx)
 
 	input := &s3.GetBucketAclInput{
-		Bucket: aws.String(bucket.Name),
+		Bucket: aws.String(bucket.Identification.Name),
 	}
 
 	result, err := s3Client.GetBucketAcl(ctx, input)
 	if err != nil {
 		log.Warn("Failed to get bucket ACL",
-			svc1log.SafeParam("bucketName", bucket.Name),
+			svc1log.SafeParam("bucketName", bucket.Identification.Name),
 			svc1log.Stacktrace(err))
 		return bucket, err
 	}
@@ -141,7 +150,7 @@ func bucketACL(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket
 	}
 
 	if len(acls) > 0 {
-		bucket.Acls = acls
+		bucket.Configuration.Acls = acls
 	}
 
 	return bucket, nil
@@ -196,10 +205,15 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 	// First pass: get all bucket regions and group them
 	for _, bucket := range listBucketsOutput.Buckets {
 		s3Bucket := s3fern.S3Bucket{
-			CreationDate: aws.ToTime(bucket.CreationDate),
-			Name:         aws.ToString(bucket.Name),
-			OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
-			OwnerName:    aws.ToString(listBucketsOutput.Owner.DisplayName),
+			Identification: &s3fern.S3BucketIdentificationInfo{
+				Name: aws.ToString(bucket.Name),
+				// Arn, Url, and Region will be set later
+			},
+			Configuration: &s3fern.S3BucketConfigurationInfo{
+				CreationDate: aws.ToTime(bucket.CreationDate),
+				OwnerId:      aws.ToString(listBucketsOutput.Owner.ID),
+				OwnerName:    aws.ToString(listBucketsOutput.Owner.DisplayName),
+			},
 		}
 
 		// Get the bucket's region
@@ -213,13 +227,14 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 		}
 
 		// If the region is empty, set it to us-east-1
-		s3Bucket.Region = string(regionOutput.LocationConstraint)
-		if s3Bucket.Region == "" {
-			s3Bucket.Region = "us-east-1"
+		region := string(regionOutput.LocationConstraint)
+		if region == "" {
+			region = "us-east-1"
 		}
+		s3Bucket.Identification.Region = region
 
 		// Group buckets by region
-		bucketsByRegion[s3Bucket.Region] = append(bucketsByRegion[s3Bucket.Region], s3Bucket)
+		bucketsByRegion[region] = append(bucketsByRegion[region], s3Bucket)
 	}
 
 	s3Buckets := []*s3fern.S3Bucket{}
@@ -261,9 +276,9 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 				errorMessages = append(errorMessages, err.Error())
 			}
 
-			bucketPtr, err = objectVersioning(ctx, regionClient, bucketPtr)
-			if err != nil {
-				errorMessages = append(errorMessages, err.Error())
+			bucketPtr, errs := objectVersioning(ctx, regionClient, bucketPtr)
+			if errs != nil {
+				errorMessages = append(errorMessages, errs...)
 			}
 
 			bucketPtr, err = bucketEncryption(ctx, regionClient, bucketPtr)
@@ -281,14 +296,14 @@ func EnumerateS3(ctx context.Context, awscfg aws.Config, config s3fern.S3Enumera
 				errorMessages = append(errorMessages, err.Error())
 			}
 
-			bucketPtr.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucketPtr.Name, bucketPtr.Region)
+			bucketPtr.Identification.Url = fmt.Sprintf("https://%s.s3.%s.amazonaws.com", bucketPtr.Identification.Name, bucketPtr.Identification.Region)
 
 			bucketARN := arn.ARN{
 				Partition: "aws",
 				Service:   "s3",
-				Resource:  bucketPtr.Name,
+				Resource:  bucketPtr.Identification.Name,
 			}
-			bucketPtr.Arn = bucketARN.String()
+			bucketPtr.Identification.Arn = bucketARN.String()
 
 			s3Buckets = append(s3Buckets, bucketPtr)
 		}

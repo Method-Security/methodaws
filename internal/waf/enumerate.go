@@ -99,14 +99,20 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 
 		// Create the WAF instance
 		waf := waffern.WafInstance{
-			Arn:           aws.ToString(webACL.ARN),
-			Name:          webACL.Name,
-			Region:        region,
-			Scope:         waffern.ScopeTypeRegional,
-			Description:   webACL.Description,
-			DefaultAction: defaultAction,
-			Rules:         rules,
-			Resources:     resources,
+			Identification: &waffern.WafIdentificationInfo{
+				Arn:    aws.ToString(webACL.ARN),
+				Name:   webACL.Name,
+				Region: region,
+			},
+			Configuration: &waffern.WafConfigurationInfo{
+				Scope:         waffern.ScopeTypeRegional,
+				Description:   webACL.Description,
+				DefaultAction: defaultAction,
+			},
+			Resources: &waffern.WafResourceInfo{
+				FrontedResources: resources,
+				Rules:            rules,
+			},
 		}
 		wafs = append(wafs, &waf)
 	}
@@ -185,16 +191,16 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 }
 
 // getResources gets the resources for a given WebACL
-func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*waffern.ResourceInfo, error) {
+func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*waffern.WafResource, error) {
 	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
 	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
 	if err != nil {
 		return nil, err
 	}
 
-	var resourceInfos []*waffern.ResourceInfo
+	var resourceInfos []*waffern.WafResource
 	for _, arn := range listResourcesOutput.ResourceArns {
-		resourceInfo := waffern.ResourceInfo{
+		resourceInfo := waffern.WafResource{
 			Arn:  arn,
 			Type: getResourceTypeFromArn(arn),
 		}
