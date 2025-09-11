@@ -27,7 +27,6 @@ types:
       deletionProtection: optional<boolean>
       iamDatabaseAuthenticationEnabled: optional<boolean>
       kmsKeyId: optional<string>
-      vpcSecurityGroupIds: optional<list<string>>
   MonitoringConfig:
     properties:
       monitoringInterval: optional<integer>
@@ -76,6 +75,7 @@ types:
   RdsResourceInfo:
     properties:
       vpc: optional<VpcInstance>
+      securityGroupIds: optional<list<string>>
 # Main RDS Structs
   RdsInstance:
     properties:

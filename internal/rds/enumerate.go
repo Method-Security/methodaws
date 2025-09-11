@@ -213,8 +213,10 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		DeletionProtection:               instance.DeletionProtection,
 		IamDatabaseAuthenticationEnabled: instance.IAMDatabaseAuthenticationEnabled,
 		KmsKeyId:                         instance.KmsKeyId,
-		VpcSecurityGroupIds:              vpcSecurityGroupIds,
 	}
+
+	// Set security group IDs in Resources
+	dbInstance.Resources.SecurityGroupIds = vpcSecurityGroupIds
 
 	// Monitoring Configuration
 	var monitoringInterval *int
