@@ -15,16 +15,27 @@ types:
       - INGRESS
       - EGRESS
 # Supporting Structs
+  ReferencedSecurityGroup:
+    properties:
+      groupId: string
+      userId: string
   Tag:
     properties:
       key: string
       value: string
-  IpPermission:
+  RulePeerInfo:
     properties:
+      cidrs: optional<list<string>>
+      referencedSecurityGroup: optional<ReferencedSecurityGroup>
+  RuleDetails:
+    properties:
+      id: string
       direction: PermissionDirection
+      peer: RulePeerInfo
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
+      description: optional<string>
   VpcInstance:
     properties:
       id: string
@@ -44,13 +55,13 @@ types:
   SecurityGroupResourceInfo:
     properties:
       vpc: optional<VpcInstance>
-      rules: optional<list<IpPermission>>
+      rules: optional<list<RuleDetails>>
 # Main Security Group Structs
   SecurityGroup:
     properties:
       identification: SecurityGroupIdentificationInfo
       configuration: SecurityGroupConfigurationInfo
-      resources: optional<list<SecurityGroupResourceInfo>>
+      resources: optional<SecurityGroupResourceInfo>
   SecurityGroupsEnumerateResult:
     properties:
       securityGroups: optional<list<SecurityGroup>>
