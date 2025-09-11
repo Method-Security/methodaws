@@ -208,7 +208,7 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 	}
 
 	// Convert SecurityGroupRules directly to fernsecuritygroup.IpPermission
-	var fernPermissions []*fernsecuritygroup.IpPermission
+	var fernPermissions []*fernsecuritygroup.RuleDetails
 	for _, rule := range detailedRules {
 		if rule.SecurityGroupRuleId == nil {
 			log.Warn("SecurityGroupRule missing ID", svc1log.SafeParam("rule", rule))
@@ -223,10 +223,11 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 			direction = fernsecuritygroup.PermissionDirectionIngress
 		}
 
-		fernPerm := &fernsecuritygroup.IpPermission{
+		fernPerm := &fernsecuritygroup.RuleDetails{
 			Id:         *rule.SecurityGroupRuleId,
 			Direction:  direction,
 			IpProtocol: rule.IpProtocol,
+			Peer:       &fernsecuritygroup.RulePeerInfo{},
 		}
 
 		// Convert ports from int32 to int
@@ -253,15 +254,21 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 			cidrs = append(cidrs, *rule.CidrIpv6)
 		}
 		if len(cidrs) > 0 {
-			fernPerm.Cidrs = cidrs
+			fernPerm.Peer.Cidrs = cidrs
 		}
 
 		// Extract referenced security group (missing bidirectional connection!)
 		if rule.ReferencedGroupInfo != nil {
-			fernPerm.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
+			fernPerm.Peer.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
 				GroupId: *rule.ReferencedGroupInfo.GroupId,
 				UserId:  *rule.ReferencedGroupInfo.UserId,
 			}
+		}
+
+		if len(cidrs) == 0 && fernPerm.Peer.ReferencedSecurityGroup == nil {
+			log.Warn("SecurityGroupRule missing CIDR or referenced security group", svc1log.SafeParam("rule", fernPerm))
+			errors = append(errors, fmt.Sprintf("SecurityGroupRule missing CIDR or referenced security group: %v", fernPerm))
+			continue
 		}
 
 		fernPermissions = append(fernPermissions, fernPerm)

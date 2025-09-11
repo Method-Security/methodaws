@@ -23,16 +23,19 @@ types:
     properties:
       key: string
       value: string
-  IpPermission:
+  RulePeerInfo:
+    properties:
+      cidrs: optional<list<string>>
+      referencedSecurityGroup: optional<ReferencedSecurityGroup>
+  RuleDetails:
     properties:
       id: string
       direction: PermissionDirection
+      peer: RulePeerInfo
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
-      cidrs: optional<list<string>>
       description: optional<string>
-      referencedSecurityGroup: optional<ReferencedSecurityGroup>
   VpcInstance:
     properties:
       id: string
@@ -52,7 +55,7 @@ types:
   SecurityGroupResourceInfo:
     properties:
       vpc: optional<VpcInstance>
-      rules: optional<list<IpPermission>>
+      rules: optional<list<RuleDetails>>
 # Main Security Group Structs
   SecurityGroup:
     properties:
