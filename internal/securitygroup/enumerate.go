@@ -17,14 +17,14 @@ import (
 )
 
 // fetchSecurityGroupRules retrieves detailed rules for a specific security group
-func fetchSecurityGroupRules(ctx context.Context, cfg aws.Config, groupId string) ([]ec2types.SecurityGroupRule, error) {
+func fetchSecurityGroupRules(ctx context.Context, cfg aws.Config, groupID string) ([]ec2types.SecurityGroupRule, error) {
 	svc := ec2.NewFromConfig(cfg)
 
 	input := &ec2.DescribeSecurityGroupRulesInput{
 		Filters: []ec2types.Filter{
 			{
 				Name:   aws.String("group-id"),
-				Values: []string{groupId},
+				Values: []string{groupID},
 			},
 		},
 	}
@@ -254,6 +254,14 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 		}
 		if len(cidrs) > 0 {
 			fernPerm.Cidrs = cidrs
+		}
+
+		// Extract referenced security group (missing bidirectional connection!)
+		if rule.ReferencedGroupInfo != nil {
+			fernPerm.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
+				GroupId: *rule.ReferencedGroupInfo.GroupId,
+				UserId:  *rule.ReferencedGroupInfo.UserId,
+			}
 		}
 
 		fernPermissions = append(fernPermissions, fernPerm)

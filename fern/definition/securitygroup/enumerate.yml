@@ -15,6 +15,10 @@ types:
       - INGRESS
       - EGRESS
 # Supporting Structs
+  ReferencedSecurityGroup:
+    properties:
+      groupId: string
+      userId: string
   Tag:
     properties:
       key: string
@@ -28,6 +32,7 @@ types:
       ipProtocol: optional<string>
       cidrs: optional<list<string>>
       description: optional<string>
+      referencedSecurityGroup: optional<ReferencedSecurityGroup>
   VpcInstance:
     properties:
       id: string
