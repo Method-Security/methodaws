@@ -50,7 +50,7 @@ types:
     properties:
       identification: SecurityGroupIdentificationInfo
       configuration: SecurityGroupConfigurationInfo
-      resources: optional<list<SecurityGroupResourceInfo>>
+      resources: optional<SecurityGroupResourceInfo>
   SecurityGroupsEnumerateResult:
     properties:
       securityGroups: optional<list<SecurityGroup>>

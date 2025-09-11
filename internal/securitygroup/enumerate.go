@@ -244,7 +244,7 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 			Vpc:   vpcInstance,
 			Rules: fernPermissions,
 		}
-		fernSG.Resources = []*fernsecuritygroup.SecurityGroupResourceInfo{resourceInfo}
+		fernSG.Resources = resourceInfo
 	}
 
 	return fernSG
@@ -281,7 +281,7 @@ func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region str
 			Vpc:   vpcInstance,
 			Rules: nil, // RDS DB security group rules are not mapped in the unified schema
 		}
-		fernSG.Resources = []*fernsecuritygroup.SecurityGroupResourceInfo{resourceInfo}
+		fernSG.Resources = resourceInfo
 	}
 
 	// Note: EC2SecurityGroups and IPRanges are not included in the Fern SecurityGroup definition
