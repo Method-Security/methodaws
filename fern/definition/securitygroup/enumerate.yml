@@ -21,10 +21,13 @@ types:
       value: string
   IpPermission:
     properties:
+      id: string
       direction: PermissionDirection
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
+      cidrs: optional<list<string>>
+      description: optional<string>
   VpcInstance:
     properties:
       id: string

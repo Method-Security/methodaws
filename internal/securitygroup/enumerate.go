@@ -16,6 +16,33 @@ import (
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
+// fetchSecurityGroupRules retrieves detailed rules for a specific security group
+func fetchSecurityGroupRules(ctx context.Context, cfg aws.Config, groupId string) ([]ec2types.SecurityGroupRule, error) {
+	svc := ec2.NewFromConfig(cfg)
+
+	input := &ec2.DescribeSecurityGroupRulesInput{
+		Filters: []ec2types.Filter{
+			{
+				Name:   aws.String("group-id"),
+				Values: []string{groupId},
+			},
+		},
+	}
+
+	var allRules []ec2types.SecurityGroupRule
+	paginator := ec2.NewDescribeSecurityGroupRulesPaginator(svc, input)
+
+	for paginator.HasMorePages() {
+		output, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		allRules = append(allRules, output.SecurityGroupRules...)
+	}
+
+	return allRules, nil
+}
+
 // EnumerateSecurityGroups lists all of the security groups available to the caller across multiple regions
 // alongside any non-fatal errors that occurred during the execution of the `methodaws securitygroup enumerate` subcommand.
 // This includes both EC2/VPC security groups and RDS DB security groups.
@@ -56,7 +83,8 @@ func EnumerateSecurityGroups(ctx context.Context, cfg aws.Config, config fernsec
 				allErrors = append(allErrors, "EC2 SecurityGroup ID is nil")
 				continue
 			}
-			fernSG := convertAWSEC2SecurityGroupToFern(sg, region)
+			fernSG, errors := convertAWSEC2SecurityGroupToFern(ctx, cfg, sg, region)
+			allErrors = append(allErrors, errors...)
 			allSecurityGroups = append(allSecurityGroups, fernSG)
 		}
 
@@ -160,47 +188,75 @@ func enumerateRDSSecurityGroupForRegion(ctx context.Context, cfg aws.Config, reg
 }
 
 // convertAWSEC2SecurityGroupToFern converts an AWS SDK EC2 SecurityGroup to a Fern SecurityGroup
-func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
+func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG ec2types.SecurityGroup, region string) (*fernsecuritygroup.SecurityGroup, []string) {
+	log := svc1log.FromContext(ctx)
+	var errors []string
 
-	// Convert IP Permissions (combining Ingress and Egress)
-	var fernPermissions []*fernsecuritygroup.IpPermission
-
-	// Add Ingress permissions
-	if awsSG.IpPermissions != nil {
-		for _, perm := range awsSG.IpPermissions {
-			fernPerm := &fernsecuritygroup.IpPermission{
-				Direction:  fernsecuritygroup.PermissionDirectionIngress,
-				IpProtocol: perm.IpProtocol,
-			}
-			if perm.FromPort != nil {
-				fromPort := int(*perm.FromPort)
-				fernPerm.FromPort = &fromPort
-			}
-			if perm.ToPort != nil {
-				toPort := int(*perm.ToPort)
-				fernPerm.ToPort = &toPort
-			}
-			fernPermissions = append(fernPermissions, fernPerm)
+	// Fetch detailed security group rules to get rule IDs
+	var detailedRules []ec2types.SecurityGroupRule
+	if awsSG.GroupId != nil {
+		cfg.Region = region
+		rules, err := fetchSecurityGroupRules(ctx, cfg, *awsSG.GroupId)
+		if err != nil {
+			log.Warn("Failed to fetch detailed security group rules",
+				svc1log.SafeParam("groupId", *awsSG.GroupId),
+				svc1log.SafeParam("region", region),
+				svc1log.Stacktrace(err))
+		} else {
+			detailedRules = rules
 		}
 	}
 
-	// Add Egress permissions
-	if awsSG.IpPermissionsEgress != nil {
-		for _, perm := range awsSG.IpPermissionsEgress {
-			fernPerm := &fernsecuritygroup.IpPermission{
-				Direction:  fernsecuritygroup.PermissionDirectionEgress,
-				IpProtocol: perm.IpProtocol,
-			}
-			if perm.FromPort != nil {
-				fromPort := int(*perm.FromPort)
-				fernPerm.FromPort = &fromPort
-			}
-			if perm.ToPort != nil {
-				toPort := int(*perm.ToPort)
-				fernPerm.ToPort = &toPort
-			}
-			fernPermissions = append(fernPermissions, fernPerm)
+	// Convert SecurityGroupRules directly to fernsecuritygroup.IpPermission
+	var fernPermissions []*fernsecuritygroup.IpPermission
+	for _, rule := range detailedRules {
+		if rule.SecurityGroupRuleId == nil {
+			log.Warn("SecurityGroupRule missing ID", svc1log.SafeParam("rule", rule))
+			continue
 		}
+
+		// Determine direction
+		var direction fernsecuritygroup.PermissionDirection
+		if rule.IsEgress != nil && *rule.IsEgress {
+			direction = fernsecuritygroup.PermissionDirectionEgress
+		} else {
+			direction = fernsecuritygroup.PermissionDirectionIngress
+		}
+
+		fernPerm := &fernsecuritygroup.IpPermission{
+			Id:         *rule.SecurityGroupRuleId,
+			Direction:  direction,
+			IpProtocol: rule.IpProtocol,
+		}
+
+		// Convert ports from int32 to int
+		if rule.FromPort != nil {
+			fromPort := int(*rule.FromPort)
+			fernPerm.FromPort = &fromPort
+		}
+		if rule.ToPort != nil {
+			toPort := int(*rule.ToPort)
+			fernPerm.ToPort = &toPort
+		}
+
+		// Extract description
+		if rule.Description != nil {
+			fernPerm.Description = rule.Description
+		}
+
+		// Extract CIDR blocks - combine IPv4 and IPv6 into single list
+		var cidrs []string
+		if rule.CidrIpv4 != nil {
+			cidrs = append(cidrs, *rule.CidrIpv4)
+		}
+		if rule.CidrIpv6 != nil {
+			cidrs = append(cidrs, *rule.CidrIpv6)
+		}
+		if len(cidrs) > 0 {
+			fernPerm.Cidrs = cidrs
+		}
+
+		fernPermissions = append(fernPermissions, fernPerm)
 	}
 
 	// Convert Tags
@@ -247,7 +303,7 @@ func convertAWSEC2SecurityGroupToFern(awsSG ec2types.SecurityGroup, region strin
 		fernSG.Resources = resourceInfo
 	}
 
-	return fernSG
+	return fernSG, errors
 }
 
 // convertAWSRDSSecurityGroupToFern converts an AWS SDK RDS DB SecurityGroup to a Fern SecurityGroup
