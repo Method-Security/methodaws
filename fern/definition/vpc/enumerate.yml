@@ -19,14 +19,6 @@ types:
       - DEFAULT
       - DEDICATED
       - HOST
-  VpcCidrBlockState:
-    enum:
-      - ASSOCIATING
-      - ASSOCIATED
-      - DISASSOCIATING
-      - DISASSOCIATED
-      - FAILING
-      - FAILED
   SubnetState:
     enum:
       - PENDING
@@ -47,7 +39,6 @@ types:
     properties:
       associationId: string
       cidrBlock: string
-      cidrBlockState: optional<VpcCidrBlockState>
 # Subnet High level structs
   SubnetIdentificationInfo:
     properties:
@@ -100,6 +91,7 @@ types:
   VpcResourceInfo:
     properties:
       subnets: optional<list<Subnet>>
+      cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
 # Main VPC structs
   VpcInstance:
     properties:

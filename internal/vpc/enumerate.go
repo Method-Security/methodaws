@@ -182,6 +182,26 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 			errors = append(errors, err.Error())
 		}
 	}
+
+	// Convert CIDR block associations (both IPv4 and IPv6)
+	var cidrAssociations []*vpcfern.VpcCidrBlockAssociation
+
+	// Add IPv4 CIDR block associations
+	for _, assoc := range awsVPC.CidrBlockAssociationSet {
+		cidrAssociations = append(cidrAssociations, &vpcfern.VpcCidrBlockAssociation{
+			AssociationId: aws.ToString(assoc.AssociationId),
+			CidrBlock:     aws.ToString(assoc.CidrBlock),
+		})
+	}
+
+	// Add IPv6 CIDR block associations
+	for _, assoc := range awsVPC.Ipv6CidrBlockAssociationSet {
+		cidrAssociations = append(cidrAssociations, &vpcfern.VpcCidrBlockAssociation{
+			AssociationId: aws.ToString(assoc.AssociationId),
+			CidrBlock:     aws.ToString(assoc.Ipv6CidrBlock),
+		})
+	}
+
 	vpc := &vpcfern.VpcInstance{
 		Identification: &vpcfern.VpcIdentificationInfo{
 			Id:     *awsVPC.VpcId,
@@ -198,7 +218,8 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 			Tags:              tags,
 		},
 		Resources: &vpcfern.VpcResourceInfo{
-			Subnets: []*vpcfern.Subnet{},
+			Subnets:                 []*vpcfern.Subnet{},
+			CidrBlockAssociationSet: cidrAssociations,
 		},
 	}
 
@@ -230,24 +251,6 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 		} else {
 			errors = append(errors, err.Error())
 		}
-	}
-
-	// Convert IPv6 CIDR block associations
-	var ipv6CidrAssociations []*vpcfern.VpcCidrBlockAssociation
-	for _, assoc := range awsSubnet.Ipv6CidrBlockAssociationSet {
-		var statePtr *vpcfern.VpcCidrBlockState
-		if assoc.Ipv6CidrBlockState != nil {
-			if s, err := vpcfern.NewVpcCidrBlockStateFromString(strings.ToUpper(string(assoc.Ipv6CidrBlockState.State))); err == nil {
-				statePtr = &s
-			} else {
-				errors = append(errors, err.Error())
-			}
-		}
-		ipv6CidrAssociations = append(ipv6CidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  aws.ToString(assoc.AssociationId),
-			CidrBlock:      aws.ToString(assoc.Ipv6CidrBlock),
-			CidrBlockState: statePtr,
-		})
 	}
 
 	// Convert available IP address count from *int32 to *int
@@ -307,8 +310,7 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 			Tags:                          tags,
 		},
 		Resources: &vpcfern.SubnetResourceInfo{
-			CidrBlock:               awsSubnet.CidrBlock,
-			CidrBlockAssociationSet: ipv6CidrAssociations,
+			CidrBlock: awsSubnet.CidrBlock,
 		},
 	}
 
