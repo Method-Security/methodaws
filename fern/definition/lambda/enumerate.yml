@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   LambdaEnumerateConfig:
@@ -13,10 +16,6 @@ types:
     enum:
       - X86_64
       - ARM64
-  LambdaVpcConfig:
-    properties:
-      vpcId: string
-      subnetIds: list<string>
   LambdaLoggingFormat:
     enum:
       - TEXT
@@ -48,9 +47,10 @@ types:
       loggingConfig: optional<LambdaLoggingConfig>
   LambdaResourceInfo:
     properties:
-      vpc: optional<LambdaVpcConfig>
-      iamRoleArn: string
-      securityGroupIds: optional<list<string>>
+      vpc: optional<common.VpcReference>
+      iamRole: optional<common.IamRoleReference>
+      securityGroups: optional<list<common.SecurityGroupReference>>
+      cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
 # Lambda Main Structs
   LambdaFunction:
     properties:

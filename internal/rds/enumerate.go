@@ -5,7 +5,9 @@ import (
 	// Standard
 	"context"
 	// Generated
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	rdsfern "github.com/Method-Security/methodaws/generated/go/rds"
+
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
@@ -168,8 +170,9 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		}
 
 		if instance.DBSubnetGroup.VpcId != nil {
-			dbInstance.Resources.Vpc = &rdsfern.VpcInstance{
+			dbInstance.Resources.Vpc = &common.VpcReference{
 				Id:        *instance.DBSubnetGroup.VpcId,
+				Region:    region,
 				SubnetIds: subnetIds,
 			}
 		}
@@ -202,11 +205,14 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		Iops:                iops,
 	}
 
-	// Security Configuration
-	var vpcSecurityGroupIds []string
+	// Security Configuration - create SecurityGroupReference objects
+	var securityGroups []*common.SecurityGroupReference
 	for _, sg := range instance.VpcSecurityGroups {
 		if sg.VpcSecurityGroupId != nil {
-			vpcSecurityGroupIds = append(vpcSecurityGroupIds, *sg.VpcSecurityGroupId)
+			securityGroups = append(securityGroups, &common.SecurityGroupReference{
+				Id:     *sg.VpcSecurityGroupId,
+				Region: region,
+			})
 		}
 	}
 	dbInstance.Configuration.Security = &rdsfern.SecurityConfig{
@@ -215,8 +221,8 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 		KmsKeyId:                         instance.KmsKeyId,
 	}
 
-	// Set security group IDs in Resources
-	dbInstance.Resources.SecurityGroupIds = vpcSecurityGroupIds
+	// Set security groups in Resources
+	dbInstance.Resources.SecurityGroups = securityGroups
 
 	// Monitoring Configuration
 	var monitoringInterval *int
@@ -250,9 +256,9 @@ func convertAWSDBInstanceToFern(instance types.DBInstance, region string) (*rdsf
 	dbInstance.Configuration.InstanceCreateTime = instance.InstanceCreateTime
 
 	// Tags
-	var tags []*rdsfern.Tag
+	var tags []*common.Tag
 	for _, tag := range instance.TagList {
-		tags = append(tags, &rdsfern.Tag{
+		tags = append(tags, &common.Tag{
 			Key:   tag.Key,
 			Value: tag.Value,
 		})

@@ -1,11 +1,15 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   SecurityGroupsEnumerateConfig:
     properties:
       accountId: string
       regions: list<string>
+# Enums
   SecurityGroupType:
     enum:
       - EC2
@@ -14,31 +18,35 @@ types:
     enum:
       - INGRESS
       - EGRESS
-# Supporting Structs
+# RuleSupporting Structs
   ReferencedSecurityGroup:
     properties:
       groupId: string
       userId: string
-  Tag:
-    properties:
-      key: string
-      value: string
   RulePeerInfo:
     properties:
       cidrs: optional<list<string>>
       referencedSecurityGroup: optional<ReferencedSecurityGroup>
-  RuleDetails:
+# Main Rule Structs
+  RuleIdentificationInfo:
     properties:
       id: string
+  RuleConfigurationInfo:
+    properties:
       direction: PermissionDirection
       peer: RulePeerInfo
       fromPort: optional<integer>
       toPort: optional<integer>
       ipProtocol: optional<string>
       description: optional<string>
-  VpcInstance:
+  RuleResourceInfo:
     properties:
-      id: string
+      peer: RulePeerInfo
+  RuleDetails:
+    properties:
+      identification: RuleIdentificationInfo
+      configuration: RuleConfigurationInfo
+      resources: optional<RuleResourceInfo>
 # Security Group High level structs
   SecurityGroupIdentificationInfo:
     properties:
@@ -51,11 +59,14 @@ types:
       description: optional<string>
       securityGroupType: SecurityGroupType
       ownerId: optional<string>
-      tags: optional<list<Tag>>
+      tags: optional<list<common.Tag>>
   SecurityGroupResourceInfo:
     properties:
-      vpc: optional<VpcInstance>
+      vpc: optional<common.VpcReference>
       rules: optional<list<RuleDetails>>
+      ec2Instances: optional<list<common.Ec2InstanceReference>>
+      rdsInstances: optional<list<common.RdsInstanceReference>>
+      loadBalancers: optional<list<common.LoadBalancerReference>>
 # Main Security Group Structs
   SecurityGroup:
     properties:

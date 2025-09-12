@@ -9,7 +9,9 @@ import (
 	"time"
 
 	// generated
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	lambdafern "github.com/Method-Security/methodaws/generated/go/lambda"
+
 	// external
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
@@ -46,12 +48,9 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 		return nil, err
 	}
 
-	var vpcConfig *lambdafern.LambdaVpcConfig
+	var vpcReference *common.VpcReference
 	if function.VpcConfig != nil {
-		vpcConfig = &lambdafern.LambdaVpcConfig{
-			VpcId:     *function.VpcConfig.VpcId,
-			SubnetIds: function.VpcConfig.SubnetIds,
-		}
+		vpcReference = createVpcReference(*function.VpcConfig.VpcId, function.VpcConfig.SubnetIds, region)
 	}
 
 	var securityGroupIds []string
@@ -115,9 +114,10 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 			LoggingConfig:        loggingConfig,
 		},
 		Resources: &lambdafern.LambdaResourceInfo{
-			Vpc:              vpcConfig,
-			IamRoleArn:       *function.Role,
-			SecurityGroupIds: securityGroupIds,
+			Vpc:            vpcReference,
+			IamRole:        createIamRoleReference(*function.Role, region),
+			SecurityGroups: createSecurityGroupReferences(securityGroupIds, region),
+			CloudWatchLogs: createCloudWatchLogReferences(loggingConfig, *function.FunctionName, region),
 		},
 	}
 	return result, nil
@@ -188,4 +188,92 @@ func EnumerateLambda(ctx context.Context, awsConfig aws.Config, config lambdafer
 	}
 	report.Errors = allErrors
 	return report
+}
+
+// Resource reference helper functions with deduplication
+func createVpcReference(vpcID string, subnetIds []string, region string) *common.VpcReference {
+	if vpcID == "" {
+		return nil
+	}
+
+	return &common.VpcReference{
+		Id:        vpcID,
+		Region:    region,
+		SubnetIds: subnetIds,
+	}
+}
+
+func createIamRoleReference(roleArn, region string) *common.IamRoleReference {
+	if roleArn == "" {
+		return nil
+	}
+
+	// Extract role name from ARN
+	roleName := extractRoleNameFromArn(roleArn)
+	var roleNamePtr *string
+	if roleName != "" {
+		roleNamePtr = &roleName
+	}
+
+	return &common.IamRoleReference{
+		Arn:      roleArn,
+		RoleName: roleNamePtr,
+		Region:   region,
+	}
+}
+
+func createSecurityGroupReferences(sgIDs []string, region string) []*common.SecurityGroupReference {
+	sgMap := make(map[string]*common.SecurityGroupReference)
+
+	for _, sgID := range sgIDs {
+		if sgID != "" {
+			key := sgID
+			if _, exists := sgMap[key]; !exists {
+				sgMap[key] = &common.SecurityGroupReference{
+					Id:     sgID,
+					Region: region,
+				}
+			}
+		}
+	}
+
+	var securityGroups []*common.SecurityGroupReference
+	for _, sg := range sgMap {
+		securityGroups = append(securityGroups, sg)
+	}
+	return securityGroups
+}
+
+func createCloudWatchLogReferences(loggingConfig *lambdafern.LambdaLoggingConfig, functionName, region string) []*common.CloudWatchLogReference {
+	var logReferences []*common.CloudWatchLogReference
+
+	// Default Lambda log group
+	defaultLogGroup := "/aws/lambda/" + functionName
+	defaultArn := fmt.Sprintf("arn:aws:logs:%s::log-group:%s", region, defaultLogGroup)
+	logReferences = append(logReferences, &common.CloudWatchLogReference{
+		Arn:          defaultArn,
+		LogGroupName: defaultLogGroup,
+		Region:       region,
+	})
+
+	// Custom log group if specified
+	if loggingConfig != nil && loggingConfig.LogGroup != defaultLogGroup {
+		customArn := fmt.Sprintf("arn:aws:logs:%s::log-group:%s", region, loggingConfig.LogGroup)
+		logReferences = append(logReferences, &common.CloudWatchLogReference{
+			Arn:          customArn,
+			LogGroupName: loggingConfig.LogGroup,
+			Region:       region,
+		})
+	}
+
+	return logReferences
+}
+
+// Helper function to extract role name from ARN
+func extractRoleNameFromArn(roleArn string) string {
+	parts := strings.Split(roleArn, "/")
+	if len(parts) > 1 {
+		return parts[len(parts)-1]
+	}
+	return ""
 }

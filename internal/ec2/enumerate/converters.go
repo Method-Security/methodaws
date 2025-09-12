@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Method-Security/methodaws/generated/go/common"
 	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
@@ -33,10 +34,10 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 		name = extractNameFromTags(awsInstance.Tags)
 	}
 
-	// Convert IAM instance profile
-	var iamInstanceProfile *ec2fern.IamInstanceProfile
+	// Convert IAM instance profile to IAM role reference
+	var iamRole *common.IamRoleReference
 	if awsInstance.IamInstanceProfile != nil {
-		iamInstanceProfile = convertIamInstanceProfile(awsInstance.IamInstanceProfile)
+		iamRole = convertIamInstanceProfileToRoleReference(awsInstance.IamInstanceProfile, region)
 	}
 
 	// Convert network interfaces
@@ -51,6 +52,18 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 		securityGroupIds = extractSecurityGroupIds(awsInstance.SecurityGroups)
 	}
 
+	// Create DNS data
+	var dnsData *ec2fern.DnsData
+	if awsInstance.PrivateIpAddress != nil || awsInstance.PublicIpAddress != nil ||
+		awsInstance.PrivateDnsName != nil || awsInstance.PublicDnsName != nil {
+		dnsData = &ec2fern.DnsData{
+			PrivateIpAddress: awsInstance.PrivateIpAddress,
+			PublicIpAddress:  awsInstance.PublicIpAddress,
+			PrivateDnsName:   awsInstance.PrivateDnsName,
+			PublicDnsName:    awsInstance.PublicDnsName,
+		}
+	}
+
 	// Create instance with nested structure
 	instance := &ec2fern.Ec2Instance{
 		Identification: &ec2fern.Ec2InstanceIdentificationInfo{
@@ -59,26 +72,23 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 			Name:   name,
 		},
 		Configuration: &ec2fern.Ec2InstanceConfigurationInfo{
-			State:            state,
-			ImageId:          awsInstance.ImageId,
-			KeyName:          awsInstance.KeyName,
-			InstanceType:     convertInstanceType(awsInstance.InstanceType),
-			LaunchTime:       awsInstance.LaunchTime,
-			Placement:        placement,
-			PrivateIpAddress: awsInstance.PrivateIpAddress,
-			PublicIpAddress:  awsInstance.PublicIpAddress,
-			PrivateDnsName:   awsInstance.PrivateDnsName,
-			PublicDnsName:    awsInstance.PublicDnsName,
-			Architecture:     convertArchitecture(awsInstance.Architecture),
-			Hypervisor:       convertHypervisor(awsInstance.Hypervisor),
-			Platform:         convertPlatform(awsInstance.Platform),
-			EbsOptimized:     awsInstance.EbsOptimized,
-			Tags:             tags,
+			State:        state,
+			ImageId:      awsInstance.ImageId,
+			KeyName:      awsInstance.KeyName,
+			InstanceType: convertInstanceType(awsInstance.InstanceType),
+			LaunchTime:   awsInstance.LaunchTime,
+			Placement:    placement,
+			Architecture: convertArchitecture(awsInstance.Architecture),
+			Hypervisor:   convertHypervisor(awsInstance.Hypervisor),
+			Platform:     convertPlatform(awsInstance.Platform),
+			EbsOptimized: awsInstance.EbsOptimized,
+			Tags:         tags,
 		},
 		Resources: &ec2fern.Ec2InstanceResourceInfo{
-			NetworkInterfaces:  networkInterfaces,
-			IamInstanceProfile: iamInstanceProfile,
-			SecurityGroupIds:   securityGroupIds,
+			NetworkInterfaces: networkInterfaces,
+			IamRole:           iamRole,
+			SecurityGroupIds:  securityGroupIds,
+			Dns:               dnsData,
 		},
 	}
 
@@ -132,11 +142,27 @@ func convertPlatform(platform types.PlatformValues) *ec2fern.PlatformValues {
 	return &fernPlatform
 }
 
-// convertIamInstanceProfile converts AWS IAM instance profile to Fern format
-func convertIamInstanceProfile(profile *types.IamInstanceProfile) *ec2fern.IamInstanceProfile {
-	return &ec2fern.IamInstanceProfile{
-		Id:  profile.Id,
-		Arn: profile.Arn,
+// convertIamInstanceProfileToRoleReference converts AWS IAM instance profile to common.IamRoleReference
+func convertIamInstanceProfileToRoleReference(profile *types.IamInstanceProfile, region string) *common.IamRoleReference {
+	if profile == nil || profile.Arn == nil {
+		return nil
+	}
+
+	// Extract role name from ARN if possible
+	var roleName *string
+	if profile.Arn != nil {
+		// ARN format: arn:aws:iam::account:instance-profile/role-name
+		parts := strings.Split(*profile.Arn, "/")
+		if len(parts) > 1 {
+			name := parts[len(parts)-1]
+			roleName = &name
+		}
+	}
+
+	return &common.IamRoleReference{
+		Arn:      *profile.Arn,
+		RoleName: roleName,
+		Region:   region,
 	}
 }
 
@@ -196,9 +222,10 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 			subnetIds = []string{*ni.SubnetId}
 		}
 
-		// Create VPC instance
-		vpcInstance := &ec2fern.VpcInstance{
+		// Create VPC reference
+		vpcReference := &common.VpcReference{
 			Id:        *ni.VpcId,
+			Region:    region,
 			SubnetIds: subnetIds,
 		}
 
@@ -219,7 +246,7 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 				SourceDestCheck:  ni.SourceDestCheck,
 			},
 			Resources: &ec2fern.InstanceNetworkInterfaceResourceInfo{
-				Vpc: vpcInstance,
+				Vpc: vpcReference,
 			},
 		}
 

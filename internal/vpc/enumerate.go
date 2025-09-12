@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	vpcfern "github.com/Method-Security/methodaws/generated/go/vpc"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -148,49 +149,18 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 		return nil, errors
 	}
 
-	// Convert AWS VPC tags to Fern tags
-	var tags []*vpcfern.Tag
+	// Convert AWS VPC tags to Fern tags and extract name
+	var tags []*common.Tag
+	var name *string
 	for _, tag := range awsVPC.Tags {
-		tags = append(tags, &vpcfern.Tag{
-			Key:   aws.ToString(tag.Key),
-			Value: aws.ToString(tag.Value),
+		tags = append(tags, &common.Tag{
+			Key:   tag.Key,
+			Value: tag.Value,
 		})
-	}
-
-	// Convert CIDR block associations
-	var cidrAssociations []*vpcfern.VpcCidrBlockAssociation
-	for _, assoc := range awsVPC.CidrBlockAssociationSet {
-		var statePtr *vpcfern.VpcCidrBlockState
-		if assoc.CidrBlockState != nil {
-			if s, err := vpcfern.NewVpcCidrBlockStateFromString(strings.ToUpper(string(assoc.CidrBlockState.State))); err == nil {
-				statePtr = &s
-			} else {
-				errors = append(errors, err.Error())
-			}
+		// Extract name from "Name" tag
+		if tag.Key != nil && *tag.Key == "Name" && tag.Value != nil {
+			name = tag.Value
 		}
-		cidrAssociations = append(cidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  aws.ToString(assoc.AssociationId),
-			CidrBlock:      aws.ToString(assoc.CidrBlock),
-			CidrBlockState: statePtr,
-		})
-	}
-
-	// Convert IPv6 CIDR block associations
-	var ipv6CidrAssociations []*vpcfern.VpcCidrBlockAssociation
-	for _, assoc := range awsVPC.Ipv6CidrBlockAssociationSet {
-		var statePtr *vpcfern.VpcCidrBlockState
-		if assoc.Ipv6CidrBlockState != nil {
-			if s, err := vpcfern.NewVpcCidrBlockStateFromString(strings.ToUpper(string(assoc.Ipv6CidrBlockState.State))); err == nil {
-				statePtr = &s
-			} else {
-				errors = append(errors, err.Error())
-			}
-		}
-		ipv6CidrAssociations = append(ipv6CidrAssociations, &vpcfern.VpcCidrBlockAssociation{
-			AssociationId:  aws.ToString(assoc.AssociationId),
-			CidrBlock:      aws.ToString(assoc.Ipv6CidrBlock),
-			CidrBlockState: statePtr,
-		})
 	}
 
 	// Convert instance tenancy
@@ -212,23 +182,20 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 			errors = append(errors, err.Error())
 		}
 	}
-
-	cidrAssociations = append(cidrAssociations, ipv6CidrAssociations...)
 	vpc := &vpcfern.VpcInstance{
 		Identification: &vpcfern.VpcIdentificationInfo{
 			Id:     *awsVPC.VpcId,
 			Region: region,
+			Name:   name,
 		},
 		Configuration: &vpcfern.VpcConfigurationInfo{
-			Name:                    nil, // Name is typically extracted from tags
-			CreationCidrBlock:       awsVPC.CidrBlock,
-			CidrBlockAssociationSet: cidrAssociations,
-			DhcpOptionsId:           awsVPC.DhcpOptionsId,
-			InstanceTenancy:         tenancy,
-			IsDefault:               awsVPC.IsDefault,
-			OwnerId:                 awsVPC.OwnerId,
-			State:                   state,
-			Tags:                    tags,
+			CreationCidrBlock: awsVPC.CidrBlock,
+			DhcpOptionsId:     awsVPC.DhcpOptionsId,
+			InstanceTenancy:   tenancy,
+			IsDefault:         awsVPC.IsDefault,
+			OwnerId:           awsVPC.OwnerId,
+			State:             state,
+			Tags:              tags,
 		},
 		Resources: &vpcfern.VpcResourceInfo{
 			Subnets: []*vpcfern.Subnet{},
@@ -241,13 +208,18 @@ func convertAWSVPCToFern(awsVPC ec2types.Vpc, region string) (*vpcfern.VpcInstan
 // convertAWSSubnetToFern converts an AWS Subnet to a Fern Subnet
 func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.Subnet, []string) {
 	errors := []string{}
-	// Convert AWS Subnet tags to Fern tags
-	var tags []*vpcfern.Tag
+	// Convert AWS Subnet tags to Fern tags and extract name
+	var tags []*common.Tag
+	var name *string
 	for _, tag := range awsSubnet.Tags {
-		tags = append(tags, &vpcfern.Tag{
-			Key:   aws.ToString(tag.Key),
-			Value: aws.ToString(tag.Value),
+		tags = append(tags, &common.Tag{
+			Key:   tag.Key,
+			Value: tag.Value,
 		})
+		// Extract name from "Name" tag
+		if tag.Key != nil && *tag.Key == "Name" && tag.Value != nil {
+			name = tag.Value
+		}
 	}
 
 	// Convert subnet state
@@ -314,6 +286,7 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 		Identification: &vpcfern.SubnetIdentificationInfo{
 			Id:     *awsSubnet.SubnetId,
 			Arn:    awsSubnet.SubnetArn,
+			Name:   name,
 			Region: region,
 		},
 		Configuration: &vpcfern.SubnetConfigurationInfo{
@@ -324,11 +297,9 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 			DefaultForAz:                  awsSubnet.DefaultForAz,
 			EnableDns64:                   awsSubnet.EnableDns64,
 			EnableLniAtDeviceIndex:        enableLni,
-			Ipv6CidrBlockAssociationSet:   ipv6CidrAssociations,
 			Ipv6Native:                    awsSubnet.Ipv6Native,
 			MapCustomerOwnedIpOnLaunch:    awsSubnet.MapCustomerOwnedIpOnLaunch,
 			MapPublicIpOnLaunch:           awsSubnet.MapPublicIpOnLaunch,
-			Name:                          nil, // Name is typically extracted from tags
 			OutpostArn:                    awsSubnet.OutpostArn,
 			OwnerId:                       awsSubnet.OwnerId,
 			PrivateDnsNameOptionsOnLaunch: privateDNSOptions,
@@ -336,7 +307,8 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 			Tags:                          tags,
 		},
 		Resources: &vpcfern.SubnetResourceInfo{
-			CidrBlock: awsSubnet.CidrBlock,
+			CidrBlock:               awsSubnet.CidrBlock,
+			CidrBlockAssociationSet: ipv6CidrAssociations,
 		},
 	}
 

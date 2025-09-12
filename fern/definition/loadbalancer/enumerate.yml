@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   LoadBalancerEnumerateConfig:
@@ -86,16 +89,6 @@ types:
       configuration: TargetGroupConfigurationInfo
       resources: optional<TargetGroupResourceInfo>
 # VPC High level structs
-  VpcIdentificationInfo:
-    properties:
-      id: string
-  VpcResourceInfo:
-    properties:
-      subnetIds: optional<list<string>>
-  VpcInstance:
-    properties:
-      identification: VpcIdentificationInfo
-      resources: optional<VpcResourceInfo>
 # LoadBalancer High level structs
   LoadBalancerIdentificationInfo:
     properties:
@@ -114,9 +107,9 @@ types:
     properties:
       listeners: optional<list<Listener>>
       targets: optional<list<Target>> # ELB v1 only
-      targetGroups: optional<list<TargetGroupInstance>>
-      vpc: optional<VpcInstance>
-      securityGroupIds: optional<list<string>>
+      targetGroups: optional<list<TargetGroupInstance>> # Targets linked through group in ELB V2
+      vpc: optional<common.VpcReference>
+      securityGroups: optional<list<common.SecurityGroupReference>>
 # Main LoadBalancer structs
   LoadBalancerInstance:
     properties:

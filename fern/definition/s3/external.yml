@@ -7,7 +7,7 @@ types:
       url: string
       regions: optional<list<string>>
 # Supporting structs
-  S3ObjectDetails:
+  DirectoryContents:
     properties:
       key: string
       lastModified: optional<datetime>
@@ -26,12 +26,12 @@ types:
       allowDirectoryListing: boolean
       allowAnonymousRead: boolean
       policy: optional<string>
-      acls: optional<list<enumerate.S3BucketACL>>
+      acls: optional<list<enumerate.S3BucketAccessControl>>
       ownerID: optional<string>
       ownerName: optional<string>
   ExternalBucketResourceInfo:
     properties:
-      directoryContents: optional<list<S3ObjectDetails>>
+      directoryContents: optional<list<DirectoryContents>>
 # Main External S3 Bucket Structs
   ExternalBucket:
     properties:

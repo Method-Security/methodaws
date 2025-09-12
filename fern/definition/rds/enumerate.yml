@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   RdsEnumerateConfig:
@@ -5,10 +8,6 @@ types:
       accountId: string
       regions: list<string>
 # Supporting Types
-  Tag:
-    properties:
-      key: optional<string>
-      value: optional<string>
   Endpoint:
     properties:
       address: optional<string>
@@ -71,11 +70,13 @@ types:
       backup: optional<BackupConfig>
       # Metadata
       instanceCreateTime: optional<datetime>
-      tags: optional<list<Tag>>
+      tags: optional<list<common.Tag>>
   RdsResourceInfo:
     properties:
-      vpc: optional<VpcInstance>
-      securityGroupIds: optional<list<string>>
+      vpc: optional<common.VpcReference>
+      securityGroups: optional<list<common.SecurityGroupReference>>
+      iamRoles: optional<list<common.IamRoleReference>>
+      kmsKeys: optional<list<common.KmsKeyReference>>
 # Main RDS Structs
   RdsInstance:
     properties:

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/apigatewayv2"
 	"github.com/aws/aws-sdk-go-v2/service/apigatewayv2/types"
@@ -130,7 +131,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 	}
 
 	// Get authorizers
-	authorizers, errs := getHTTPAPIAuthorizers(ctx, client, *api.ApiId)
+	_, errs = getHTTPAPIAuthorizers(ctx, client, *api.ApiId)
 	errors = append(errors, errs...)
 
 	// Get domain name certificates (similar to v1 but for HTTP API)
@@ -177,12 +178,9 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 
 	// Create resource info
 	resources := &apigatewayfern.ApiGatewayResourceInfo{
-		Certificates:      certificates,
-		AccessLogSettings: accessLogSettings,
+		Certificates: certificates,
 		// V2 specific resources
-		Routes:            routes,
-		CorsConfiguration: corsConfig,
-		Authorizers:       authorizers,
+		Routes: routes,
 		// AWS Resource References (unidirectional links)
 		LambdaFunctions: lambdaFunctions,
 		CloudWatchLogs:  cloudwatchLogs,
@@ -478,11 +476,11 @@ func getHTTPAPIAccessLogSettings(ctx context.Context, client *apigatewayv2.Clien
 }
 
 // discoverV2ResourceRelationships discovers related AWS resources for an HTTP API
-func discoverV2ResourceRelationships(ctx context.Context, client *apigatewayv2.Client, apiID string, routes []*apigatewayfern.Route, region string) ([]*apigatewayfern.LambdaReference, []*apigatewayfern.CloudWatchLogReference, []*apigatewayfern.IamRoleReference, []*apigatewayfern.LoadBalancerReference, []string) {
+func discoverV2ResourceRelationships(ctx context.Context, client *apigatewayv2.Client, apiID string, routes []*apigatewayfern.Route, region string) ([]*apigatewayfern.LambdaReference, []*common.CloudWatchLogReference, []*common.IamRoleReference, []*common.LoadBalancerReference, []string) {
 	var lambdaFunctions []*apigatewayfern.LambdaReference
-	var cloudwatchLogs []*apigatewayfern.CloudWatchLogReference
-	var iamRoles []*apigatewayfern.IamRoleReference
-	var loadBalancers []*apigatewayfern.LoadBalancerReference
+	var cloudwatchLogs []*common.CloudWatchLogReference
+	var iamRoles []*common.IamRoleReference
+	var loadBalancers []*common.LoadBalancerReference
 	var errors []string
 
 	// Track discovered resources to avoid duplicates

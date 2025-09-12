@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
@@ -207,13 +208,13 @@ func createLambdaReference(arn, region string) *apigatewayfern.LambdaReference {
 
 	return &apigatewayfern.LambdaReference{
 		Arn:          arn,
-		FunctionName: *functionName,
+		FunctionName: functionName,
 		Region:       region,
 	}
 }
 
 // createIamRoleReference creates an IAM role reference from an ARN
-func createIamRoleReference(arn, region string) *apigatewayfern.IamRoleReference {
+func createIamRoleReference(arn, region string) *common.IamRoleReference {
 	if !isIAMRole(arn) {
 		return nil
 	}
@@ -223,15 +224,15 @@ func createIamRoleReference(arn, region string) *apigatewayfern.IamRoleReference
 		return nil
 	}
 
-	return &apigatewayfern.IamRoleReference{
+	return &common.IamRoleReference{
 		Arn:      arn,
-		RoleName: *roleName,
+		RoleName: roleName,
 		Region:   region,
 	}
 }
 
 // createCloudWatchLogReference creates a CloudWatch log reference from an ARN
-func createCloudWatchLogReference(arn, region string) *apigatewayfern.CloudWatchLogReference {
+func createCloudWatchLogReference(arn, region string) *common.CloudWatchLogReference {
 	if !isCloudWatchLogGroup(arn) {
 		return nil
 	}
@@ -241,7 +242,7 @@ func createCloudWatchLogReference(arn, region string) *apigatewayfern.CloudWatch
 		return nil
 	}
 
-	return &apigatewayfern.CloudWatchLogReference{
+	return &common.CloudWatchLogReference{
 		Arn:          arn,
 		LogGroupName: *logGroupName,
 		Region:       region,
@@ -249,7 +250,7 @@ func createCloudWatchLogReference(arn, region string) *apigatewayfern.CloudWatch
 }
 
 // createLoadBalancerReference creates a load balancer reference from an ARN or URI
-func createLoadBalancerReference(arn, uri, region string) *apigatewayfern.LoadBalancerReference {
+func createLoadBalancerReference(arn, uri, region string) *common.LoadBalancerReference {
 	if arn != "" && isLoadBalancer(arn) {
 		dnsName := ""
 		// Extract DNS name if available in URI
@@ -264,11 +265,11 @@ func createLoadBalancerReference(arn, uri, region string) *apigatewayfern.LoadBa
 			lbType = "NLB"
 		}
 
-		return &apigatewayfern.LoadBalancerReference{
+		return &common.LoadBalancerReference{
 			Arn:     arn,
-			DnsName: dnsName,
+			DnsName: &dnsName,
 			Region:  region,
-			Type:    &lbType,
+			Type:    common.LoadBalancerType(lbType),
 		}
 	}
 

@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
 
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   VpcEnumerateConfig:
@@ -30,10 +33,6 @@ types:
       - AVAILABLE
       - UNAVAILABLE
 # Supporting Types
-  Tag:
-    properties:
-      key: string
-      value: string
   AvailabilityZone:
     properties:
       zoneId: optional<string>
@@ -54,6 +53,7 @@ types:
     properties:
       id: string
       arn: optional<string>
+      name: optional<string>
       region: string
   SubnetConfigurationInfo:
     properties:
@@ -64,19 +64,18 @@ types:
       defaultForAz: optional<boolean>
       enableDns64: optional<boolean>
       enableLniAtDeviceIndex: optional<integer>
-      ipv6CidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       ipv6Native: optional<boolean>
       mapCustomerOwnedIpOnLaunch: optional<boolean>
       mapPublicIpOnLaunch: optional<boolean>
-      name: optional<string>
       outpostArn: optional<string>
       ownerId: optional<string>
       privateDnsNameOptionsOnLaunch: optional<string>
       state: optional<SubnetState>
-      tags: optional<list<Tag>>
+      tags: optional<list<common.Tag>>
   SubnetResourceInfo:
     properties:
       cidrBlock: optional<string>
+      cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
 #  Subnet Main Struct
   Subnet:
     properties:
@@ -84,24 +83,23 @@ types:
       configuration: SubnetConfigurationInfo
       resources: optional<SubnetResourceInfo>
 # VPC High level structs
-  VpcResourceInfo:
+  VpcIdentificationInfo:
     properties:
-      subnets: optional<list<Subnet>>
+      id: string
+      region: string
+      name: optional<string>
   VpcConfigurationInfo:
     properties:
-      name: optional<string>
       creationCidrBlock: optional<string>
-      cidrBlockAssociationSet: optional<list<VpcCidrBlockAssociation>>
       dhcpOptionsId: optional<string>
       instanceTenancy: optional<Tenancy>
       isDefault: optional<boolean>
       ownerId: optional<string>
       state: optional<VpcState>
-      tags: optional<list<Tag>>
-  VpcIdentificationInfo:
+      tags: optional<list<common.Tag>>
+  VpcResourceInfo:
     properties:
-      id: string
-      region: string
+      subnets: optional<list<Subnet>>
 # Main VPC structs
   VpcInstance:
     properties:

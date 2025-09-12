@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	loadbalancerfern "github.com/Method-Security/methodaws/generated/go/loadbalancer"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
@@ -130,26 +131,17 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 				errorMessages = append(errorMessages, errors...)
 			}
 
-			// Create VPC instance if VpcId exists
-			var vpc *loadbalancerfern.VpcInstance
-			if lb.VpcId != nil {
-				vpc = &loadbalancerfern.VpcInstance{
-					Identification: &loadbalancerfern.VpcIdentificationInfo{
-						Id: aws.ToString(lb.VpcId),
-					},
-					Resources: &loadbalancerfern.VpcResourceInfo{
-						SubnetIds: getSubnetIds(lb.AvailabilityZones),
-					},
-				}
+			// Create resource info with deduplicated references
+			resources := &loadbalancerfern.LoadBalancerResourceInfo{
+				Listeners:    listeners,
+				TargetGroups: targetGroups,
 			}
 
-			// Create resource info
-			resources := &loadbalancerfern.LoadBalancerResourceInfo{
-				Listeners:        listeners,
-				TargetGroups:     targetGroups,
-				Vpc:              vpc,
-				SecurityGroupIds: lb.SecurityGroups,
+			// Add resource references with deduplication
+			if lb.VpcId != nil {
+				resources.Vpc = createVpcReferenceFromLB(lb, region)
 			}
+			resources.SecurityGroups = createSecurityGroupReferencesFromLB(lb.SecurityGroups, region)
 
 			// Create LoadBalancerInstance
 			loadBalancer := &loadbalancerfern.LoadBalancerInstance{
@@ -352,11 +344,44 @@ func certificatesForListenerV2(certificates []types.Certificate) []*loadbalancer
 	return certs
 }
 
-// getSubnetIds converts AWS AvailabilityZone to Fern SubnetId
-func getSubnetIds(availabilityZones []types.AvailabilityZone) []string {
-	subnetIds := []string{}
-	for _, az := range availabilityZones {
-		subnetIds = append(subnetIds, aws.ToString(az.SubnetId))
+// Resource discovery helper functions with deduplication
+func createVpcReferenceFromLB(lb types.LoadBalancer, region string) *common.VpcReference {
+	if lb.VpcId == nil {
+		return nil
 	}
-	return subnetIds
+
+	var subnetIds []string
+	for _, az := range lb.AvailabilityZones {
+		if az.SubnetId != nil {
+			subnetIds = append(subnetIds, *az.SubnetId)
+		}
+	}
+
+	return &common.VpcReference{
+		Id:        *lb.VpcId,
+		Region:    region,
+		SubnetIds: subnetIds,
+	}
+}
+
+func createSecurityGroupReferencesFromLB(sgIDs []string, region string) []*common.SecurityGroupReference {
+	sgMap := make(map[string]*common.SecurityGroupReference)
+
+	for _, sgID := range sgIDs {
+		if sgID != "" {
+			key := sgID
+			if _, exists := sgMap[key]; !exists {
+				sgMap[key] = &common.SecurityGroupReference{
+					Id:     sgID,
+					Region: region,
+				}
+			}
+		}
+	}
+
+	var securityGroups []*common.SecurityGroupReference
+	for _, sg := range sgMap {
+		securityGroups = append(securityGroups, sg)
+	}
+	return securityGroups
 }
