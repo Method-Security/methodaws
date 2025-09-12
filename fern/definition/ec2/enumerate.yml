@@ -50,8 +50,8 @@ types:
 # Supporting Structs
   IamInstanceProfile:
     properties:
+      arn: string
       id: optional<string>
-      arn: optional<string>
   Placement:
     properties:
       availabilityZone: optional<string>

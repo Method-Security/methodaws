@@ -60,6 +60,10 @@ types:
       - HTTP_ENDPOINT
       - OTHER
 # Supporting Types
+  Tag:
+    properties:
+      key: optional<string>
+      value: optional<string>
   ResourceReference:
     properties:
       arn: optional<string>
@@ -69,10 +73,43 @@ types:
       region: optional<string>
       name: optional<string>
       description: optional<string>
+# AWS Resource References
+  LambdaReference:
+    properties:
+      arn: string
+      functionName: string
+      region: string
+      runtime: optional<string>
+  IamRoleReference:
+    properties:
+      arn: string
+      roleName: string
+      region: string
+  VpcReference:
+    properties:
+      id: string
+      region: string
+      subnetIds: optional<list<string>>
+  SecurityGroupReference:
+    properties:
+      id: string
+      region: string
+      name: optional<string>
+  LoadBalancerReference:
+    properties:
+      arn: string
+      dnsName: string
+      region: string
+      type: optional<string>
+  CloudWatchLogReference:
+    properties:
+      arn: string
+      logGroupName: string
+      region: string
   AwsProxyIntegration:
     properties:
       arn: string
-      resourceReference: optional<ResourceReference>
+      lambda: optional<LambdaReference>
   AwsIntegration:
     properties:
       arn: string
@@ -82,7 +119,7 @@ types:
   HttpIntegration:
     properties: 
       uri: string
-      resourceReference: optional<ResourceReference>
+      loadBalancer: optional<LoadBalancerReference>
   HttpProxyIntegration:
     properties: 
       uri: string
@@ -119,6 +156,7 @@ types:
     properties:
       destinationArn: string
       format: optional<string>
+      cloudWatchLog: optional<CloudWatchLogReference>
   CorsConfiguration:
     properties:
       allowCredentials: optional<boolean>
@@ -164,7 +202,6 @@ types:
       description: optional<string>
       createdTime: optional<datetime>
       endpointConfiguration: optional<EndpointType>
-      executionRoleArn: optional<string>
       # V1 (REST API) specific configuration
       baseUrl: optional<string>
       apiKeySource: optional<string>
@@ -175,6 +212,8 @@ types:
       apiEndpoint: optional<string>
       protocolType: optional<string>
       disableExecuteApiEndpoint: optional<boolean>
+      # Additional metadata
+      tags: optional<list<Tag>>
   ApiGatewayResourceInfo:
     properties:
       certificates: optional<list<Certificate>>
@@ -188,11 +227,13 @@ types:
       corsConfiguration: optional<CorsConfiguration>
       mutualTlsAuthentication: optional<MutualTlsAuthentication>
       authorizers: optional<list<Authorizer>>
-      # Resource relationships
-      relatedResources: optional<list<ResourceReference>>
-      lambdaFunctions: optional<list<ResourceReference>>
-      cloudwatchLogs: optional<list<ResourceReference>>
-      iamRoles: optional<list<ResourceReference>>
+      # AWS Resource References (unidirectional links)
+      vpc: optional<VpcReference>
+      lambdaFunctions: optional<list<LambdaReference>>
+      cloudWatchLogs: optional<list<CloudWatchLogReference>>
+      iamRoles: optional<list<IamRoleReference>>
+      loadBalancers: optional<list<LoadBalancerReference>>
+      securityGroups: optional<list<SecurityGroupReference>>
       # Security analysis
       securityAnalysis: optional<ApiGatewaySecurity>
 # Main API Gateway structs

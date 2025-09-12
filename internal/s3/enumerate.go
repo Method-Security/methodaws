@@ -9,7 +9,6 @@ import (
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
-	// Internal
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
@@ -33,10 +32,10 @@ func publicAccess(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Buc
 	}
 
 	bucket.Configuration.PublicAccessConfig = &s3fern.S3PublicAccessBlockConfiguration{
-		BlockPublicAcls:       *result.PublicAccessBlockConfiguration.BlockPublicAcls,
-		IgnorePublicAcls:      *result.PublicAccessBlockConfiguration.IgnorePublicAcls,
-		BlockPublicPolicy:     *result.PublicAccessBlockConfiguration.BlockPublicPolicy,
-		RestrictPublicBuckets: *result.PublicAccessBlockConfiguration.RestrictPublicBuckets,
+		BlockPublicAcls:       result.PublicAccessBlockConfiguration.BlockPublicAcls,
+		IgnorePublicAcls:      result.PublicAccessBlockConfiguration.IgnorePublicAcls,
+		BlockPublicPolicy:     result.PublicAccessBlockConfiguration.BlockPublicPolicy,
+		RestrictPublicBuckets: result.PublicAccessBlockConfiguration.RestrictPublicBuckets,
 	}
 
 	return bucket, nil

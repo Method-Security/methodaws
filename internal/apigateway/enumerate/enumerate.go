@@ -194,6 +194,87 @@ func identifyResourceType(arn, uri string) apigatewayfern.ResourceType {
 	return apigatewayfern.ResourceTypeOther
 }
 
+// createLambdaReference creates a Lambda reference from an ARN
+func createLambdaReference(arn, region string) *apigatewayfern.LambdaReference {
+	if !isLambdaFunction(arn) {
+		return nil
+	}
+
+	functionName := extractResourceNameFromArn(arn)
+	if functionName == nil {
+		return nil
+	}
+
+	return &apigatewayfern.LambdaReference{
+		Arn:          arn,
+		FunctionName: *functionName,
+		Region:       region,
+	}
+}
+
+// createIamRoleReference creates an IAM role reference from an ARN
+func createIamRoleReference(arn, region string) *apigatewayfern.IamRoleReference {
+	if !isIAMRole(arn) {
+		return nil
+	}
+
+	roleName := extractResourceNameFromArn(arn)
+	if roleName == nil {
+		return nil
+	}
+
+	return &apigatewayfern.IamRoleReference{
+		Arn:      arn,
+		RoleName: *roleName,
+		Region:   region,
+	}
+}
+
+// createCloudWatchLogReference creates a CloudWatch log reference from an ARN
+func createCloudWatchLogReference(arn, region string) *apigatewayfern.CloudWatchLogReference {
+	if !isCloudWatchLogGroup(arn) {
+		return nil
+	}
+
+	logGroupName := extractResourceNameFromArn(arn)
+	if logGroupName == nil {
+		return nil
+	}
+
+	return &apigatewayfern.CloudWatchLogReference{
+		Arn:          arn,
+		LogGroupName: *logGroupName,
+		Region:       region,
+	}
+}
+
+// createLoadBalancerReference creates a load balancer reference from an ARN or URI
+func createLoadBalancerReference(arn, uri, region string) *apigatewayfern.LoadBalancerReference {
+	if arn != "" && isLoadBalancer(arn) {
+		dnsName := ""
+		// Extract DNS name if available in URI
+		if uri != "" {
+			if name := extractResourceNameFromURI(uri); name != nil {
+				dnsName = *name
+			}
+		}
+
+		lbType := "ALB"
+		if strings.Contains(arn, ":loadbalancer/net/") {
+			lbType = "NLB"
+		}
+
+		return &apigatewayfern.LoadBalancerReference{
+			Arn:     arn,
+			DnsName: dnsName,
+			Region:  region,
+			Type:    &lbType,
+		}
+	}
+
+	return nil
+}
+
 // isEC2Endpoint checks if URI appears to point to EC2 instances
 func isEC2Endpoint(uri string) bool {
 	// Common patterns for EC2 endpoints

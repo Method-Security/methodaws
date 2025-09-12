@@ -14,14 +14,50 @@ types:
       - UPDATING
       - PENDING
 # Supporting Types
+  Tag:
+    properties:
+      key: optional<string>
+      value: optional<string>
+# AWS Resource References
+  IamRoleReference:
+    properties:
+      arn: string
+      roleName: string
+      region: string
+  VpcReference:
+    properties:
+      id: string
+      region: string
+      subnetIds: optional<list<string>>
+  SecurityGroupReference:
+    properties:
+      id: string
+      region: string
+      name: optional<string>
+  Ec2InstanceReference:
+    properties:
+      id: string
+      region: string
+      instanceType: optional<string>
+      availabilityZone: optional<string>
+  KmsKeyReference:
+    properties:
+      arn: string
+      keyId: string
+      region: string
+  CloudWatchLogReference:
+    properties:
+      arn: string
+      logGroupName: string
+      region: string
   Ec2Instance:
     properties:
       id: string
   NodeGroup:
     properties:
       name: optional<string>
-      nodeRole: optional<string>
-      instances: optional<list<Ec2Instance>>
+      nodeRole: optional<IamRoleReference>
+      instances: optional<list<Ec2InstanceReference>>
   EksEndpointConfigResponse:
     properties:
       privateAccess: optional<boolean>
@@ -29,10 +65,12 @@ types:
   EksVpcConfig:
     properties:
       vpcId: optional<string>
+      vpc: optional<VpcReference>
       clusterSecurityGroupId: optional<string>
       endpointConfigResponse: optional<EksEndpointConfigResponse>
       publicAccessCidrs: optional<list<string>>
       securityGroupIds: optional<list<string>>
+      securityGroups: optional<list<SecurityGroupReference>>
       subnetIds: optional<list<string>>
   EksKubernetesNetworkConfig:
     properties:
@@ -43,6 +81,7 @@ types:
     properties:
       enabled: optional<boolean>
       types: optional<list<string>>
+      cloudWatchLog: optional<CloudWatchLogReference>
   EksLogging:
     properties:
       clusterLogging: optional<list<EksClusterLogging>>
@@ -55,6 +94,7 @@ types:
   EksProvider:
     properties:
       keyArn: optional<string>
+      kmsKey: optional<KmsKeyReference>
   EksEncryptionConfig:
     properties:
       provider: optional<EksProvider>
@@ -101,6 +141,7 @@ types:
       platformVersion: optional<string>
       createdAt: optional<datetime>
       roleArn: optional<string>
+      serviceRole: optional<IamRoleReference>
       tags: optional<map<string, string>>
       accessConfig: optional<EksAccessConfig>
   EksResourceInfo:
@@ -114,6 +155,13 @@ types:
       connectorConfig: optional<EksConnectorConfig>
       health: optional<EksClusterHealth>
       outpostConfig: optional<EksOutpostConfig>
+      # AWS Resource References (unidirectional links)
+      vpc: optional<VpcReference>
+      iamRoles: optional<list<IamRoleReference>>
+      securityGroups: optional<list<SecurityGroupReference>>
+      ec2Instances: optional<list<Ec2InstanceReference>>
+      kmsKeys: optional<list<KmsKeyReference>>
+      cloudWatchLogs: optional<list<CloudWatchLogReference>>
 # Main EKS structs
   EksInstance:
     properties:

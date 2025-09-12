@@ -28,10 +28,10 @@ types:
         value: "aws:kms:dsse"
   S3PublicAccessBlockConfiguration:
     properties:
-      blockPublicAcls: boolean
-      ignorePublicAcls: boolean
-      blockPublicPolicy: boolean
-      restrictPublicBuckets: boolean
+      blockPublicAcls: optional<boolean>
+      ignorePublicAcls: optional<boolean>
+      blockPublicPolicy: optional<boolean>
+      restrictPublicBuckets: optional<boolean>
   EncryptionRule:
     properties:
       sseAlgorithm: optional<S3ServerSideEncryption>
