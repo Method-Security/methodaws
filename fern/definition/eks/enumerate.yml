@@ -17,60 +17,7 @@ types:
       - FAILED
       - UPDATING
       - PENDING
-  EksEndpointConfigResponse:
-    properties:
-      privateAccess: optional<boolean>
-      publicAccess: optional<boolean>
-  EksKubernetesNetworkConfig:
-    properties:
-      ipFamily: optional<string>
-      serviceIpv4Cidr: optional<string>
-      serviceIpv6Cidr: optional<string>
-  EksClusterLogging:
-    properties:
-      enabled: optional<boolean>
-      types: optional<list<string>>
-      cloudWatchLog: optional<common.CloudWatchLogReference>
-  EksLogging:
-    properties:
-      clusterLogging: optional<list<EksClusterLogging>>
-  EksOidc:
-    properties:
-      issuer: optional<string>
-  EksIdentity:
-    properties:
-      oidc: optional<EksOidc>
-  EksProvider:
-    properties:
-      keyArn: optional<string>
-      kmsKey: optional<common.KmsKeyReference>
-  EksEncryptionConfig:
-    properties:
-      provider: optional<EksProvider>
-      resources: optional<list<string>>
-  EksConnectorConfig:
-    properties:
-      activationCode: optional<string>
-      activationExpiry: optional<datetime>
-      activationId: optional<string>
-      provider: optional<string>
-      roleArn: optional<string>
-  EksClusterIssue:
-    properties:
-      code: optional<string>
-      message: optional<string>
-      resourceIds: optional<list<string>>
-  EksClusterHealth:
-    properties:
-      issues: optional<list<EksClusterIssue>>
-  EksControlPlanePlacement:
-    properties:
-      groupName: optional<string>
-  EksOutpostConfig:
-    properties:
-      controlPlaneInstanceType: optional<string>
-      controlPlanePlacement: optional<EksControlPlanePlacement>
-      outpostArns: optional<list<string>>
+# Simple access config (only used fields)
   EksAccessConfig:
     properties:
       authenticationMode: optional<string>
@@ -93,13 +40,6 @@ types:
       serviceRole: optional<common.IamRoleReference>
       tags: optional<map<string, string>>
       accessConfig: optional<EksAccessConfig>
-      kubernetesNetworkConfig: optional<EksKubernetesNetworkConfig>
-      logging: optional<EksLogging>
-      identity: optional<EksIdentity>
-      encryptionConfig: optional<list<EksEncryptionConfig>>
-      connectorConfig: optional<EksConnectorConfig>
-      health: optional<EksClusterHealth>
-      outpostConfig: optional<EksOutpostConfig>
   EksResourceInfo:
     properties:
       vpc: optional<common.VpcReference>

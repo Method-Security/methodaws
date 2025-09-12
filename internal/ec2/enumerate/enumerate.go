@@ -4,32 +4,32 @@ import (
 	"context"
 	"fmt"
 
-	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
+	ec2 "github.com/Method-Security/methodaws/generated/go/ec2"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2aws "github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-// InternalEnumerateEc2 enumerates EC2 resources based on the provided configuration
-func InternalEnumerateEc2(ctx context.Context, awsConfig aws.Config, config ec2fern.Ec2EnumerateConfig) *ec2fern.Ec2EnumerateReport {
+// InternalEnumerateEc2 enumerates ec2aws resources based on the provided configuration
+func InternalEnumerateEc2(ctx context.Context, awsConfig aws.Config, config ec2.Ec2EnumerateConfig) *ec2.Ec2EnumerateReport {
 	log := svc1log.FromContext(ctx)
-	log.Info("Starting EC2 enumeration",
+	log.Info("Starting ec2aws enumeration",
 		svc1log.SafeParam("accountId", config.AccountId),
 		svc1log.SafeParam("regionsCount", len(config.Regions)))
 
 	// Initialize report
-	report := &ec2fern.Ec2EnumerateReport{
+	report := &ec2.Ec2EnumerateReport{
 		Config: &config,
-		Result: &ec2fern.Ec2EnumerateResult{},
+		Result: &ec2.Ec2EnumerateResult{},
 	}
 
-	var allInstances []*ec2fern.Ec2Instance
+	var allInstances []*ec2.Ec2Instance
 	var allErrors []string
 
 	// Enumerate instances across all regions
 	for _, region := range config.Regions {
-		log.Info("Enumerating EC2 instances for region", svc1log.SafeParam("region", region))
+		log.Info("Enumerating ec2 instances for region", svc1log.SafeParam("region", region))
 		instances, errs := enumerateEc2ForRegion(ctx, awsConfig, region)
 
 		if len(instances) > 0 {
@@ -43,36 +43,36 @@ func InternalEnumerateEc2(ctx context.Context, awsConfig aws.Config, config ec2f
 	// Populate report
 	if len(allInstances) > 0 {
 		report.Result.Instances = allInstances
-		log.Info("Successfully enumerated EC2 instances",
+		log.Info("Successfully enumerated ec2 instances",
 			svc1log.SafeParam("totalInstances", len(allInstances)))
 	} else {
-		log.Info("No EC2 instances found across all regions")
-		report.Result.Instances = []*ec2fern.Ec2Instance{}
+		log.Info("No ec2 instances found across all regions")
+		report.Result.Instances = []*ec2.Ec2Instance{}
 	}
 
 	if len(allErrors) > 0 {
 		report.Errors = allErrors
-		log.Warn("Errors encountered during EC2 enumeration",
+		log.Warn("Errors encountered during ec2 enumeration",
 			svc1log.SafeParam("errorCount", len(allErrors)))
 	}
 
-	log.Info("Completed EC2 enumeration",
+	log.Info("Completed ec2 enumeration",
 		svc1log.SafeParam("totalInstances", len(allInstances)),
 		svc1log.SafeParam("totalErrors", len(allErrors)))
 
 	return report
 }
 
-// enumerateEc2ForRegion retrieves all EC2 instances for a specific region
-func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*ec2fern.Ec2Instance, []string) {
+// enumerateEc2ForRegion retrieves all ec2 instances for a specific region
+func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region string) ([]*ec2.Ec2Instance, []string) {
 	log := svc1log.FromContext(ctx)
-	var instances []*ec2fern.Ec2Instance
+	var instances []*ec2.Ec2Instance
 	var errors []string
 
 	// Create region-specific config and client
 	regionConfig := awsConfig.Copy()
 	regionConfig.Region = region
-	client := ec2.NewFromConfig(regionConfig)
+	client := ec2aws.NewFromConfig(regionConfig)
 
 	// Get all instances
 	awsInstances, err := getAllInstances(ctx, client, region)
@@ -81,7 +81,7 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 		return instances, errors
 	}
 
-	log.Info("Processing EC2 instances",
+	log.Info("Processing ec2aws instances",
 		svc1log.SafeParam("region", region),
 		svc1log.SafeParam("instanceCount", len(awsInstances)))
 
@@ -102,11 +102,11 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 	return instances, errors
 }
 
-// getAllInstances retrieves all EC2 instances in a region
-func getAllInstances(ctx context.Context, client *ec2.Client, region string) ([]types.Instance, error) {
+// getAllInstances retrieves all ec2aws instances in a region
+func getAllInstances(ctx context.Context, client *ec2aws.Client, region string) ([]types.Instance, error) {
 	var instances []types.Instance
 
-	paginator := ec2.NewDescribeInstancesPaginator(client, &ec2.DescribeInstancesInput{})
+	paginator := ec2aws.NewDescribeInstancesPaginator(client, &ec2aws.DescribeInstancesInput{})
 	for paginator.HasMorePages() {
 		result, err := paginator.NextPage(ctx)
 		if err != nil {
@@ -123,9 +123,9 @@ func getAllInstances(ctx context.Context, client *ec2.Client, region string) ([]
 }
 
 // processInstance converts an AWS instance to Fern format
-func processInstance(ctx context.Context, awsInstance types.Instance, region string) (*ec2fern.Ec2Instance, []string) {
+func processInstance(ctx context.Context, awsInstance types.Instance, region string) (*ec2.Ec2Instance, []string) {
 	log := svc1log.FromContext(ctx)
-	log.Info("Processing EC2 instance", svc1log.SafeParam("instanceId", awsInstance.InstanceId))
+	log.Info("Processing ec2aws instance", svc1log.SafeParam("instanceId", awsInstance.InstanceId))
 	var errors []string
 
 	// Convert instance

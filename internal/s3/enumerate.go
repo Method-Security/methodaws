@@ -20,7 +20,6 @@ import (
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
-
 func bucketEncryption(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S3Bucket) (*s3fern.S3Bucket, error) {
 	log := svc1log.FromContext(ctx)
 
@@ -119,9 +118,8 @@ func bucketPermissions(ctx context.Context, s3Client *s3.Client, bucket *s3fern.
 			svc1log.SafeParam("bucketName", bucket.Identification.Name),
 			svc1log.Stacktrace(aclErr))
 		return bucket, aclErr
-	} else {
-		grants = aclResult.Grants
 	}
+	grants = aclResult.Grants
 
 	// Get public access block configuration
 	var publicAccessBlock *types.PublicAccessBlockConfiguration
@@ -211,7 +209,7 @@ func processS3Permissions(grants []types.Grant, policyDocument *string, publicAc
 	// Second, analyze bucket policy for additional permissions
 	if policyDocument != nil && *policyDocument != "" {
 		policyPermissions := analyzeBucketPolicy(*policyDocument)
-		
+
 		// Merge policy-derived permissions with ACL permissions
 		if policyPermissions.AllowPublicRead && (accessControl.AllowPublicRead == nil || !*accessControl.AllowPublicRead) {
 			accessControl.AllowPublicRead = aws.Bool(true)
@@ -258,10 +256,10 @@ type PolicyPermissions struct {
 // analyzeBucketPolicy analyzes a bucket policy JSON and extracts permission flags
 func analyzeBucketPolicy(policyJSON string) PolicyPermissions {
 	permissions := PolicyPermissions{}
-	
+
 	// Simple pattern matching for common policy patterns
 	// This could be enhanced with full JSON parsing for more complex scenarios
-	
+
 	// Check for public read access: "Principal":"*" with "s3:GetObject"
 	if strings.Contains(policyJSON, `"Principal":"*"`) || strings.Contains(policyJSON, `"Principal": "*"`) {
 		if strings.Contains(policyJSON, `"s3:GetObject"`) {
@@ -283,11 +281,6 @@ func analyzeBucketPolicy(policyJSON string) PolicyPermissions {
 	}
 
 	return permissions
-}
-
-// processS3ACLGrants converts AWS S3 ACL grants to boolean-based ACL structure (legacy function for compatibility)
-func processS3ACLGrants(grants []types.Grant) *s3fern.S3BucketAccessControl {
-	return processS3Permissions(grants, nil, nil)
 }
 
 // EnumerateS3 retrieves all S3 buckets available to the caller and returns an EnumerateResourceReport struct. Non-fatal

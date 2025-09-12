@@ -5,29 +5,29 @@ import (
 	"strings"
 
 	"github.com/Method-Security/methodaws/generated/go/common"
-	ec2fern "github.com/Method-Security/methodaws/generated/go/ec2"
+	ec2 "github.com/Method-Security/methodaws/generated/go/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
 // convertInstanceToFern converts AWS EC2 Instance to Fern Ec2Instance
-func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, region string) (*ec2fern.Ec2Instance, []string) {
+func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, region string) (*ec2.Ec2Instance, []string) {
 	var errors []string
 
 	// Convert instance state
-	var state *ec2fern.InstanceState
+	var state *ec2.InstanceState
 	if awsInstance.State != nil {
 		state = convertInstanceState(awsInstance.State.Name)
 	}
 
 	// Convert placement
-	var placement *ec2fern.Placement
+	var placement *ec2.Placement
 	if awsInstance.Placement != nil {
 		placement = convertPlacement(awsInstance.Placement)
 	}
 
 	// Convert tags and extract name
-	var tags []*ec2fern.Tag
+	var tags []*ec2.Tag
 	var name *string
 	if len(awsInstance.Tags) > 0 {
 		tags = convertTags(awsInstance.Tags)
@@ -41,7 +41,7 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 	}
 
 	// Convert network interfaces
-	var networkInterfaces []*ec2fern.InstanceNetworkInterface
+	var networkInterfaces []*ec2.InstanceNetworkInterface
 	if len(awsInstance.NetworkInterfaces) > 0 {
 		networkInterfaces, errors = convertNetworkInterfaces(ctx, awsInstance.NetworkInterfaces, region)
 	}
@@ -53,10 +53,10 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 	}
 
 	// Create DNS data
-	var dnsData *ec2fern.DnsData
+	var dnsData *ec2.DnsData
 	if awsInstance.PrivateIpAddress != nil || awsInstance.PublicIpAddress != nil ||
 		awsInstance.PrivateDnsName != nil || awsInstance.PublicDnsName != nil {
-		dnsData = &ec2fern.DnsData{
+		dnsData = &ec2.DnsData{
 			PrivateIpAddress: awsInstance.PrivateIpAddress,
 			PublicIpAddress:  awsInstance.PublicIpAddress,
 			PrivateDnsName:   awsInstance.PrivateDnsName,
@@ -65,13 +65,13 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 	}
 
 	// Create instance with nested structure
-	instance := &ec2fern.Ec2Instance{
-		Identification: &ec2fern.Ec2InstanceIdentificationInfo{
+	instance := &ec2.Ec2Instance{
+		Identification: &ec2.Ec2InstanceIdentificationInfo{
 			Id:     *awsInstance.InstanceId,
 			Region: region,
 			Name:   name,
 		},
-		Configuration: &ec2fern.Ec2InstanceConfigurationInfo{
+		Configuration: &ec2.Ec2InstanceConfigurationInfo{
 			State:        state,
 			ImageId:      awsInstance.ImageId,
 			KeyName:      awsInstance.KeyName,
@@ -84,7 +84,7 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 			EbsOptimized: awsInstance.EbsOptimized,
 			Tags:         tags,
 		},
-		Resources: &ec2fern.Ec2InstanceResourceInfo{
+		Resources: &ec2.Ec2InstanceResourceInfo{
 			NetworkInterfaces: networkInterfaces,
 			IamRole:           iamRole,
 			SecurityGroupIds:  securityGroupIds,
@@ -96,49 +96,49 @@ func convertInstanceToFern(ctx context.Context, awsInstance types.Instance, regi
 }
 
 // convertInstanceState converts AWS instance state to Fern enum
-func convertInstanceState(state types.InstanceStateName) *ec2fern.InstanceState {
+func convertInstanceState(state types.InstanceStateName) *ec2.InstanceState {
 	stateStr := strings.ToUpper(string(state))
-	fernState := ec2fern.InstanceState(stateStr)
+	fernState := ec2.InstanceState(stateStr)
 	return &fernState
 }
 
 // convertInstanceType converts AWS instance type to Fern enum
-func convertInstanceType(instanceType types.InstanceType) *ec2fern.InstanceType {
+func convertInstanceType(instanceType types.InstanceType) *ec2.InstanceType {
 	if instanceType == "" {
 		return nil
 	}
 	typeStr := strings.ToUpper(strings.ReplaceAll(string(instanceType), ".", "_"))
-	fernType := ec2fern.InstanceType(typeStr)
+	fernType := ec2.InstanceType(typeStr)
 	return &fernType
 }
 
 // convertArchitecture converts AWS architecture to Fern enum
-func convertArchitecture(arch types.ArchitectureValues) *ec2fern.Architecture {
+func convertArchitecture(arch types.ArchitectureValues) *ec2.Architecture {
 	if arch == "" {
 		return nil
 	}
 	archStr := strings.ToUpper(strings.ReplaceAll(string(arch), "-", "_"))
-	fernArch := ec2fern.Architecture(archStr)
+	fernArch := ec2.Architecture(archStr)
 	return &fernArch
 }
 
 // convertHypervisor converts AWS hypervisor to Fern enum
-func convertHypervisor(hypervisor types.HypervisorType) *ec2fern.HypervisorType {
+func convertHypervisor(hypervisor types.HypervisorType) *ec2.HypervisorType {
 	if hypervisor == "" {
 		return nil
 	}
 	hypervisorStr := strings.ToUpper(string(hypervisor))
-	fernHypervisor := ec2fern.HypervisorType(hypervisorStr)
+	fernHypervisor := ec2.HypervisorType(hypervisorStr)
 	return &fernHypervisor
 }
 
 // convertPlatform converts AWS platform to Fern enum
-func convertPlatform(platform types.PlatformValues) *ec2fern.PlatformValues {
+func convertPlatform(platform types.PlatformValues) *ec2.PlatformValues {
 	if platform == "" {
 		return nil
 	}
 	platformStr := strings.ToUpper(string(platform))
-	fernPlatform := ec2fern.PlatformValues(platformStr)
+	fernPlatform := ec2.PlatformValues(platformStr)
 	return &fernPlatform
 }
 
@@ -167,8 +167,8 @@ func convertIamInstanceProfileToRoleReference(profile *types.IamInstanceProfile,
 }
 
 // convertPlacement converts AWS placement to Fern format
-func convertPlacement(placement *types.Placement) *ec2fern.Placement {
-	fernPlacement := &ec2fern.Placement{
+func convertPlacement(placement *types.Placement) *ec2.Placement {
+	fernPlacement := &ec2.Placement{
 		AvailabilityZone: placement.AvailabilityZone,
 		Affinity:         placement.Affinity,
 		GroupName:        placement.GroupName,
@@ -193,8 +193,8 @@ func convertPlacement(placement *types.Placement) *ec2fern.Placement {
 }
 
 // convertNetworkInterfaces converts AWS network interfaces to Fern format
-func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNetworkInterface, region string) ([]*ec2fern.InstanceNetworkInterface, []string) {
-	var fernInterfaces []*ec2fern.InstanceNetworkInterface
+func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNetworkInterface, region string) ([]*ec2.InstanceNetworkInterface, []string) {
+	var fernInterfaces []*ec2.InstanceNetworkInterface
 	var errors []string
 	log := svc1log.FromContext(ctx)
 	for _, ni := range interfaces {
@@ -230,13 +230,13 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 		}
 
 		// Create network interface with nested structure
-		fernNI := &ec2fern.InstanceNetworkInterface{
-			Identification: &ec2fern.InstanceNetworkInterfaceIdentificationInfo{
+		fernNI := &ec2.InstanceNetworkInterface{
+			Identification: &ec2.InstanceNetworkInterfaceIdentificationInfo{
 				Id:     *ni.NetworkInterfaceId,
 				Arn:    ni.NetworkInterfaceId, // Using the ID as placeholder for ARN
 				Region: region,
 			},
-			Configuration: &ec2fern.InstanceNetworkInterfaceConfigurationInfo{
+			Configuration: &ec2.InstanceNetworkInterfaceConfigurationInfo{
 				Description:      ni.Description,
 				OwnerId:          ni.OwnerId,
 				Status:           status,
@@ -245,7 +245,7 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 				PrivateDnsName:   ni.PrivateDnsName,
 				SourceDestCheck:  ni.SourceDestCheck,
 			},
-			Resources: &ec2fern.InstanceNetworkInterfaceResourceInfo{
+			Resources: &ec2.InstanceNetworkInterfaceResourceInfo{
 				Vpc: vpcReference,
 			},
 		}
@@ -257,11 +257,11 @@ func convertNetworkInterfaces(ctx context.Context, interfaces []types.InstanceNe
 }
 
 // convertTags converts AWS tags to Fern format
-func convertTags(tags []types.Tag) []*ec2fern.Tag {
-	var fernTags []*ec2fern.Tag
+func convertTags(tags []types.Tag) []*ec2.Tag {
+	var fernTags []*ec2.Tag
 
 	for _, tag := range tags {
-		fernTag := &ec2fern.Tag{
+		fernTag := &ec2.Tag{
 			Key:   tag.Key,
 			Value: tag.Value,
 		}
