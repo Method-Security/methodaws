@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Method-Security/methodaws/generated/go/common"
 	loadbalancerfern "github.com/Method-Security/methodaws/generated/go/loadbalancer"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
@@ -91,26 +92,21 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 				errorMessages = append(errorMessages, errors...)
 			}
 
-			// Create VPC instance if VPCId exists
-			var vpc *loadbalancerfern.VpcInstance
-			if lb.VPCId != nil {
-				vpc = &loadbalancerfern.VpcInstance{
-					Identification: &loadbalancerfern.VpcIdentificationInfo{
-						Id: aws.ToString(lb.VPCId),
-					},
-					Resources: &loadbalancerfern.VpcResourceInfo{
-						SubnetIds: lb.Subnets,
-					},
-				}
-			}
-
 			// Create resource info
 			resources := &loadbalancerfern.LoadBalancerResourceInfo{
-				Listeners:        listeners,
-				Targets:          targets,
-				Vpc:              vpc,
-				SecurityGroupIds: lb.SecurityGroups,
+				Listeners: listeners,
+				Targets:   targets,
 			}
+
+			// Add resource references with deduplication
+			if lb.VPCId != nil {
+				resources.Vpc = &common.VpcReference{
+					Id:        aws.ToString(lb.VPCId),
+					Region:    region,
+					SubnetIds: lb.Subnets,
+				}
+			}
+			resources.SecurityGroups = createSecurityGroupReferences(lb.SecurityGroups, region)
 
 			// Create LoadBalancerInstance
 			loadBalancer := &loadbalancerfern.LoadBalancerInstance{
@@ -175,4 +171,18 @@ func listenersForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*
 		listeners = append(listeners, fernListener)
 	}
 	return listeners, errorMessages
+}
+
+// createSecurityGroupReferences creates security group references from AWS security groups
+func createSecurityGroupReferences(sgIDs []string, region string) []*common.SecurityGroupReference {
+	var securityGroups []*common.SecurityGroupReference
+	for _, sgID := range sgIDs {
+		if sgID != "" {
+			securityGroups = append(securityGroups, &common.SecurityGroupReference{
+				Id:     sgID,
+				Region: region,
+			})
+		}
+	}
+	return securityGroups
 }

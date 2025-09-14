@@ -1,20 +1,29 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   IamEnumerateConfig:
     properties:
       accountId: string
-      regions: list<string>
 # Supporting Structs
   RoleLastUsed:
     properties:
       lastUsedDate: optional<datetime>
       region: optional<string>
-  AttachedPolicy:
+# Attached Policy Supporting Structs
+  AttachedPolicyIdentificationInfo:
     properties:
       arn: string
       policyName: string
+  AttachedPolicyConfigurationInfo:
+    properties:
       policyDocument: optional<string>
       isCustomerManaged: optional<boolean>
+  AttachedPolicy:
+    properties:
+      identification: AttachedPolicyIdentificationInfo
+      configuration: AttachedPolicyConfigurationInfo
 # IAM Role High level structs
   IamRoleIdentificationInfo:
     properties:
@@ -24,9 +33,12 @@ types:
     properties:
       createDate: optional<datetime>
       roleLastUsed: optional<RoleLastUsed>
+# IAM Role Resource Info Supporting Structs
   IamRoleResourceInfo:
     properties:
       attachedPolicies: optional<list<AttachedPolicy>>
+      lambdaFunctions: optional<list<common.LambdaReference>>
+      ec2Instances: optional<list<common.Ec2InstanceReference>>
 # Main IAM Role Structs
   IamRoles:
     properties:

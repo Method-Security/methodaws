@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   S3EnumerateConfig:
@@ -14,10 +17,28 @@ types:
       - ENABLED
       - DISABLED
 # Supporting Types
-  S3BucketACL:
+  S3BucketAccessControl:
     properties:
-      granteeURI: string
-      permission: string
+      # Public Access Permissions (from ACL and Policy analysis)
+      allowPublicRead: optional<boolean>
+      allowPublicWrite: optional<boolean>
+      allowPublicReadAcp: optional<boolean>
+      allowPublicWriteAcp: optional<boolean>
+      allowPublicFullControl: optional<boolean>
+      # Authenticated Users Permissions  
+      allowAuthenticatedUsersRead: optional<boolean>
+      allowAuthenticatedUsersWrite: optional<boolean>
+      allowAuthenticatedUsersReadAcp: optional<boolean>
+      allowAuthenticatedUsersWriteAcp: optional<boolean>
+      allowAuthenticatedUsersFullControl: optional<boolean>
+      # Log Delivery Permissions
+      allowLogDeliveryWrite: optional<boolean>
+      allowLogDeliveryReadAcp: optional<boolean>
+      # Public Access Block Configuration
+      blockPublicAcls: optional<boolean>
+      ignorePublicAcls: optional<boolean>
+      blockPublicPolicy: optional<boolean>
+      restrictPublicBuckets: optional<boolean>
   S3ServerSideEncryption:
     enum:
       - name: "AES256"
@@ -26,16 +47,10 @@ types:
         value: "aws:kms"
       - name: "awskmsdsse"
         value: "aws:kms:dsse"
-  S3PublicAccessBlockConfiguration:
-    properties:
-      blockPublicAcls: boolean
-      ignorePublicAcls: boolean
-      blockPublicPolicy: boolean
-      restrictPublicBuckets: boolean
   EncryptionRule:
     properties:
       sseAlgorithm: optional<S3ServerSideEncryption>
-      kmsMasterKeyID: optional<string>
+      kmsKey: optional<common.KmsKeyReference>
 # S3 High level structs
   S3BucketIdentificationInfo:
     properties:
@@ -48,17 +63,21 @@ types:
       creationDate: datetime
       ownerID: string
       ownerName: string
-      publicAccessConfig: optional<S3PublicAccessBlockConfiguration>
       policy: optional<string>
       bucketVersioning: optional<BucketVersioningStatus>
       mfaDelete: optional<S3MFADeleteStatus>
       encryptionRules: optional<list<EncryptionRule>>
-      acls: optional<list<S3BucketACL>>
+      accessControl: optional<S3BucketAccessControl>
+  S3BucketResourceInfo:
+    properties:
+      iamRoles: optional<list<common.IamRoleReference>>
+      lambdaFunctions: optional<list<common.LambdaReference>>
 # Main S3 Bucket Structs
   S3Bucket:
     properties:
       identification: S3BucketIdentificationInfo
       configuration: S3BucketConfigurationInfo
+      resources: optional<S3BucketResourceInfo>
   S3EnumerateResult:
     properties:
       s3Buckets: optional<list<S3Bucket>>

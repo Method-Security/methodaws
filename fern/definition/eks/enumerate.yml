@@ -1,3 +1,7 @@
+imports:
+  common: ../common/resources.yml
+  ec2: ../ec2/enumerate.yml
+
 types:
 # Config
   EksEnumerateConfig:
@@ -13,75 +17,7 @@ types:
       - FAILED
       - UPDATING
       - PENDING
-# Supporting Types
-  Ec2Instance:
-    properties:
-      id: string
-  NodeGroup:
-    properties:
-      name: optional<string>
-      nodeRole: optional<string>
-      instances: optional<list<Ec2Instance>>
-  EksEndpointConfigResponse:
-    properties:
-      privateAccess: optional<boolean>
-      publicAccess: optional<boolean>
-  EksVpcConfig:
-    properties:
-      vpcId: optional<string>
-      clusterSecurityGroupId: optional<string>
-      endpointConfigResponse: optional<EksEndpointConfigResponse>
-      publicAccessCidrs: optional<list<string>>
-      securityGroupIds: optional<list<string>>
-      subnetIds: optional<list<string>>
-  EksKubernetesNetworkConfig:
-    properties:
-      ipFamily: optional<string>
-      serviceIpv4Cidr: optional<string>
-      serviceIpv6Cidr: optional<string>
-  EksClusterLogging:
-    properties:
-      enabled: optional<boolean>
-      types: optional<list<string>>
-  EksLogging:
-    properties:
-      clusterLogging: optional<list<EksClusterLogging>>
-  EksOidc:
-    properties:
-      issuer: optional<string>
-  EksIdentity:
-    properties:
-      oidc: optional<EksOidc>
-  EksProvider:
-    properties:
-      keyArn: optional<string>
-  EksEncryptionConfig:
-    properties:
-      provider: optional<EksProvider>
-      resources: optional<list<string>>
-  EksConnectorConfig:
-    properties:
-      activationCode: optional<string>
-      activationExpiry: optional<datetime>
-      activationId: optional<string>
-      provider: optional<string>
-      roleArn: optional<string>
-  EksClusterIssue:
-    properties:
-      code: optional<string>
-      message: optional<string>
-      resourceIds: optional<list<string>>
-  EksClusterHealth:
-    properties:
-      issues: optional<list<EksClusterIssue>>
-  EksControlPlanePlacement:
-    properties:
-      groupName: optional<string>
-  EksOutpostConfig:
-    properties:
-      controlPlaneInstanceType: optional<string>
-      controlPlanePlacement: optional<EksControlPlanePlacement>
-      outpostArns: optional<list<string>>
+# Simple access config (only used fields)
   EksAccessConfig:
     properties:
       authenticationMode: optional<string>
@@ -101,19 +37,17 @@ types:
       platformVersion: optional<string>
       createdAt: optional<datetime>
       roleArn: optional<string>
+      serviceRole: optional<common.IamRoleReference>
       tags: optional<map<string, string>>
       accessConfig: optional<EksAccessConfig>
   EksResourceInfo:
     properties:
-      resourcesVpcConfig: optional<EksVpcConfig>
-      nodeGroups: optional<list<NodeGroup>>
-      kubernetesNetworkConfig: optional<EksKubernetesNetworkConfig>
-      logging: optional<EksLogging>
-      identity: optional<EksIdentity>
-      encryptionConfig: optional<list<EksEncryptionConfig>>
-      connectorConfig: optional<EksConnectorConfig>
-      health: optional<EksClusterHealth>
-      outpostConfig: optional<EksOutpostConfig>
+      vpc: optional<common.VpcReference>
+      iamRoles: optional<list<common.IamRoleReference>>
+      securityGroups: optional<list<common.SecurityGroupReference>>
+      ec2Instances: optional<list<ec2.Ec2Instance>>
+      kmsKeys: optional<list<common.KmsKeyReference>>
+      cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
 # Main EKS structs
   EksInstance:
     properties:

@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   ApiGatewayEnumerateConfig:
@@ -69,24 +72,31 @@ types:
       region: optional<string>
       name: optional<string>
       description: optional<string>
+# Extended Lambda Reference (specific to API Gateway)
+  LambdaReference:
+    extends: common.LambdaReference
+    properties:
+      runtime: optional<string>
   AwsProxyIntegration:
     properties:
       arn: string
-      resourceReference: optional<ResourceReference>
+      lambda: optional<LambdaReference>
   AwsIntegration:
     properties:
       arn: string
       resourceReference: optional<ResourceReference>
-  MockIntegration:
-    properties: {}
   HttpIntegration:
     properties: 
       uri: string
-      resourceReference: optional<ResourceReference>
+      loadBalancer: optional<common.LoadBalancerReference>
   HttpProxyIntegration:
     properties: 
       uri: string
       resourceReference: optional<ResourceReference>
+  MockIntegration:
+    properties:
+      responseTemplates: optional<map<string, string>>
+      statusCode: optional<string>
   Integration:
     union:
       aws_proxy: AwsProxyIntegration
@@ -119,6 +129,7 @@ types:
     properties:
       destinationArn: string
       format: optional<string>
+      cloudWatchLog: optional<common.CloudWatchLogReference>
   CorsConfiguration:
     properties:
       allowCredentials: optional<boolean>
@@ -164,35 +175,38 @@ types:
       description: optional<string>
       createdTime: optional<datetime>
       endpointConfiguration: optional<EndpointType>
-      executionRoleArn: optional<string>
+      accessLogSettings: optional<AccessLogSettings>
       # V1 (REST API) specific configuration
       baseUrl: optional<string>
       apiKeySource: optional<string>
       stage: optional<string>
       clientCertificateId: optional<string>
       minimumCompressionSize: optional<integer>
+      usagePlans: optional<list<string>>
       # V2 (HTTP API) specific configuration
       apiEndpoint: optional<string>
       protocolType: optional<string>
       disableExecuteApiEndpoint: optional<boolean>
-  ApiGatewayResourceInfo:
-    properties:
-      certificates: optional<list<Certificate>>
-      accessLogSettings: optional<AccessLogSettings>
-      # V1 (REST API) specific resources
-      paths: optional<list<Route>>
-      apiKeys: optional<list<string>>
-      usagePlans: optional<list<string>>
-      # V2 (HTTP API) specific resources
-      routes: optional<list<Route>>
       corsConfiguration: optional<CorsConfiguration>
       mutualTlsAuthentication: optional<MutualTlsAuthentication>
       authorizers: optional<list<Authorizer>>
-      # Resource relationships
-      relatedResources: optional<list<ResourceReference>>
-      lambdaFunctions: optional<list<ResourceReference>>
-      cloudwatchLogs: optional<list<ResourceReference>>
-      iamRoles: optional<list<ResourceReference>>
+      # Additional metadata
+      tags: optional<list<common.Tag>>
+  ApiGatewayResourceInfo:
+    properties:
+      certificates: optional<list<Certificate>>
+      # V1 (REST API) specific resources
+      paths: optional<list<Route>>
+      apiKeys: optional<list<string>>
+      # V2 (HTTP API) specific resources
+      routes: optional<list<Route>>
+      # AWS Resource References (unidirectional links)
+      vpc: optional<common.VpcReference>
+      lambdaFunctions: optional<list<LambdaReference>>
+      cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
+      iamRoles: optional<list<common.IamRoleReference>>
+      loadBalancers: optional<list<common.LoadBalancerReference>>
+      securityGroups: optional<list<common.SecurityGroupReference>>
       # Security analysis
       securityAnalysis: optional<ApiGatewaySecurity>
 # Main API Gateway structs

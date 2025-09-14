@@ -43,7 +43,6 @@ func (a *MethodAws) InitIamCommand() {
 // getIamEnumerateConfig returns an IamEnumerateConfig with the given regions and account ID
 func getIamEnumerateConfig(regions []string, accountID string) iam.IamEnumerateConfig {
 	return iam.IamEnumerateConfig{
-		Regions:   regions,
 		AccountId: accountID,
 	}
 }

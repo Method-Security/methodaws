@@ -1,0 +1,107 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
+
+types:
+# Enums
+  LoadBalancerType:
+    enum:
+      - APPLICATION
+      - NETWORK
+      - GATEWAY
+      - CLASSIC
+# Common AWS Resource Reference Types
+  Tag:
+    properties:
+      key: optional<string>
+      value: optional<string>
+# IAM Resources
+  IamRoleReference:
+    properties:
+      arn: string
+      roleName: optional<string>
+      region: string
+# VPC Resources
+  VpcReference:
+    properties:
+      id: string
+      region: string
+      subnetIds: optional<list<string>>
+  SecurityGroupReference:
+    properties:
+      id: string
+      region: string
+      name: optional<string>
+# EC2 Resources
+  Ec2InstanceReference:
+    properties:
+      id: string
+      region: string
+      instanceType: optional<string>
+      availabilityZone: optional<string>
+# Lambda Resources
+  LambdaReference:
+    properties:
+      arn: string
+      functionName: optional<string>
+      region: string
+# KMS Resources
+  KmsKeyReference:
+    properties:
+      arn: string
+      keyId: string
+      region: string
+# CloudWatch Resources
+  CloudWatchLogReference:
+    properties:
+      arn: string
+      logGroupName: string
+      region: string
+# CloudFront Resources
+  CloudFrontDistributionReference:
+    properties:
+      arn: string
+      domainName: optional<string>
+      region: string
+# Load Balancer Resources
+  LoadBalancerReference:
+    properties:
+      arn: string
+      dnsName: optional<string>
+      region: string
+      type: LoadBalancerType
+# S3 Resources
+  S3BucketReference:
+    properties:
+      arn: string
+      bucketName: optional<string>
+      region: string
+# RDS Resources
+  RdsInstanceReference:
+    properties:
+      arn: string
+      identifier: optional<string>
+      region: string
+# SNS Resources
+  SnsTopicReference:
+    properties:
+      arn: string
+      topicName: optional<string>
+      region: string
+# SQS Resources
+  SqsQueueReference:
+    properties:
+      arn: string
+      queueName: optional<string>
+      region: string
+# DynamoDB Resources
+  DynamoDbTableReference:
+    properties:
+      arn: string
+      tableName: optional<string>
+      region: string
+# API Gateway Resources
+  ApiGatewayReference:
+    properties:
+      arn: string
+      apiId: optional<string>
+      region: string
+      name: optional<string>

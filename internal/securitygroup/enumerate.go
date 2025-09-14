@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	// Generated
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	fernsecuritygroup "github.com/Method-Security/methodaws/generated/go/securitygroup"
+
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -224,25 +226,29 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 		}
 
 		fernPerm := &fernsecuritygroup.RuleDetails{
-			Id:         *rule.SecurityGroupRuleId,
-			Direction:  direction,
-			IpProtocol: rule.IpProtocol,
-			Peer:       &fernsecuritygroup.RulePeerInfo{},
+			Identification: &fernsecuritygroup.RuleIdentificationInfo{
+				Id: *rule.SecurityGroupRuleId,
+			},
+			Configuration: &fernsecuritygroup.RuleConfigurationInfo{
+				Direction:  direction,
+				IpProtocol: rule.IpProtocol,
+				Peer:       &fernsecuritygroup.RulePeerInfo{},
+			},
 		}
 
 		// Convert ports from int32 to int
 		if rule.FromPort != nil {
 			fromPort := int(*rule.FromPort)
-			fernPerm.FromPort = &fromPort
+			fernPerm.Configuration.FromPort = &fromPort
 		}
 		if rule.ToPort != nil {
 			toPort := int(*rule.ToPort)
-			fernPerm.ToPort = &toPort
+			fernPerm.Configuration.ToPort = &toPort
 		}
 
 		// Extract description
 		if rule.Description != nil {
-			fernPerm.Description = rule.Description
+			fernPerm.Configuration.Description = rule.Description
 		}
 
 		// Extract CIDR blocks - combine IPv4 and IPv6 into single list
@@ -254,18 +260,18 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 			cidrs = append(cidrs, *rule.CidrIpv6)
 		}
 		if len(cidrs) > 0 {
-			fernPerm.Peer.Cidrs = cidrs
+			fernPerm.Configuration.Peer.Cidrs = cidrs
 		}
 
 		// Extract referenced security group (missing bidirectional connection!)
 		if rule.ReferencedGroupInfo != nil {
-			fernPerm.Peer.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
+			fernPerm.Configuration.Peer.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
 				GroupId: *rule.ReferencedGroupInfo.GroupId,
 				UserId:  *rule.ReferencedGroupInfo.UserId,
 			}
 		}
 
-		if len(cidrs) == 0 && fernPerm.Peer.ReferencedSecurityGroup == nil {
+		if len(cidrs) == 0 && fernPerm.Configuration.Peer.ReferencedSecurityGroup == nil {
 			log.Warn("SecurityGroupRule missing CIDR or referenced security group", svc1log.SafeParam("rule", fernPerm))
 			errors = append(errors, fmt.Sprintf("SecurityGroupRule missing CIDR or referenced security group: %v", fernPerm))
 			continue
@@ -275,22 +281,23 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 	}
 
 	// Convert Tags
-	var fernTags []*fernsecuritygroup.Tag
+	var fernTags []*common.Tag
 	if awsSG.Tags != nil {
 		for _, tag := range awsSG.Tags {
-			fernTag := &fernsecuritygroup.Tag{
-				Key:   *tag.Key,
-				Value: *tag.Value,
+			fernTag := &common.Tag{
+				Key:   tag.Key,
+				Value: tag.Value,
 			}
 			fernTags = append(fernTags, fernTag)
 		}
 	}
 
-	// Create VPC instance if VPC ID exists
-	var vpcInstance *fernsecuritygroup.VpcInstance
+	// Create VPC reference if VPC ID exists
+	var vpcReference *common.VpcReference
 	if awsSG.VpcId != nil {
-		vpcInstance = &fernsecuritygroup.VpcInstance{
-			Id: *awsSG.VpcId,
+		vpcReference = &common.VpcReference{
+			Id:     *awsSG.VpcId,
+			Region: region,
 		}
 	}
 
@@ -310,9 +317,9 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 	}
 
 	// Add resources if we have VPC or permissions
-	if vpcInstance != nil || len(fernPermissions) > 0 {
+	if vpcReference != nil || len(fernPermissions) > 0 {
 		resourceInfo := &fernsecuritygroup.SecurityGroupResourceInfo{
-			Vpc:   vpcInstance,
+			Vpc:   vpcReference,
 			Rules: fernPermissions,
 		}
 		fernSG.Resources = resourceInfo
@@ -323,11 +330,12 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 
 // convertAWSRDSSecurityGroupToFern converts an AWS SDK RDS DB SecurityGroup to a Fern SecurityGroup
 func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region string) *fernsecuritygroup.SecurityGroup {
-	// Create VPC instance if VPC ID exists
-	var vpcInstance *fernsecuritygroup.VpcInstance
+	// Create VPC reference if VPC ID exists
+	var vpcReference *common.VpcReference
 	if awsSG.VpcId != nil {
-		vpcInstance = &fernsecuritygroup.VpcInstance{
-			Id: *awsSG.VpcId,
+		vpcReference = &common.VpcReference{
+			Id:     *awsSG.VpcId,
+			Region: region,
 		}
 	}
 
@@ -347,9 +355,9 @@ func convertAWSRDSSecurityGroupToFern(awsSG rdstypes.DBSecurityGroup, region str
 	}
 
 	// Add resources if we have VPC
-	if vpcInstance != nil {
+	if vpcReference != nil {
 		resourceInfo := &fernsecuritygroup.SecurityGroupResourceInfo{
-			Vpc:   vpcInstance,
+			Vpc:   vpcReference,
 			Rules: nil, // RDS DB security group rules are not mapped in the unified schema
 		}
 		fernSG.Resources = resourceInfo

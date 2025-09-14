@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
 # Config
   WafEnumerateConfig:
@@ -34,16 +37,7 @@ types:
       - SQLI_MATCH
       - XSS_MATCH
       - OTHER
-  WafResourceType:
-    enum:
-      - APPLICATION_LOAD_BALANCER
-      - API_GATEWAY_REST_API
-      - APPSYNC_GRAPHQL_API
-      - COGNITO_USER_POOL
-      - APP_RUNNER_SERVICE
-      - VERIFIED_ACCESS_INSTANCE
-      - OTHER
-# Supporting Types
+# Rule Supporting Structs
   ActionInfo:
     properties:
       type: ActionType
@@ -52,18 +46,21 @@ types:
     properties:
       type: StatementType
       rawStatement: optional<string>
-  RuleInfo:
+# Main Rule Structs
+  RuleIdentificationInfo:
     properties:
       name: string
+  RuleConfigurationInfo:
+    properties:
       priority: integer
       statement: StatementInfo
       action: optional<ActionInfo>
       labels: optional<list<string>>
-      rawRule: string 
-  WafResource:
+      rawRule: string
+  RuleInfo:
     properties:
-      arn: string
-      type: WafResourceType
+      identification: RuleIdentificationInfo
+      configuration: RuleConfigurationInfo
 # High level structs
   WafIdentificationInfo:
     properties:
@@ -77,7 +74,8 @@ types:
       defaultAction: optional<ActionType>
   WafResourceInfo:
     properties:
-      frontedResources: list<WafResource>
+      apiGateway: optional<common.ApiGatewayReference>
+      loadBalancer: optional<common.LoadBalancerReference>
       rules: optional<list<RuleInfo>>
 # Main WAF structs
   WafInstance:

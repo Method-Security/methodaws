@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"regexp"
 
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	iam "github.com/Method-Security/methodaws/generated/go/iam"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	iamaws "github.com/aws/aws-sdk-go-v2/service/iam"
@@ -95,6 +97,9 @@ func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*
 		},
 		Resources: &iam.IamRoleResourceInfo{
 			AttachedPolicies: attachedPolicies,
+			// Discover resource references from policy documents
+			LambdaFunctions: discoverLambdaReferencesFromPolicies(attachedPolicies),
+			Ec2Instances:    discoverEc2ReferencesFromPolicies(attachedPolicies),
 		},
 	}
 
@@ -120,27 +125,33 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 
 		for _, policy := range result.AttachedPolicies {
 			if policy.PolicyArn != nil && policy.PolicyName != nil {
-				attachedPolicy := &iam.AttachedPolicy{
-					Arn:        *policy.PolicyArn,
-					PolicyName: *policy.PolicyName,
-				}
-
 				// Determine if it's customer managed (Local scope) or AWS managed
 				isCustomerManaged := !isAWSManagedPolicy(*policy.PolicyArn)
-				attachedPolicy.IsCustomerManaged = &isCustomerManaged
 
+				var policyDoc *string
 				// Get policy document if it's customer managed
 				if isCustomerManaged {
 					if policy.PolicyArn == nil {
 						errors = append(errors, fmt.Sprintf("policy ARN is nil for policy %s", *policy.PolicyName))
 						continue
 					}
-					policyDoc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
+					doc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
 					if err != nil {
 						errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
 					} else {
-						attachedPolicy.PolicyDocument = policyDoc
+						policyDoc = doc
 					}
+				}
+
+				attachedPolicy := &iam.AttachedPolicy{
+					Identification: &iam.AttachedPolicyIdentificationInfo{
+						Arn:        *policy.PolicyArn,
+						PolicyName: *policy.PolicyName,
+					},
+					Configuration: &iam.AttachedPolicyConfigurationInfo{
+						PolicyDocument:    policyDoc,
+						IsCustomerManaged: &isCustomerManaged,
+					},
 				}
 
 				attachedPolicies = append(attachedPolicies, attachedPolicy)
@@ -199,4 +210,91 @@ func getPolicyDocument(ctx context.Context, client *iamaws.Client, policyArn str
 // isAWSManagedPolicy checks if a policy ARN represents an AWS managed policy
 func isAWSManagedPolicy(arn string) bool {
 	return len(arn) > 13 && arn[:13] == "arn:aws:iam::"
+}
+
+// Resource discovery functions with deduplication
+func discoverLambdaReferencesFromPolicies(policies []*iam.AttachedPolicy) []*common.LambdaReference {
+	lambdaMap := make(map[string]*common.LambdaReference)
+
+	// Regex to match Lambda function ARNs in policy documents
+	lambdaArnRegex := regexp.MustCompile(`arn:aws:lambda:([^:]+):([^:]+):function:([^"'\s]+)`)
+
+	for _, policy := range policies {
+		if policy.Configuration != nil && policy.Configuration.PolicyDocument != nil {
+			matches := lambdaArnRegex.FindAllStringSubmatch(*policy.Configuration.PolicyDocument, -1)
+			for _, match := range matches {
+				if len(match) > 3 {
+					arn := match[0]
+					region := match[1]
+					functionName := match[3]
+
+					key := arn
+					if _, exists := lambdaMap[key]; !exists {
+						lambdaMap[key] = &common.LambdaReference{
+							Arn:          arn,
+							FunctionName: &functionName,
+							Region:       region,
+						}
+					}
+				}
+			}
+		}
+	}
+
+	var lambdaFunctions []*common.LambdaReference
+	for _, lambda := range lambdaMap {
+		lambdaFunctions = append(lambdaFunctions, lambda)
+	}
+	return lambdaFunctions
+}
+
+func discoverEc2ReferencesFromPolicies(policies []*iam.AttachedPolicy) []*common.Ec2InstanceReference {
+	ec2Map := make(map[string]*common.Ec2InstanceReference)
+
+	// Regex to match EC2 instance ARNs and instance IDs in policy documents
+	ec2ArnRegex := regexp.MustCompile(`arn:aws:ec2:([^:]+):([^:]+):instance/([^"'\s]+)`)
+	ec2IdRegex := regexp.MustCompile(`"(i-[a-f0-9]{8,17})"`) // Instance ID pattern
+
+	for _, policy := range policies {
+		if policy.Configuration != nil && policy.Configuration.PolicyDocument != nil {
+			// Look for ARNs first
+			matches := ec2ArnRegex.FindAllStringSubmatch(*policy.Configuration.PolicyDocument, -1)
+			for _, match := range matches {
+				if len(match) > 3 {
+					region := match[1]
+					instanceID := match[3]
+
+					key := instanceID
+					if _, exists := ec2Map[key]; !exists {
+						ec2Map[key] = &common.Ec2InstanceReference{
+							Id:     instanceID,
+							Region: region,
+						}
+					}
+				}
+			}
+
+			// Also look for standalone instance IDs
+			instanceMatches := ec2IdRegex.FindAllStringSubmatch(*policy.Configuration.PolicyDocument, -1)
+			for _, match := range instanceMatches {
+				if len(match) > 1 {
+					instanceID := match[1]
+					key := instanceID
+					if _, exists := ec2Map[key]; !exists {
+						// We don't have region info from standalone ID, use empty region
+						ec2Map[key] = &common.Ec2InstanceReference{
+							Id:     instanceID,
+							Region: "", // Region unknown from policy alone
+						}
+					}
+				}
+			}
+		}
+	}
+
+	var ec2Instances []*common.Ec2InstanceReference
+	for _, instance := range ec2Map {
+		ec2Instances = append(ec2Instances, instance)
+	}
+	return ec2Instances
 }

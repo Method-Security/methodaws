@@ -1,3 +1,6 @@
+imports:
+  common: ../common/resources.yml
+
 types:
   # DNS Record Types Enum
   RecordType:
@@ -77,7 +80,10 @@ types:
       resourceRecordSetCount: optional<integer>
   HostedZoneResourceInfo:
     properties:
-      resourceRecordSets: list<ResourceRecordSet>
+      recordSets: list<ResourceRecordSet>
+      loadBalancers: optional<list<common.LoadBalancerReference>>
+      cloudFrontDistributions: optional<list<common.CloudFrontDistributionReference>>
+      s3Buckets: optional<list<common.S3BucketReference>>
 # Main Hosted Zone Structs
   EnrichedHostedZone:
     properties:

@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
-
+imports:
+  common: ../common/resources.yml
 types:
 # Config
   Ec2EnumerateConfig:
@@ -48,10 +49,6 @@ types:
       key: optional<string>
       value: optional<string>
 # Supporting Structs
-  IamInstanceProfile:
-    properties:
-      id: optional<string>
-      arn: optional<string>
   Placement:
     properties:
       availabilityZone: optional<string>
@@ -63,10 +60,12 @@ types:
       spreadDomain: optional<string>
       hostResourceGroupArn: optional<string>
       groupId: optional<string>
-  VpcInstance:
+  dnsData:
     properties:
-      id: string
-      subnetIds: optional<list<string>>
+      privateIpAddress: optional<string>
+      publicIpAddress: optional<string>
+      privateDnsName: optional<string>
+      publicDnsName: optional<string>
 # Network Interface High level Structs
   InstanceNetworkInterfaceIdentificationInfo:
     properties:
@@ -84,7 +83,7 @@ types:
       sourceDestCheck: optional<boolean>
   InstanceNetworkInterfaceResourceInfo:
     properties:
-      vpc: VpcInstance
+      vpc: common.VpcReference
 # Main Network Interface Structs
   InstanceNetworkInterface:
     properties:
@@ -105,10 +104,6 @@ types:
       instanceType: optional<InstanceType>
       launchTime: optional<datetime>
       placement: optional<Placement>
-      privateIpAddress: optional<string>
-      publicIpAddress: optional<string>
-      privateDnsName: optional<string>
-      publicDnsName: optional<string>
       architecture: optional<Architecture>
       hypervisor: optional<HypervisorType>
       platform: optional<PlatformValues>
@@ -117,8 +112,9 @@ types:
   Ec2InstanceResourceInfo:
     properties:
       networkInterfaces: optional<list<InstanceNetworkInterface>>
-      iamInstanceProfile: optional<IamInstanceProfile>
+      iamRole: optional<common.IamRoleReference>
       securityGroupIds: optional<list<string>>
+      dns: optional<dnsData>
 # EC2 Main Structs
   Ec2Instance:
     properties:

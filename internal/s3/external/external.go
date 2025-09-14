@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
@@ -70,10 +71,10 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 }
 
 // listBucketContents attempts to list objects in the bucket
-func listBucketContents(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.S3ObjectDetails, error) {
+func listBucketContents(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.DirectoryContents, error) {
 	log := svc1log.FromContext(ctx)
 	maxKeys := int32(100) // Limit the number of objects to list
-	directoryContents := []*s3fern.S3ObjectDetails{}
+	directoryContents := []*s3fern.DirectoryContents{}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
 		Bucket:     aws.String(bucketName),
@@ -96,7 +97,7 @@ func listBucketContents(ctx context.Context, client *s3.Client, bucketName strin
 			size = int(*object.Size)
 		}
 
-		details := &s3fern.S3ObjectDetails{
+		details := &s3fern.DirectoryContents{
 			Key:          *object.Key,
 			LastModified: object.LastModified,
 			Size:         &size,
@@ -125,7 +126,7 @@ func checkListingAllowed(ctx context.Context, client *s3.Client, bucketName stri
 }
 
 // checkAnonymousReadAllowed checks if anonymous read is allowed on a bucket
-func checkAnonymousReadAllowed(ctx context.Context, client *s3.Client, bucketName string, directoryContents []*s3fern.S3ObjectDetails) bool {
+func checkAnonymousReadAllowed(ctx context.Context, client *s3.Client, bucketName string, directoryContents []*s3fern.DirectoryContents) bool {
 	if len(directoryContents) > 0 {
 		_, err := client.GetObject(ctx, &s3.GetObjectInput{
 			Bucket: aws.String(bucketName),
@@ -148,9 +149,7 @@ func checkPolicy(ctx context.Context, client *s3.Client, bucketName string) (str
 }
 
 // checkACL checks the bucket ACL
-func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.S3BucketAcl, *string, *string, error) {
-	acls := []*s3fern.S3BucketAcl{}
-
+func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*s3fern.S3BucketAccessControl, *string, *string, error) {
 	output, err := client.GetBucketAcl(ctx, &s3.GetBucketAclInput{
 		Bucket: aws.String(bucketName),
 	})
@@ -165,16 +164,93 @@ func checkACL(ctx context.Context, client *s3.Client, bucketName string) ([]*s3f
 		ownerName = output.Owner.DisplayName
 	}
 
-	for _, grant := range output.Grants {
-		if grant.Grantee.URI != nil {
-			acls = append(acls, &s3fern.S3BucketAcl{
-				GranteeUri: *grant.Grantee.URI,
-				Permission: string(grant.Permission),
-			})
+	// Process ACL grants
+	acls := processS3ACLGrants(output.Grants)
+
+	return acls, ownerID, ownerName, nil
+}
+
+// processS3ACLGrants converts AWS S3 ACL grants to boolean-based ACL structures
+func processS3ACLGrants(grants []types.Grant) []*s3fern.S3BucketAccessControl {
+	if len(grants) == 0 {
+		return nil
+	}
+
+	// Group grants by grantee type to create consolidated ACL objects
+	publicACL := &s3fern.S3BucketAccessControl{}
+	authUserACL := &s3fern.S3BucketAccessControl{}
+	logDeliveryACL := &s3fern.S3BucketAccessControl{}
+
+	hasPublic := false
+	hasAuthUser := false
+	hasLogDelivery := false
+
+	for _, grant := range grants {
+		if grant.Grantee == nil || grant.Grantee.URI == nil {
+			continue
+		}
+
+		granteeURI := *grant.Grantee.URI
+		permission := string(grant.Permission)
+
+		// Public Access permissions (AllUsers)
+		if granteeURI == "http://acs.amazonaws.com/groups/global/AllUsers" {
+			hasPublic = true
+			switch permission {
+			case "READ":
+				publicACL.AllowPublicRead = aws.Bool(true)
+			case "WRITE":
+				publicACL.AllowPublicWrite = aws.Bool(true)
+			case "READ_ACP":
+				publicACL.AllowPublicReadAcp = aws.Bool(true)
+			case "WRITE_ACP":
+				publicACL.AllowPublicWriteAcp = aws.Bool(true)
+			case "FULL_CONTROL":
+				publicACL.AllowPublicFullControl = aws.Bool(true)
+			}
+		}
+
+		// Authenticated users permissions
+		if granteeURI == "http://acs.amazonaws.com/groups/global/AuthenticatedUsers" {
+			hasAuthUser = true
+			switch permission {
+			case "READ":
+				authUserACL.AllowAuthenticatedUsersRead = aws.Bool(true)
+			case "WRITE":
+				authUserACL.AllowAuthenticatedUsersWrite = aws.Bool(true)
+			case "READ_ACP":
+				authUserACL.AllowAuthenticatedUsersReadAcp = aws.Bool(true)
+			case "WRITE_ACP":
+				authUserACL.AllowAuthenticatedUsersWriteAcp = aws.Bool(true)
+			case "FULL_CONTROL":
+				authUserACL.AllowAuthenticatedUsersFullControl = aws.Bool(true)
+			}
+		}
+
+		// Log delivery permissions
+		if granteeURI == "http://acs.amazonaws.com/groups/s3/LogDelivery" {
+			hasLogDelivery = true
+			switch permission {
+			case "WRITE":
+				logDeliveryACL.AllowLogDeliveryWrite = aws.Bool(true)
+			case "READ_ACP":
+				logDeliveryACL.AllowLogDeliveryReadAcp = aws.Bool(true)
+			}
 		}
 	}
 
-	return acls, ownerID, ownerName, nil
+	var acls []*s3fern.S3BucketAccessControl
+	if hasPublic {
+		acls = append(acls, publicACL)
+	}
+	if hasAuthUser {
+		acls = append(acls, authUserACL)
+	}
+	if hasLogDelivery {
+		acls = append(acls, logDeliveryACL)
+	}
+
+	return acls
 }
 
 // EnumerateS3Region enumerates a single public facing S3 bucket in a specific region

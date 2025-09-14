@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	waffern "github.com/Method-Security/methodaws/generated/go/waf"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/wafv2"
@@ -91,13 +92,18 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 		}
 
 		// Get the resources for the WAF
-		resources, err := getResources(ctx, wafClient, webACL.ARN)
-		if err != nil {
-			errors = append(errors, err.Error())
-			continue
+		resourceInfo := &waffern.WafResourceInfo{
+			Rules: rules,
 		}
 
-		// Create the WAF instance
+		// Add resource discovery from fronted resources
+		if lbRef := discoverLoadBalancerFromWebACL(ctx, wafClient, webACL.ARN, region); lbRef != nil {
+			resourceInfo.LoadBalancer = lbRef
+		}
+		if apiRef := discoverAPIGatewayFromWebACL(ctx, wafClient, webACL.ARN, region); apiRef != nil {
+			resourceInfo.ApiGateway = apiRef
+		}
+
 		waf := waffern.WafInstance{
 			Identification: &waffern.WafIdentificationInfo{
 				Arn:    aws.ToString(webACL.ARN),
@@ -109,10 +115,7 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 				Description:   webACL.Description,
 				DefaultAction: defaultAction,
 			},
-			Resources: &waffern.WafResourceInfo{
-				FrontedResources: resources,
-				Rules:            rules,
-			},
+			Resources: resourceInfo,
 		}
 		wafs = append(wafs, &waf)
 	}
@@ -175,38 +178,23 @@ func getRules(ctx context.Context, wafClient *wafv2.Client, scope types.Scope, w
 
 		statementJSONString := string(statementJSON)
 		ruleInfo := waffern.RuleInfo{
-			Name:     aws.ToString(rule.Name),
-			Priority: int(rule.Priority),
-			Statement: &waffern.StatementInfo{
-				Type:         getStatementType(rule.Statement),
-				RawStatement: &statementJSONString,
+			Identification: &waffern.RuleIdentificationInfo{
+				Name: aws.ToString(rule.Name),
 			},
-			Action:  actionInfo,
-			RawRule: string(ruleJSON),
+			Configuration: &waffern.RuleConfigurationInfo{
+				Priority: int(rule.Priority),
+				Statement: &waffern.StatementInfo{
+					Type:         getStatementType(rule.Statement),
+					RawStatement: &statementJSONString,
+				},
+				Action:  actionInfo,
+				RawRule: string(ruleJSON),
+			},
 		}
 		rules = append(rules, &ruleInfo)
 	}
 
 	return rules, &defaultActionType, errors
-}
-
-// getResources gets the resources for a given WebACL
-func getResources(ctx context.Context, wafClient *wafv2.Client, webACLArn *string) ([]*waffern.WafResource, error) {
-	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
-	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
-	if err != nil {
-		return nil, err
-	}
-
-	var resourceInfos []*waffern.WafResource
-	for _, arn := range listResourcesOutput.ResourceArns {
-		resourceInfo := waffern.WafResource{
-			Arn:  arn,
-			Type: getResourceTypeFromArn(arn),
-		}
-		resourceInfos = append(resourceInfos, &resourceInfo)
-	}
-	return resourceInfos, nil
 }
 
 // getActionType gets the action type for a given RuleAction
@@ -236,26 +224,6 @@ func getDefaultActionType(action *types.DefaultAction) waffern.ActionType {
 		return waffern.ActionTypeBlock
 	default:
 		return waffern.ActionTypeOther
-	}
-}
-
-// getResourceTypeFromArn gets the resource type for a given ARN
-func getResourceTypeFromArn(arn string) waffern.WafResourceType {
-	switch {
-	case strings.Contains(arn, "elasticloadbalancing") && strings.Contains(arn, "loadbalancer/app"):
-		return waffern.WafResourceTypeApplicationLoadBalancer
-	case strings.Contains(arn, "apigateway") && strings.Contains(arn, "/restapis/"):
-		return waffern.WafResourceTypeApiGatewayRestApi
-	case strings.Contains(arn, "appsync") && strings.Contains(arn, "apis"):
-		return waffern.WafResourceTypeAppsyncGraphqlApi
-	case strings.Contains(arn, "cognito-idp") && strings.Contains(arn, "userpool"):
-		return waffern.WafResourceTypeCognitoUserPool
-	case strings.Contains(arn, "apprunner") && strings.Contains(arn, "service"):
-		return waffern.WafResourceTypeAppRunnerService
-	case strings.Contains(arn, "verifiedaccess") && strings.Contains(arn, "instance"):
-		return waffern.WafResourceTypeVerifiedAccessInstance
-	default:
-		return waffern.WafResourceTypeOther
 	}
 }
 
@@ -295,4 +263,77 @@ func getStatementType(statement *types.Statement) waffern.StatementType {
 	default:
 		return waffern.StatementTypeOther
 	}
+}
+
+// Resource discovery functions
+func discoverLoadBalancerFromWebACL(ctx context.Context, wafClient *wafv2.Client, webACLArn *string, region string) *common.LoadBalancerReference {
+	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
+	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
+	if err != nil {
+		return nil
+	}
+
+	for _, arn := range listResourcesOutput.ResourceArns {
+		if strings.Contains(arn, "elasticloadbalancing") && strings.Contains(arn, "loadbalancer/app") {
+			// Extract load balancer name from ARN
+			lbName := extractLoadBalancerNameFromArn(arn)
+			lbType := common.LoadBalancerTypeApplication
+
+			if lbName != "" {
+				dnsName := ""
+				return &common.LoadBalancerReference{
+					Arn:     arn,
+					DnsName: &dnsName,
+					Region:  region,
+					Type:    lbType,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// discoverAPIGatewayFromWebACL discovers the API Gateway from the WebACL
+func discoverAPIGatewayFromWebACL(ctx context.Context, wafClient *wafv2.Client, webACLArn *string, region string) *common.ApiGatewayReference {
+	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
+	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
+	if err != nil {
+		return nil
+	}
+
+	for _, arn := range listResourcesOutput.ResourceArns {
+		if strings.Contains(arn, "apigateway") && strings.Contains(arn, "/restapis/") {
+			// Extract API Gateway ID from ARN
+			apiID := extractAPIGatewayIDFromArn(arn)
+
+			if apiID != "" {
+				return &common.ApiGatewayReference{
+					Arn:    arn,
+					ApiId:  &apiID,
+					Region: region,
+					Name:   nil,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Helper functions to extract resource identifiers from ARNs
+func extractLoadBalancerNameFromArn(arn string) string {
+	// Format: arn:aws:elasticloadbalancing:region:account:loadbalancer/app/name/id
+	parts := strings.Split(arn, "/")
+	if len(parts) >= 3 && parts[1] == "app" {
+		return parts[2]
+	}
+	return ""
+}
+
+func extractAPIGatewayIDFromArn(arn string) string {
+	// Format: arn:aws:apigateway:region::/restapis/api-id
+	parts := strings.Split(arn, "/")
+	if len(parts) >= 2 && parts[len(parts)-2] == "restapis" {
+		return parts[len(parts)-1]
+	}
+	return ""
 }

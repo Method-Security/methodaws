@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
+	common "github.com/Method-Security/methodaws/generated/go/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/apigatewayv2"
 	"github.com/aws/aws-sdk-go-v2/service/apigatewayv2/types"
@@ -104,7 +105,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 	}
 
 	// Get routes for this API with security info
-	routes, errs := getHTTPAPIRoutes(ctx, client, *api.ApiId)
+	routes, errs := getHTTPAPIRoutes(ctx, client, *api.ApiId, region)
 	errors = append(errors, errs...)
 
 	// Convert CORS configuration
@@ -130,7 +131,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 	}
 
 	// Get authorizers
-	authorizers, errs := getHTTPAPIAuthorizers(ctx, client, *api.ApiId)
+	_, errs = getHTTPAPIAuthorizers(ctx, client, *api.ApiId)
 	errors = append(errors, errs...)
 
 	// Get domain name certificates (similar to v1 but for HTTP API)
@@ -144,7 +145,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 	}
 
 	// Discover resource relationships
-	relatedResources, lambdaFunctions, cloudwatchLogs, iamRoles, errs := discoverV2ResourceRelationships(ctx, client, *api.ApiId, routes, region)
+	lambdaFunctions, cloudwatchLogs, iamRoles, loadBalancers, errs := discoverV2ResourceRelationships(ctx, client, *api.ApiId, routes, region)
 	errors = append(errors, errs...)
 
 	// Perform security analysis
@@ -177,17 +178,14 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 
 	// Create resource info
 	resources := &apigatewayfern.ApiGatewayResourceInfo{
-		Certificates:      certificates,
-		AccessLogSettings: accessLogSettings,
+		Certificates: certificates,
 		// V2 specific resources
-		Routes:            routes,
-		CorsConfiguration: corsConfig,
-		Authorizers:       authorizers,
-		// Resource relationships
-		RelatedResources: relatedResources,
-		LambdaFunctions:  lambdaFunctions,
-		CloudwatchLogs:   cloudwatchLogs,
-		IamRoles:         iamRoles,
+		Routes: routes,
+		// AWS Resource References (unidirectional links)
+		LambdaFunctions: lambdaFunctions,
+		CloudWatchLogs:  cloudwatchLogs,
+		IamRoles:        iamRoles,
+		LoadBalancers:   loadBalancers,
 		// Security analysis
 		SecurityAnalysis: securityAnalysis,
 	}
@@ -203,7 +201,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 }
 
 // getHTTPAPIRoutes retrieves routes for an HTTP API
-func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID string) ([]*apigatewayfern.Route, []string) {
+func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID, region string) ([]*apigatewayfern.Route, []string) {
 	var routes []*apigatewayfern.Route
 	var errors []string
 
@@ -227,7 +225,7 @@ func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID st
 				if err != nil {
 					errors = append(errors, err.Error())
 				} else {
-					integ, err := convertV2Integration(integrationResult)
+					integ, err := convertV2Integration(integrationResult, region)
 					if err != nil {
 						errors = append(errors, err.Error())
 					} else {
@@ -308,14 +306,17 @@ func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID st
 }
 
 // convertV2Integration converts AWS API Gateway v2 integration to Fern Integration with resource discovery
-func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput) (*apigatewayfern.Integration, error) {
+func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region string) (*apigatewayfern.Integration, error) {
 	switch integration.IntegrationType {
 	case types.IntegrationTypeHttp:
 		uri := aws.ToString(integration.IntegrationUri)
-		resourceRef := discoverResourceFromURI(uri)
+
+		// Create load balancer reference if it's a load balancer
+		loadBalancerRef := createLoadBalancerReference("", uri, region)
+
 		return apigatewayfern.NewIntegrationFromHttp(&apigatewayfern.HttpIntegration{
-			Uri:               uri,
-			ResourceReference: resourceRef,
+			Uri:          uri,
+			LoadBalancer: loadBalancerRef,
 		}), nil
 
 	case types.IntegrationTypeAws:
@@ -336,10 +337,13 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput) (*apig
 
 	case types.IntegrationTypeAwsProxy:
 		arn := aws.ToString(integration.IntegrationUri)
-		resourceRef := discoverResourceFromArn(arn)
+
+		// Create Lambda reference for AWS Proxy integrations (typically Lambda)
+		lambdaRef := createLambdaReference(arn, region)
+
 		return apigatewayfern.NewIntegrationFromAwsProxy(&apigatewayfern.AwsProxyIntegration{
-			Arn:               arn,
-			ResourceReference: resourceRef,
+			Arn:    arn,
+			Lambda: lambdaRef,
 		}), nil
 
 	case types.IntegrationTypeMock:
@@ -472,117 +476,47 @@ func getHTTPAPIAccessLogSettings(ctx context.Context, client *apigatewayv2.Clien
 }
 
 // discoverV2ResourceRelationships discovers related AWS resources for an HTTP API
-func discoverV2ResourceRelationships(ctx context.Context, client *apigatewayv2.Client, apiID string, routes []*apigatewayfern.Route, region string) ([]*apigatewayfern.ResourceReference, []*apigatewayfern.ResourceReference, []*apigatewayfern.ResourceReference, []*apigatewayfern.ResourceReference, []string) {
-	var relatedResources []*apigatewayfern.ResourceReference
-	var lambdaFunctions []*apigatewayfern.ResourceReference
-	var cloudwatchLogs []*apigatewayfern.ResourceReference
-	var iamRoles []*apigatewayfern.ResourceReference
+func discoverV2ResourceRelationships(ctx context.Context, client *apigatewayv2.Client, apiID string, routes []*apigatewayfern.Route, region string) ([]*apigatewayfern.LambdaReference, []*common.CloudWatchLogReference, []*common.IamRoleReference, []*common.LoadBalancerReference, []string) {
+	var lambdaFunctions []*apigatewayfern.LambdaReference
+	var cloudwatchLogs []*common.CloudWatchLogReference
+	var iamRoles []*common.IamRoleReference
+	var loadBalancers []*common.LoadBalancerReference
 	var errors []string
 
 	// Track discovered resources to avoid duplicates
-	discovered := make(map[string]bool)
+	discoveredLambdas := make(map[string]bool)
+	discoveredLogs := make(map[string]bool)
+	discoveredRoles := make(map[string]bool)
+	discoveredLBs := make(map[string]bool)
 
 	// Discover resources from route integrations
 	for _, route := range routes {
 		if route.Integration != nil {
-			if route.Integration.AwsProxy != nil {
-				arn := route.Integration.AwsProxy.Arn
-				if !discovered[arn] && arn != "" {
-					resourceType := identifyResourceType(arn, "")
-					resource := &apigatewayfern.ResourceReference{
-						Arn:        &arn,
-						Type:       resourceType,
-						Region:     &region,
-						Name:       extractResourceNameFromArn(arn),
-						ResourceId: extractResourceIDFromArn(arn),
-					}
-
-					// Categorize by type
-					switch resourceType {
-					case apigatewayfern.ResourceTypeLambdaFunction:
-						lambdaFunctions = append(lambdaFunctions, resource)
-					case apigatewayfern.ResourceTypeIamRole:
-						iamRoles = append(iamRoles, resource)
-					default:
-						relatedResources = append(relatedResources, resource)
-					}
-					discovered[arn] = true
+			// AWS Proxy integrations (typically Lambda)
+			if route.Integration.AwsProxy != nil && route.Integration.AwsProxy.Lambda != nil {
+				lambda := route.Integration.AwsProxy.Lambda
+				if !discoveredLambdas[lambda.Arn] {
+					lambdaFunctions = append(lambdaFunctions, lambda)
+					discoveredLambdas[lambda.Arn] = true
 				}
 			}
-			if route.Integration.Aws != nil {
-				arn := route.Integration.Aws.Arn
-				if !discovered[arn] && arn != "" {
-					resourceType := identifyResourceType(arn, "")
-					resource := &apigatewayfern.ResourceReference{
-						Arn:        &arn,
-						Type:       resourceType,
-						Region:     &region,
-						Name:       extractResourceNameFromArn(arn),
-						ResourceId: extractResourceIDFromArn(arn),
-					}
 
-					// Categorize by type
-					switch resourceType {
-					case apigatewayfern.ResourceTypeLambdaFunction:
-						lambdaFunctions = append(lambdaFunctions, resource)
-					case apigatewayfern.ResourceTypeIamRole:
-						iamRoles = append(iamRoles, resource)
-					default:
-						relatedResources = append(relatedResources, resource)
-					}
-					discovered[arn] = true
-				}
-			}
-			// Discover HTTP endpoints and other URI-based integrations
-			if route.Integration.Http != nil || route.Integration.HttpProxy != nil {
-				var uri string
-				if route.Integration.Http != nil {
-					uri = route.Integration.Http.Uri
-				} else if route.Integration.HttpProxy != nil {
-					uri = route.Integration.HttpProxy.Uri
-				}
-
-				if !discovered[uri] && uri != "" {
-					resourceType := identifyResourceType("", uri)
-					resourceName := extractResourceNameFromURI(uri)
-					resourceID := extractResourceIDFromURI(uri)
-
-					resource := &apigatewayfern.ResourceReference{
-						Uri:        &uri, // For HTTP endpoints, use URI
-						Type:       resourceType,
-						Region:     &region,
-						Name:       resourceName,
-						ResourceId: resourceID,
-					}
-
-					// Categorize by type
-					switch resourceType {
-					case apigatewayfern.ResourceTypeEc2Instance:
-						relatedResources = append(relatedResources, resource)
-					case apigatewayfern.ResourceTypeApplicationLoadBalancer,
-						apigatewayfern.ResourceTypeNetworkLoadBalancer,
-						apigatewayfern.ResourceTypeLoadBalancer:
-						relatedResources = append(relatedResources, resource)
-					default:
-						relatedResources = append(relatedResources, resource)
-					}
-					discovered[uri] = true
+			// HTTP integrations (potentially load balancers)
+			if route.Integration.Http != nil && route.Integration.Http.LoadBalancer != nil {
+				lb := route.Integration.Http.LoadBalancer
+				if !discoveredLBs[lb.Arn] {
+					loadBalancers = append(loadBalancers, lb)
+					discoveredLBs[lb.Arn] = true
 				}
 			}
 		}
 
-		// Discover IAM roles from authorizers
+		// Check for IAM roles in authorizers
 		if route.Authorizer != nil && route.Authorizer.Credentials != nil {
-			arn := *route.Authorizer.Credentials
-			if !discovered[arn] && isIAMRole(arn) {
-				iamRoles = append(iamRoles, &apigatewayfern.ResourceReference{
-					Arn:        &arn,
-					Type:       apigatewayfern.ResourceTypeIamRole,
-					Region:     &region,
-					Name:       extractResourceNameFromArn(arn),
-					ResourceId: extractResourceIDFromArn(arn),
-				})
-				discovered[arn] = true
+			roleRef := createIamRoleReference(*route.Authorizer.Credentials, region)
+			if roleRef != nil && !discoveredRoles[roleRef.Arn] {
+				iamRoles = append(iamRoles, roleRef)
+				discoveredRoles[roleRef.Arn] = true
 			}
 		}
 	}
@@ -592,25 +526,14 @@ func discoverV2ResourceRelationships(ctx context.Context, client *apigatewayv2.C
 	if err == nil {
 		for _, stage := range stages.Items {
 			if stage.AccessLogSettings != nil && stage.AccessLogSettings.DestinationArn != nil {
-				arn := *stage.AccessLogSettings.DestinationArn
-				if !discovered[arn] && isCloudWatchLogGroup(arn) {
-					cloudwatchLogs = append(cloudwatchLogs, &apigatewayfern.ResourceReference{
-						Arn:        &arn,
-						Type:       apigatewayfern.ResourceTypeCloudwatchLogGroup,
-						Region:     &region,
-						Name:       extractResourceNameFromArn(arn),
-						ResourceId: extractResourceIDFromArn(arn),
-					})
-					discovered[arn] = true
+				logRef := createCloudWatchLogReference(*stage.AccessLogSettings.DestinationArn, region)
+				if logRef != nil && !discoveredLogs[logRef.Arn] {
+					cloudwatchLogs = append(cloudwatchLogs, logRef)
+					discoveredLogs[logRef.Arn] = true
 				}
 			}
 		}
 	}
 
-	// Add all discovered resources to relatedResources for consolidated view
-	relatedResources = append(relatedResources, lambdaFunctions...)
-	relatedResources = append(relatedResources, cloudwatchLogs...)
-	relatedResources = append(relatedResources, iamRoles...)
-
-	return relatedResources, lambdaFunctions, cloudwatchLogs, iamRoles, errors
+	return lambdaFunctions, cloudwatchLogs, iamRoles, loadBalancers, errors
 }
