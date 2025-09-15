@@ -165,11 +165,11 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 
 	// Create configuration info
 	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
-		Version:                   apigatewayfern.ApiGatewayVersionV2,
-		Description:               api.Description,
-		CreatedTime:               api.CreatedDate,
-		AccessLogSettings:         accessLogSettings,
-		Security:                  securityAnalysis,
+		Version:           apigatewayfern.ApiGatewayVersionV2,
+		Description:       api.Description,
+		CreatedTime:       api.CreatedDate,
+		AccessLogSettings: accessLogSettings,
+		Security:          securityAnalysis,
 		// V2 specific configuration
 		ApiEndpoint:               &apiEndpoint,
 		ProtocolType:              &protocolType,
