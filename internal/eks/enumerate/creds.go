@@ -86,6 +86,7 @@ func CredsEks(ctx context.Context, cfg aws.Config, clusterName string) (*eksfern
 		CaCert:     &caCert,
 		Expiration: &expiration,
 		ClusterArn: fmt.Sprintf("arn:aws:eks:%s:%s:cluster/%s", cfg.Region, aws.ToString(accountID), clusterName),
+		Region:     cfg.Region,
 	}
 
 	report := eksfern.EksCredentialReport{
