@@ -131,69 +131,7 @@ func isHTTPEndpoint(uri string) bool {
 	return strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://")
 }
 
-func identifyResourceType(arn, uri string) apigatewayfern.ResourceType {
-	if arn != "" {
-		if isLambdaFunction(arn) {
-			return apigatewayfern.ResourceTypeLambdaFunction
-		}
-		if isIAMRole(arn) {
-			return apigatewayfern.ResourceTypeIamRole
-		}
-		if isCloudWatchLogGroup(arn) {
-			return apigatewayfern.ResourceTypeCloudwatchLogGroup
-		}
-		if isSNSTopic(arn) {
-			return apigatewayfern.ResourceTypeSnsTopic
-		}
-		if isSQSQueue(arn) {
-			return apigatewayfern.ResourceTypeSqsQueue
-		}
-		if isKinesisStream(arn) {
-			return apigatewayfern.ResourceTypeKinesisStream
-		}
-		if isLoadBalancer(arn) {
-			if strings.Contains(arn, ":loadbalancer/app/") {
-				return apigatewayfern.ResourceTypeApplicationLoadBalancer
-			} else if strings.Contains(arn, ":loadbalancer/net/") {
-				return apigatewayfern.ResourceTypeNetworkLoadBalancer
-			}
-			return apigatewayfern.ResourceTypeLoadBalancer
-		}
-		if strings.Contains(arn, ":s3:") {
-			return apigatewayfern.ResourceTypeS3Bucket
-		}
-		if strings.Contains(arn, ":ecs:") && strings.Contains(arn, ":service/") {
-			return apigatewayfern.ResourceTypeEcsService
-		}
-		if isDynamoDBTable(arn) {
-			return apigatewayfern.ResourceTypeDynamodbTable
-		}
-		if isEventBridge(arn) {
-			return apigatewayfern.ResourceTypeEventbridgeRule
-		}
-		if isWAFWebACL(arn) {
-			return apigatewayfern.ResourceTypeWafWebAcl
-		}
-		if isCognitoUserPool(arn) {
-			return apigatewayfern.ResourceTypeCognitoUserPool
-		}
-		if isVPCLink(arn) {
-			return apigatewayfern.ResourceTypeVpcLink
-		}
-	}
-
-	if uri != "" {
-		if isHTTPEndpoint(uri) {
-			// Try to identify if it's pointing to EC2 instances
-			if isEC2Endpoint(uri) {
-				return apigatewayfern.ResourceTypeEc2Instance
-			}
-			return apigatewayfern.ResourceTypeHttpEndpoint
-		}
-	}
-
-	return apigatewayfern.ResourceTypeOther
-}
+// Helper function to identify resource type (removed - no longer used in simplified schema)
 
 // createLambdaReference creates a Lambda reference from an ARN
 func createLambdaReference(arn, region string) *apigatewayfern.LambdaReference {
@@ -486,4 +424,58 @@ func calculateSecurityScore(analysis *apigatewayfern.ApiGatewaySecurity) float64
 	}
 
 	return score
+}
+
+// createRouteResources creates route-specific resource links from integration data
+func createRouteResources(integration *apigatewayfern.Integration, region string) *apigatewayfern.RouteResources {
+	if integration == nil {
+		return nil
+	}
+
+	links := &apigatewayfern.RouteResources{}
+
+	// Extract resources based on integration type
+	switch {
+	case integration.AwsProxy != nil:
+		// Lambda function for AWS Proxy integration
+		if arn := integration.AwsProxy.Arn; arn != "" && isLambdaFunction(arn) {
+			links.Lambda = createLambdaReference(arn, region)
+		}
+		// IAM role might also be involved
+		if arn := integration.AwsProxy.Arn; arn != "" && isIAMRole(arn) {
+			links.IamRole = createIamRoleReference(arn, region)
+		}
+	
+	case integration.Http != nil:
+		// Load balancer for HTTP integration
+		if uri := integration.Http.Uri; uri != "" && (strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.")) {
+			links.LoadBalancer = createLoadBalancerReference("", uri, region)
+		}
+		
+	case integration.Aws != nil:
+		// Various AWS services for AWS integration
+		if arn := integration.Aws.Arn; arn != "" {
+			if isLambdaFunction(arn) {
+				links.Lambda = createLambdaReference(arn, region)
+			} else if isIAMRole(arn) {
+				links.IamRole = createIamRoleReference(arn, region)
+			} else if isCloudWatchLogGroup(arn) {
+				links.CloudWatchLog = createCloudWatchLogReference(arn, region)
+			}
+		}
+	
+	case integration.HttpProxy != nil:
+		// Similar to HTTP but might point to different resources
+		if uri := integration.HttpProxy.Uri; uri != "" && (strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.")) {
+			links.LoadBalancer = createLoadBalancerReference("", uri, region)
+		}
+	}
+
+	// Return nil if no resources were found
+	if links.Lambda == nil && links.LoadBalancer == nil && links.CloudWatchLog == nil && 
+	   links.IamRole == nil && links.Vpc == nil && len(links.SecurityGroups) == 0 {
+		return nil
+	}
+
+	return links
 }

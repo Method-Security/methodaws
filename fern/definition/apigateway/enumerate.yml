@@ -36,43 +36,7 @@ types:
     enum:
       - TLS_1_0
       - TLS_1_2
-  MutualTlsAuthenticationFailureType:
-    enum:
-      - CLIENT_CERTIFICATE_VERIFICATION
-      - CLIENT_CERTIFICATE_EXPIRED
-      - CLIENT_CERTIFICATE_INVALID
-  ResourceType:
-    enum:
-      - LAMBDA_FUNCTION
-      - CLOUDWATCH_LOG_GROUP
-      - IAM_ROLE
-      - WAF_WEB_ACL
-      - COGNITO_USER_POOL
-      - VPC_LINK
-      - LOAD_BALANCER
-      - ECS_SERVICE
-      - S3_BUCKET
-      - EC2_INSTANCE
-      - APPLICATION_LOAD_BALANCER
-      - NETWORK_LOAD_BALANCER
-      - SNS_TOPIC
-      - SQS_QUEUE
-      - KINESIS_STREAM
-      - DYNAMODB_TABLE
-      - EVENTBRIDGE_RULE
-      - HTTP_ENDPOINT
-      - OTHER
 # Supporting Types
-  ResourceReference:
-    properties:
-      arn: optional<string>
-      uri: optional<string>
-      resourceId: optional<string>
-      type: ResourceType
-      region: optional<string>
-      name: optional<string>
-      description: optional<string>
-# Extended Lambda Reference (specific to API Gateway)
   LambdaReference:
     extends: common.LambdaReference
     properties:
@@ -80,19 +44,15 @@ types:
   AwsProxyIntegration:
     properties:
       arn: string
-      lambda: optional<LambdaReference>
   AwsIntegration:
     properties:
       arn: string
-      resourceReference: optional<ResourceReference>
   HttpIntegration:
     properties: 
       uri: string
-      loadBalancer: optional<common.LoadBalancerReference>
   HttpProxyIntegration:
     properties: 
       uri: string
-      resourceReference: optional<ResourceReference>
   MockIntegration:
     properties:
       responseTemplates: optional<map<string, string>>
@@ -129,7 +89,6 @@ types:
     properties:
       destinationArn: string
       format: optional<string>
-      cloudWatchLog: optional<common.CloudWatchLogReference>
   CorsConfiguration:
     properties:
       allowCredentials: optional<boolean>
@@ -142,6 +101,14 @@ types:
     properties:
       truststoreUri: string
       truststoreVersion: optional<string>
+  RouteResources:
+    properties:
+      lambda: optional<LambdaReference>
+      loadBalancer: optional<common.LoadBalancerReference>
+      cloudWatchLog: optional<common.CloudWatchLogReference>
+      iamRole: optional<common.IamRoleReference>
+      vpc: optional<common.VpcReference>
+      securityGroups: optional<list<common.SecurityGroupReference>>
   Route:
     properties:
       path: string
@@ -151,6 +118,7 @@ types:
       authorizer: optional<Authorizer>
       apiKeyRequired: optional<boolean>
       throttle: optional<ThrottleSettings>
+      resources: optional<RouteResources>
   ApiGatewaySecurity:
     properties:
       hasWafIntegration: boolean
@@ -176,6 +144,7 @@ types:
       createdTime: optional<datetime>
       endpointConfiguration: optional<EndpointType>
       accessLogSettings: optional<AccessLogSettings>
+      security: optional<ApiGatewaySecurity>
       # V1 (REST API) specific configuration
       baseUrl: optional<string>
       apiKeySource: optional<string>
@@ -195,21 +164,11 @@ types:
   ApiGatewayResourceInfo:
     properties:
       certificates: optional<list<Certificate>>
-      # V1 (REST API) specific resources
-      paths: optional<list<Route>>
       apiKeys: optional<list<string>>
-      # V2 (HTTP API) specific resources
       routes: optional<list<Route>>
-      # AWS Resource References (unidirectional links)
-      vpc: optional<common.VpcReference>
-      lambdaFunctions: optional<list<LambdaReference>>
-      cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
-      iamRoles: optional<list<common.IamRoleReference>>
-      loadBalancers: optional<list<common.LoadBalancerReference>>
-      securityGroups: optional<list<common.SecurityGroupReference>>
-      # Security analysis
-      securityAnalysis: optional<ApiGatewaySecurity>
-# Main API Gateway structs
+      globalVpc: optional<common.VpcReference>
+      globalSecurityGroups: optional<list<common.SecurityGroupReference>>
+# Main API Gateway Structs
   ApiGatewayInstance:
     properties:
       identification: ApiGatewayIdentificationInfo

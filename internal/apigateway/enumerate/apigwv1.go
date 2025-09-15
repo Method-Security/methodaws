@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
-	common "github.com/Method-Security/methodaws/generated/go/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/apigateway"
 	"github.com/aws/aws-sdk-go-v2/service/apigateway/types"
@@ -126,8 +125,7 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	}
 
 	// Discover resource relationships
-	lambdaFunctions, cloudwatchLogs, iamRoles, loadBalancers, errs := discoverV1ResourceRelationships(ctx, client, *api.Id, routes, region)
-	errors = append(errors, errs...)
+	// Resources are now nested within routes, no need for separate discovery
 
 	// Perform security analysis
 	securityAnalysis := analyzeAPISecurity(routes, certificates, accessLogSettings, nil, apiKeys)
@@ -156,6 +154,8 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 		Description:           api.Description,
 		CreatedTime:           api.CreatedDate,
 		EndpointConfiguration: endpointType,
+		AccessLogSettings:     accessLogSettings,
+		Security:              securityAnalysis,
 		// V1 specific configuration
 		BaseUrl:                &baseURL,
 		ApiKeySource:           apiKeySource,
@@ -167,16 +167,8 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	// Create resource info
 	resources := &apigatewayfern.ApiGatewayResourceInfo{
 		Certificates: certificates,
-		// V1 specific resources
-		Paths:   routes,
-		ApiKeys: apiKeys,
-		// AWS Resource References (unidirectional links)
-		LambdaFunctions: lambdaFunctions,
-		CloudWatchLogs:  cloudwatchLogs,
-		IamRoles:        iamRoles,
-		LoadBalancers:   loadBalancers,
-		// Security analysis
-		SecurityAnalysis: securityAnalysis,
+		Routes:       routes,
+		ApiKeys:      apiKeys,
 	}
 
 	// Create ApiGatewayInstance
@@ -265,13 +257,17 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 				}
 			}
 
+			// Create route-specific resource links
+			resources := createRouteResources(integration, region)
+
 			route := &apigatewayfern.Route{
-				Path:           *resource.Path,
-				Method:         methodName,
-				Integration:    integration,
-				Authorization:  authType,
-				Authorizer:     authorizer,
+				Path:          *resource.Path,
+				Method:        methodName,
+				Integration:   integration,
+				Authorization: authType,
+				Authorizer:    authorizer,
 				ApiKeyRequired: method.ApiKeyRequired,
+				Resources:     resources,
 			}
 			routes = append(routes, route)
 		}
@@ -288,32 +284,24 @@ func convertV1Integration(methodIntegration *types.Integration, region string) (
 			return nil, fmt.Errorf("HTTP integration missing URI")
 		}
 
-		// Create load balancer reference if it's a load balancer
-		loadBalancerRef := createLoadBalancerReference("", *methodIntegration.Uri, region)
-
 		return apigatewayfern.NewIntegrationFromHttp(&apigatewayfern.HttpIntegration{
-			Uri:          *methodIntegration.Uri,
-			LoadBalancer: loadBalancerRef,
+			Uri: *methodIntegration.Uri,
 		}), nil
 
 	case types.IntegrationTypeAws:
 		if methodIntegration.Uri == nil {
 			return nil, fmt.Errorf("AWS integration missing ARN")
 		}
-		resourceRef := discoverResourceFromArn(*methodIntegration.Uri)
 		return apigatewayfern.NewIntegrationFromAws(&apigatewayfern.AwsIntegration{
-			Arn:               *methodIntegration.Uri,
-			ResourceReference: resourceRef,
+			Arn: *methodIntegration.Uri,
 		}), nil
 
 	case types.IntegrationTypeHttpProxy:
 		if methodIntegration.Uri == nil {
 			return nil, fmt.Errorf("HTTP Proxy integration missing URI")
 		}
-		resourceRef := discoverResourceFromURI(*methodIntegration.Uri)
 		return apigatewayfern.NewIntegrationFromHttpProxy(&apigatewayfern.HttpProxyIntegration{
-			Uri:               *methodIntegration.Uri,
-			ResourceReference: resourceRef,
+			Uri: *methodIntegration.Uri,
 		}), nil
 
 	case types.IntegrationTypeAwsProxy:
@@ -321,12 +309,8 @@ func convertV1Integration(methodIntegration *types.Integration, region string) (
 			return nil, fmt.Errorf("AWS Proxy integration missing ARN")
 		}
 
-		// Create Lambda reference for AWS Proxy integrations (typically Lambda)
-		lambdaRef := createLambdaReference(*methodIntegration.Uri, region)
-
 		return apigatewayfern.NewIntegrationFromAwsProxy(&apigatewayfern.AwsProxyIntegration{
-			Arn:    *methodIntegration.Uri,
-			Lambda: lambdaRef,
+			Arn: *methodIntegration.Uri,
 		}), nil
 
 	case types.IntegrationTypeMock:
@@ -448,112 +432,12 @@ func getAccessLogSettings(stage types.Stage, region string) (*apigatewayfern.Acc
 		Format:         stage.AccessLogSettings.Format,
 	}
 
-	// Create CloudWatch log reference if it's a log group
-	if isCloudWatchLogGroup(*stage.AccessLogSettings.DestinationArn) {
-		settings.CloudWatchLog = createCloudWatchLogReference(*stage.AccessLogSettings.DestinationArn, region)
-	}
+	// CloudWatch log reference removed from AccessLogSettings - now handled at route level
 
 	return settings, nil
 }
 
-// discoverV1ResourceRelationships discovers related AWS resources for a REST API
-func discoverV1ResourceRelationships(ctx context.Context, client *apigateway.Client, apiID string, routes []*apigatewayfern.Route, region string) ([]*apigatewayfern.LambdaReference, []*common.CloudWatchLogReference, []*common.IamRoleReference, []*common.LoadBalancerReference, []string) {
-	var lambdaFunctions []*apigatewayfern.LambdaReference
-	var cloudwatchLogs []*common.CloudWatchLogReference
-	var iamRoles []*common.IamRoleReference
-	var loadBalancers []*common.LoadBalancerReference
-	var errors []string
-
-	// Track discovered resources to avoid duplicates
-	discoveredLambdas := make(map[string]bool)
-	discoveredLogs := make(map[string]bool)
-	discoveredRoles := make(map[string]bool)
-	discoveredLBs := make(map[string]bool)
-
-	// Discover resources from route integrations
-	for _, route := range routes {
-		if route.Integration != nil {
-			// AWS Proxy integrations (typically Lambda)
-			if route.Integration.AwsProxy != nil && route.Integration.AwsProxy.Lambda != nil {
-				lambda := route.Integration.AwsProxy.Lambda
-				if !discoveredLambdas[lambda.Arn] {
-					lambdaFunctions = append(lambdaFunctions, lambda)
-					discoveredLambdas[lambda.Arn] = true
-				}
-			}
-
-			// HTTP integrations (potentially load balancers)
-			if route.Integration.Http != nil && route.Integration.Http.LoadBalancer != nil {
-				lb := route.Integration.Http.LoadBalancer
-				if !discoveredLBs[lb.Arn] {
-					loadBalancers = append(loadBalancers, lb)
-					discoveredLBs[lb.Arn] = true
-				}
-			}
-		}
-
-		// Check for IAM roles in authorizers
-		if route.Authorizer != nil && route.Authorizer.Credentials != nil {
-			roleRef := createIamRoleReference(*route.Authorizer.Credentials, region)
-			if roleRef != nil && !discoveredRoles[roleRef.Arn] {
-				iamRoles = append(iamRoles, roleRef)
-				discoveredRoles[roleRef.Arn] = true
-			}
-		}
-	}
-
-	// Discover CloudWatch Log Groups from access log settings
-	stages, err := client.GetStages(ctx, &apigateway.GetStagesInput{RestApiId: &apiID})
-	if err == nil {
-		for _, stage := range stages.Item {
-			if stage.AccessLogSettings != nil && stage.AccessLogSettings.DestinationArn != nil {
-				logRef := createCloudWatchLogReference(*stage.AccessLogSettings.DestinationArn, region)
-				if logRef != nil && !discoveredLogs[logRef.Arn] {
-					cloudwatchLogs = append(cloudwatchLogs, logRef)
-					discoveredLogs[logRef.Arn] = true
-				}
-			}
-		}
-	}
-
-	return lambdaFunctions, cloudwatchLogs, iamRoles, loadBalancers, errors
-}
-
-// discoverResourceFromArn extracts detailed resource information from an ARN
-func discoverResourceFromArn(arn string) *apigatewayfern.ResourceReference {
-	if arn == "" {
-		return nil
-	}
-
-	resourceType := identifyResourceType(arn, "")
-	resourceName := extractResourceNameFromArn(arn)
-	resourceID := extractResourceIDFromArn(arn)
-
-	return &apigatewayfern.ResourceReference{
-		Type:       resourceType,
-		Arn:        &arn,
-		ResourceId: resourceID,
-		Name:       resourceName,
-	}
-}
-
-// discoverResourceFromURI extracts detailed resource information from a URI
-func discoverResourceFromURI(uri string) *apigatewayfern.ResourceReference {
-	if uri == "" {
-		return nil
-	}
-
-	resourceType := identifyResourceType("", uri)
-	resourceName := extractResourceNameFromURI(uri)
-	resourceID := extractResourceIDFromURI(uri)
-
-	return &apigatewayfern.ResourceReference{
-		Type:       resourceType,
-		Uri:        &uri,
-		ResourceId: resourceID,
-		Name:       resourceName,
-	}
-}
+// Note: Resource discovery functions removed - resources now nested directly under routes
 
 // extractResourceIDFromArn extracts resource ID from ARN
 func extractResourceIDFromArn(arn string) *string {
