@@ -71,17 +71,7 @@ func convertInt32PtrToIntPtr(val *int32) *int {
 	return &converted
 }
 
-func convertStringPtrToSlice(val *string) []string {
-	if val == nil {
-		return nil
-	}
-	return []string{*val}
-}
-
 // Helper functions for resource identification
-func isLambdaFunction(arn string) bool {
-	return strings.Contains(arn, ":lambda:")
-}
 
 func isIAMRole(arn string) bool {
 	return strings.Contains(arn, ":iam:") && strings.Contains(arn, ":role/")
@@ -91,29 +81,7 @@ func isCloudWatchLogGroup(arn string) bool {
 	return strings.Contains(arn, ":logs:") && strings.Contains(arn, ":log-group:")
 }
 
-func isLoadBalancer(arn string) bool {
-	return strings.Contains(arn, ":elasticloadbalancing:")
-}
-
 // Helper function to identify resource type (removed - no longer used in simplified schema)
-
-// createLambdaReference creates a Lambda reference from an ARN
-func createLambdaReference(arn, region string) *apigatewayfern.LambdaReference {
-	if !isLambdaFunction(arn) {
-		return nil
-	}
-
-	functionName := extractResourceNameFromArn(arn)
-	if functionName == nil {
-		return nil
-	}
-
-	return &apigatewayfern.LambdaReference{
-		Arn:          arn,
-		FunctionName: functionName,
-		Region:       region,
-	}
-}
 
 // createIamRoleReference creates an IAM role reference from an ARN
 func createIamRoleReference(arn, region string) *common.IamRoleReference {
@@ -151,33 +119,6 @@ func createCloudWatchLogReference(arn, region string) *common.CloudWatchLogRefer
 	}
 }
 
-// createLoadBalancerReference creates a load balancer reference from an ARN or URI
-func createLoadBalancerReference(arn, uri, region string) *common.LoadBalancerReference {
-	if arn != "" && isLoadBalancer(arn) {
-		dnsName := ""
-		// Extract DNS name if available in URI
-		if uri != "" {
-			if name := extractResourceNameFromURI(uri); name != nil {
-				dnsName = *name
-			}
-		}
-
-		lbType := "ALB"
-		if strings.Contains(arn, ":loadbalancer/net/") {
-			lbType = "NLB"
-		}
-
-		return &common.LoadBalancerReference{
-			Arn:     arn,
-			DnsName: &dnsName,
-			Region:  region,
-			Type:    common.LoadBalancerType(lbType),
-		}
-	}
-
-	return nil
-}
-
 func extractResourceNameFromArn(arn string) *string {
 	if arn == "" {
 		return nil
@@ -203,54 +144,16 @@ func extractResourceNameFromArn(arn string) *string {
 	return nil
 }
 
-// extractResourceNameFromURI extracts a meaningful name from a URI
-func extractResourceNameFromURI(uri string) *string {
-	if uri == "" {
-		return nil
-	}
-
-	// For EC2 public DNS names
-	if strings.Contains(uri, ".compute.amazonaws.com") {
-		// Extract instance ID or public DNS
-		if strings.Contains(uri, "ec2-") {
-			parts := strings.Split(uri, ".")
-			for _, part := range parts {
-				if strings.HasPrefix(part, "ec2-") {
-					return &part
-				}
-			}
-		}
-	}
-
-	// For load balancers
-	if strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.") {
-		parts := strings.Split(uri, ".")
-		if len(parts) > 0 && parts[0] != "" {
-			// Remove protocol if present
-			name := strings.TrimPrefix(parts[0], "https://")
-			name = strings.TrimPrefix(name, "http://")
-			return &name
-		}
-	}
-
-	// For private IPs, use the whole URI as name
-	if strings.Contains(uri, "://10.") || strings.Contains(uri, "://172.") || strings.Contains(uri, "://192.168.") {
-		return &uri
-	}
-
-	// Default: extract host from URI
+// extractDNSNameFromURI extracts DNS name from URI
+func extractDNSNameFromURI(uri string) string {
 	if strings.Contains(uri, "://") {
 		parts := strings.Split(uri, "://")
 		if len(parts) > 1 {
 			host := strings.Split(parts[1], "/")[0]
-			host = strings.Split(host, ":")[0] // Remove port if present
-			if host != "" {
-				return &host
-			}
+			return strings.Split(host, ":")[0] // Remove port if present
 		}
 	}
-
-	return &uri
+	return uri
 }
 
 // analyzeAPISecurity performs security analysis on API Gateway configurations
@@ -282,18 +185,22 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 		}
 
 		// Count open endpoints (no auth required)
-		if route.Authorization == nil || *route.Authorization == apigatewayfern.AuthorizationTypeNone {
+		if route.Configuration == nil || route.Configuration.Authorization == nil ||
+			*route.Configuration.Authorization == apigatewayfern.AuthorizationTypeNone {
 			analysis.OpenEndpoints++
-			analysis.HighRiskRoutes = append(analysis.HighRiskRoutes, route.Method+" "+route.Path)
+			if route.Identification != nil {
+				analysis.HighRiskRoutes = append(analysis.HighRiskRoutes,
+					route.Identification.Method+" "+route.Identification.Path)
+			}
 		}
 
 		// Track authentication methods
-		if route.Authorization != nil {
-			authMethods[*route.Authorization] = true
+		if route.Configuration != nil && route.Configuration.Authorization != nil {
+			authMethods[*route.Configuration.Authorization] = true
 		}
 
 		// Check for throttling
-		if route.Throttle != nil {
+		if route.Configuration != nil && route.Configuration.Throttle != nil {
 			analysis.HasThrottling = true
 		}
 	}
@@ -371,54 +278,38 @@ func calculateSecurityScore(analysis *apigatewayfern.ApiGatewaySecurity) float64
 	return score
 }
 
-// createRouteResources creates route-specific resource links from integration data
-func createRouteResources(integration *apigatewayfern.Integration, region string) *apigatewayfern.RouteResources {
+// createRouteResources creates route-specific resource links from integration data (excluding integration itself)
+func createRouteResources(integration *apigatewayfern.Integration, region string) *apigatewayfern.RouteResourceInfo {
 	if integration == nil {
 		return nil
 	}
 
-	links := &apigatewayfern.RouteResources{}
+	links := &apigatewayfern.RouteResourceInfo{}
 
-	// Extract resources based on integration type
-	switch {
-	case integration.AwsProxy != nil:
-		// Lambda function for AWS Proxy integration
-		if arn := integration.AwsProxy.Arn; arn != "" && isLambdaFunction(arn) {
-			links.Lambda = createLambdaReference(arn, region)
-		}
-		// IAM role might also be involved
-		if arn := integration.AwsProxy.Arn; arn != "" && isIAMRole(arn) {
-			links.IamRole = createIamRoleReference(arn, region)
+	// Extract resources based on integration type and backend
+	switch integration.Type {
+	case "aws_proxy":
+		if awsProxy := integration.AwsProxy; awsProxy != nil && awsProxy.Backend != nil {
+			// Set execution role if available
+			links.ExecutionRole = createIamRoleReference(awsProxy.Backend.Arn, region)
 		}
 
-	case integration.Http != nil:
-		// Load balancer for HTTP integration
-		if uri := integration.Http.Uri; uri != "" && (strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.")) {
-			links.LoadBalancer = createLoadBalancerReference("", uri, region)
-		}
+	case "vpc_link":
+		// VPC Link details are stored in integration.backend only, no duplication in route resources
+		// Only set VPC and security group references if needed for the route itself
 
-	case integration.Aws != nil:
-		// Various AWS services for AWS integration
-		if arn := integration.Aws.Arn; arn != "" {
-			if isLambdaFunction(arn) {
-				links.Lambda = createLambdaReference(arn, region)
-			} else if isIAMRole(arn) {
-				links.IamRole = createIamRoleReference(arn, region)
-			} else if isCloudWatchLogGroup(arn) {
-				links.CloudWatchLog = createCloudWatchLogReference(arn, region)
+	case "aws":
+		if aws := integration.Aws; aws != nil && aws.Backend != nil {
+			// Set execution role for AWS service integration
+			links.ExecutionRole = createIamRoleReference(aws.Backend.Arn, region)
+			if isCloudWatchLogGroup(aws.Backend.Arn) {
+				links.CloudWatchLog = createCloudWatchLogReference(aws.Backend.Arn, region)
 			}
-		}
-
-	case integration.HttpProxy != nil:
-		// Similar to HTTP but might point to different resources
-		if uri := integration.HttpProxy.Uri; uri != "" && (strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.")) {
-			links.LoadBalancer = createLoadBalancerReference("", uri, region)
 		}
 	}
 
 	// Return nil if no resources were found
-	if links.Lambda == nil && links.LoadBalancer == nil && links.CloudWatchLog == nil &&
-		links.IamRole == nil && links.Vpc == nil && len(links.SecurityGroups) == 0 {
+	if links.ExecutionRole == nil && links.CloudWatchLog == nil {
 		return nil
 	}
 

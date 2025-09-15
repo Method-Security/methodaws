@@ -3,6 +3,7 @@ package eks
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 
 	eksfern "github.com/Method-Security/methodaws/generated/go/eks"
 	"github.com/Method-Security/methodaws/internal/sts"
@@ -84,6 +85,7 @@ func CredsEks(ctx context.Context, cfg aws.Config, clusterName string) (*eksfern
 		Token:      encodedToken,
 		CaCert:     &caCert,
 		Expiration: &expiration,
+		ClusterArn: fmt.Sprintf("arn:aws:eks:%s:%s:cluster/%s", cfg.Region, aws.ToString(accountID), clusterName),
 	}
 
 	report := eksfern.EksCredentialReport{

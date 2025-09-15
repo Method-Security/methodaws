@@ -3,6 +3,7 @@ package apigateway
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -103,8 +104,8 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	routes, errs := getRestAPIRoutes(ctx, client, *api.Id, region)
 	errors = append(errors, errs...)
 
-	// Get endpoint configuration
-	endpointType, err := getEndpointConfiguration(api.EndpointConfiguration)
+	// Get endpoint configuration (not used in simplified version)
+	_, err := getEndpointConfiguration(api.EndpointConfiguration)
 	if err != nil {
 		errors = append(errors, err.Error())
 	}
@@ -129,11 +130,8 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	// Perform security analysis
 	securityAnalysis := analyzeAPISecurity(routes, certificates, accessLogSettings, nil, apiKeys)
 
-	var apiKeySource *string
-	if api.ApiKeySource != "" {
-		keySource := string(api.ApiKeySource)
-		apiKeySource = &keySource
-	}
+	// API key source not used in simplified version
+	_ = api.ApiKeySource
 
 	var stageName string
 	if stage.StageName != nil {
@@ -145,36 +143,30 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 		Id:     *api.Id,
 		Name:   api.Name,
 		Region: region,
+		Url:    baseURL,
 	}
 
 	// Create configuration info
 	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
-		Version:               apigatewayfern.ApiGatewayVersionV1,
-		Description:           api.Description,
-		CreatedTime:           api.CreatedDate,
-		EndpointConfiguration: endpointType,
-		AccessLogSettings:     accessLogSettings,
-		Security:              securityAnalysis,
-		// V1 specific configuration
-		BaseUrl:                &baseURL,
-		ApiKeySource:           apiKeySource,
-		Stage:                  &stageName,
-		ClientCertificateId:    stage.ClientCertificateId,
-		MinimumCompressionSize: convertInt32PtrToIntPtr(api.MinimumCompressionSize),
+		Version:     apigatewayfern.ApiGatewayVersionV1,
+		Description: api.Description,
+		Stage:       &stageName,
 	}
 
 	// Create resource info
 	resources := &apigatewayfern.ApiGatewayResourceInfo{
-		Certificates: certificates,
-		Routes:       routes,
-		ApiKeys:      apiKeys,
+		Routes: routes,
 	}
 
 	// Create ApiGatewayInstance
 	apiGatewayInstance := &apigatewayfern.ApiGatewayInstance{
-		Identification: identification,
-		Configuration:  configuration,
-		Resources:      resources,
+		Identification:      identification,
+		Configuration:       configuration,
+		Resources:           resources,
+		AccessLogSettings:   accessLogSettings,
+		ClientCertificateId: stage.ClientCertificateId,
+		Certificates:        certificates,
+		Security:            securityAnalysis,
 	}
 
 	return apiGatewayInstance, errors
@@ -232,41 +224,33 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 				}
 			}
 
-			// Get authorizer info if present
-			var authorizer *apigatewayfern.Authorizer
-			if method.AuthorizerId != nil {
-				authResult, err := client.GetAuthorizer(ctx, &apigateway.GetAuthorizerInput{
-					RestApiId:    &apiID,
-					AuthorizerId: method.AuthorizerId,
-				})
-				if err == nil {
-					authorizer = &apigatewayfern.Authorizer{
-						Id:                           *authResult.Id,
-						Name:                         *authResult.Name,
-						Type:                         *authType, // Use the converted type
-						Uri:                          authResult.AuthorizerUri,
-						Credentials:                  authResult.AuthorizerCredentials,
-						IdentitySource:               convertStringPtrToSlice(authResult.IdentitySource),
-						IdentityValidationExpression: authResult.IdentityValidationExpression,
-						ResultTtlInSeconds:           convertInt32PtrToIntPtr(authResult.AuthorizerResultTtlInSeconds),
-					}
-					if authResult.ProviderARNs != nil {
-						authorizer.ProviderArns = authResult.ProviderARNs
-					}
-				}
-			}
+			// Get authorizer info if present (simplified - not included in route)
+			_ = method.AuthorizerId
 
 			// Create route-specific resource links
-			resources := createRouteResources(integration, region)
+			resourceLinks := createRouteResources(integration, region)
+
+			// Create resources with integration and other links
+			resources := &apigatewayfern.RouteResourceInfo{
+				Integration: integration,
+			}
+
+			// Add other resource links if they exist
+			if resourceLinks != nil {
+				resources.ExecutionRole = resourceLinks.ExecutionRole
+				resources.CloudWatchLog = resourceLinks.CloudWatchLog
+			}
 
 			route := &apigatewayfern.Route{
-				Path:           *resource.Path,
-				Method:         methodName,
-				Integration:    integration,
-				Authorization:  authType,
-				Authorizer:     authorizer,
-				ApiKeyRequired: method.ApiKeyRequired,
-				Resources:      resources,
+				Identification: &apigatewayfern.RouteIdentificationInfo{
+					Path:   *resource.Path,
+					Method: methodName,
+				},
+				Configuration: &apigatewayfern.RouteConfigurationInfo{
+					Authorization:  authType,
+					ApiKeyRequired: method.ApiKeyRequired,
+				},
+				Resources: resources,
 			}
 			routes = append(routes, route)
 		}
@@ -275,7 +259,7 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 	return routes, errors
 }
 
-// convertV1Integration converts AWS API Gateway integration to Fern Integration with resource discovery
+// convertV1Integration converts AWS API Gateway integration to Fern Integration with backend structure
 func convertV1Integration(methodIntegration *types.Integration, region string) (*apigatewayfern.Integration, error) {
 	switch methodIntegration.Type {
 	case types.IntegrationTypeHttp:
@@ -283,24 +267,50 @@ func convertV1Integration(methodIntegration *types.Integration, region string) (
 			return nil, fmt.Errorf("HTTP integration missing URI")
 		}
 
+		backend := &apigatewayfern.HttpBackend{
+			Uri:        *methodIntegration.Uri,
+			IsExternal: !strings.Contains(*methodIntegration.Uri, ".amazonaws.com"),
+		}
+
 		return apigatewayfern.NewIntegrationFromHttp(&apigatewayfern.HttpIntegration{
-			Uri: *methodIntegration.Uri,
+			Backend: backend,
 		}), nil
 
 	case types.IntegrationTypeAws:
 		if methodIntegration.Uri == nil {
 			return nil, fmt.Errorf("AWS integration missing ARN")
 		}
+
+		backend := &apigatewayfern.AwsServiceBackend{
+			Arn:     *methodIntegration.Uri,
+			Service: extractServiceFromArn(*methodIntegration.Uri),
+			Region:  region,
+		}
+
 		return apigatewayfern.NewIntegrationFromAws(&apigatewayfern.AwsIntegration{
-			Arn: *methodIntegration.Uri,
+			Backend: backend,
 		}), nil
 
 	case types.IntegrationTypeHttpProxy:
 		if methodIntegration.Uri == nil {
 			return nil, fmt.Errorf("HTTP Proxy integration missing URI")
 		}
+
+		// Check if this is a VPC Link integration (private load balancer)
+		if isVpcLinkIntegration(methodIntegration) {
+			backend := createLoadBalancerBackend(methodIntegration, region)
+			return apigatewayfern.NewIntegrationFromVpcLink(&apigatewayfern.VpcLinkIntegration{
+				Backend: backend,
+			}), nil
+		}
+
+		backend := &apigatewayfern.HttpBackend{
+			Uri:        *methodIntegration.Uri,
+			IsExternal: !strings.Contains(*methodIntegration.Uri, ".amazonaws.com"),
+		}
+
 		return apigatewayfern.NewIntegrationFromHttpProxy(&apigatewayfern.HttpProxyIntegration{
-			Uri: *methodIntegration.Uri,
+			Backend: backend,
 		}), nil
 
 	case types.IntegrationTypeAwsProxy:
@@ -308,15 +318,57 @@ func convertV1Integration(methodIntegration *types.Integration, region string) (
 			return nil, fmt.Errorf("AWS Proxy integration missing ARN")
 		}
 
+		backend := &apigatewayfern.LambdaBackend{
+			Arn:          *methodIntegration.Uri,
+			FunctionName: extractResourceNameFromArn(*methodIntegration.Uri),
+			Region:       region,
+		}
+
 		return apigatewayfern.NewIntegrationFromAwsProxy(&apigatewayfern.AwsProxyIntegration{
-			Arn: *methodIntegration.Uri,
+			Backend: backend,
 		}), nil
 
 	case types.IntegrationTypeMock:
-		return apigatewayfern.NewIntegrationFromMock(&apigatewayfern.MockIntegration{}), nil
+		backend := &apigatewayfern.MockBackend{}
+		return apigatewayfern.NewIntegrationFromMock(&apigatewayfern.MockIntegration{
+			Backend: backend,
+		}), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported integration type: %s", methodIntegration.Type)
+	}
+}
+
+// extractServiceFromArn extracts the service name from an AWS ARN
+func extractServiceFromArn(arn string) string {
+	parts := strings.Split(arn, ":")
+	if len(parts) >= 3 {
+		return parts[2] // Service is the 3rd element (0-indexed position 2)
+	}
+	return "unknown"
+}
+
+// isVpcLinkIntegration checks if the integration uses a VPC Link
+func isVpcLinkIntegration(integration *types.Integration) bool {
+	// In V1 API Gateway, VPC Link is indicated by connection type and connection ID
+	return integration.ConnectionType == types.ConnectionTypeVpcLink &&
+		integration.ConnectionId != nil
+}
+
+// createLoadBalancerBackend creates a LoadBalancerBackend from integration details
+func createLoadBalancerBackend(integration *types.Integration, region string) *apigatewayfern.LoadBalancerBackend {
+	if integration.Uri == nil || integration.ConnectionId == nil {
+		return nil
+	}
+
+	// Extract DNS name from URI
+	dnsName := extractDNSNameFromURI(*integration.Uri)
+
+	return &apigatewayfern.LoadBalancerBackend{
+		Uri:             *integration.Uri,
+		VpcLinkId:       *integration.ConnectionId,
+		LoadBalancerArn: "", // Would need additional API call to get actual ARN
+		DnsName:         &dnsName,
 	}
 }
 
@@ -356,9 +408,8 @@ func getAPICertificates(ctx context.Context, client *apigateway.Client) ([]*apig
 	for _, domain := range domainNames.Items {
 		if domain.CertificateArn != nil {
 			cert := &apigatewayfern.Certificate{
-				Arn:       *domain.CertificateArn,
-				Name:      *domain.DomainName,
-				IsDefault: false, // API Gateway doesn't have a "default" concept like this
+				Arn:        *domain.CertificateArn,
+				DomainName: domain.DomainName,
 			}
 
 			// Convert security policy if present
