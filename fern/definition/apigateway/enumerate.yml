@@ -1,6 +1,5 @@
 imports:
   common: ../common/resources.yml
-
 types:
 # Config
   ApiGatewayEnumerateConfig:
@@ -13,13 +12,6 @@ types:
     enum:
       - V1
       - V2
-  IntegrationType:
-    enum:
-      - HTTP
-      - AWS
-      - HTTP_PROXY  
-      - AWS_PROXY
-      - MOCK
   AuthorizationType:
     enum:
       - NONE
@@ -27,109 +19,36 @@ types:
       - CUSTOM
       - COGNITO_USER_POOLS
       - JWT
+  SecurityPolicy:
+    enum:
+      - TLS_1_0
+      - TLS_1_2
+# References
+  LambdaReference:
+    properties:
+      arn: string
+      functionName: optional<string>
+      region: string
   EndpointType:
     enum:
       - EDGE
       - REGIONAL
       - PRIVATE
-  SecurityPolicy:
-    enum:
-      - TLS_1_0
-      - TLS_1_2
-  MutualTlsAuthenticationFailureType:
-    enum:
-      - CLIENT_CERTIFICATE_VERIFICATION
-      - CLIENT_CERTIFICATE_EXPIRED
-      - CLIENT_CERTIFICATE_INVALID
-  ResourceType:
-    enum:
-      - LAMBDA_FUNCTION
-      - CLOUDWATCH_LOG_GROUP
-      - IAM_ROLE
-      - WAF_WEB_ACL
-      - COGNITO_USER_POOL
-      - VPC_LINK
-      - LOAD_BALANCER
-      - ECS_SERVICE
-      - S3_BUCKET
-      - EC2_INSTANCE
-      - APPLICATION_LOAD_BALANCER
-      - NETWORK_LOAD_BALANCER
-      - SNS_TOPIC
-      - SQS_QUEUE
-      - KINESIS_STREAM
-      - DYNAMODB_TABLE
-      - EVENTBRIDGE_RULE
-      - HTTP_ENDPOINT
-      - OTHER
-# Supporting Types
-  ResourceReference:
-    properties:
-      arn: optional<string>
-      uri: optional<string>
-      resourceId: optional<string>
-      type: ResourceType
-      region: optional<string>
-      name: optional<string>
-      description: optional<string>
-# Extended Lambda Reference (specific to API Gateway)
-  LambdaReference:
-    extends: common.LambdaReference
-    properties:
-      runtime: optional<string>
-  AwsProxyIntegration:
-    properties:
-      arn: string
-      lambda: optional<LambdaReference>
-  AwsIntegration:
-    properties:
-      arn: string
-      resourceReference: optional<ResourceReference>
-  HttpIntegration:
-    properties: 
-      uri: string
-      loadBalancer: optional<common.LoadBalancerReference>
-  HttpProxyIntegration:
-    properties: 
-      uri: string
-      resourceReference: optional<ResourceReference>
-  MockIntegration:
-    properties:
-      responseTemplates: optional<map<string, string>>
-      statusCode: optional<string>
-  Integration:
-    union:
-      aws_proxy: AwsProxyIntegration
-      aws: AwsIntegration
-      mock: MockIntegration
-      http: HttpIntegration
-      http_proxy: HttpProxyIntegration
-  Certificate:
-    properties:
-      arn: string
-      name: string
-      isDefault: boolean
-      securityPolicy: optional<SecurityPolicy>
   Authorizer:
     properties:
       id: string
-      name: string
-      type: AuthorizationType
-      providerArns: optional<list<string>>
-      uri: optional<string>
-      credentials: optional<string>
-      identitySource: optional<list<string>>
-      identityValidationExpression: optional<string>
-      resultTtlInSeconds: optional<integer>
-  ThrottleSettings:
+      name: optional<string>
+      type: optional<string>
+# Supporting Types
+  Certificate:
     properties:
-      rateLimit: double
-      burstLimit: integer
+      arn: string
+      domainName: optional<string>
+      securityPolicy: optional<SecurityPolicy>
   AccessLogSettings:
     properties:
       destinationArn: string
       format: optional<string>
-      cloudWatchLog: optional<common.CloudWatchLogReference>
   CorsConfiguration:
     properties:
       allowCredentials: optional<boolean>
@@ -138,19 +57,6 @@ types:
       allowOrigins: optional<list<string>>
       exposeHeaders: optional<list<string>>
       maxAge: optional<integer>
-  MutualTlsAuthentication:
-    properties:
-      truststoreUri: string
-      truststoreVersion: optional<string>
-  Route:
-    properties:
-      path: string
-      method: string
-      integration: optional<Integration>
-      authorization: optional<AuthorizationType>
-      authorizer: optional<Authorizer>
-      apiKeyRequired: optional<boolean>
-      throttle: optional<ThrottleSettings>
   ApiGatewaySecurity:
     properties:
       hasWafIntegration: boolean
@@ -163,62 +69,110 @@ types:
       tlsVersions: list<SecurityPolicy>
       corsConfigured: boolean
       apiKeysRequired: boolean
-# API Gateway High level structs
+  Throttle:
+    properties:
+      rateLimit: optional<double>
+      burstLimit: optional<integer>
+# Backend Types - what integrations connect to
+  LambdaBackend:
+    properties:
+      arn: string
+      functionName: optional<string>
+      region: string
+  LoadBalancerBackend:
+    properties:
+      uri: string
+      vpcLinkId: string
+      loadBalancerArn: string
+      dnsName: optional<string>
+  HttpBackend:
+    properties:
+      uri: string
+      isExternal: boolean
+  AwsServiceBackend:
+    properties:
+      arn: string
+      service: string
+      region: string
+  MockBackend:
+    properties:
+      statusCode: optional<string>
+# Integrations - explicit links between routes and backends  
+  AwsProxyIntegration:
+    properties:
+      backend: LambdaBackend
+  VpcLinkIntegration:
+    properties:
+      backend: LoadBalancerBackend
+  HttpIntegration:
+    properties:
+      backend: HttpBackend
+  HttpProxyIntegration:
+    properties:
+      backend: HttpBackend
+  AwsIntegration:
+    properties:
+      backend: AwsServiceBackend
+  MockIntegration:
+    properties:
+      backend: MockBackend
+  Integration:
+    union:
+      aws_proxy: AwsProxyIntegration
+      vpc_link: VpcLinkIntegration
+      http: HttpIntegration
+      http_proxy: HttpProxyIntegration
+      aws: AwsIntegration
+      mock: MockIntegration
+# Route Structure
+  RouteIdentificationInfo:
+    properties:
+      path: string
+      method: string
+  RouteConfigurationInfo:
+    properties:
+      authorization: optional<AuthorizationType>
+      apiKeyRequired: optional<boolean>
+      throttle: optional<Throttle>
+  RouteResourceInfo:
+    properties:
+      integration: Integration
+      executionRole: optional<common.IamRoleReference>
+      cloudWatchLog: optional<common.CloudWatchLogReference>
+  Route:
+    properties:
+      identification: RouteIdentificationInfo
+      configuration: RouteConfigurationInfo
+      resources: optional<RouteResourceInfo>
+# API Gateway Structure
   ApiGatewayIdentificationInfo:
     properties:
       id: string
       name: optional<string>
       region: string
+      url: string
   ApiGatewayConfigurationInfo:
     properties:
       version: ApiGatewayVersion
       description: optional<string>
-      createdTime: optional<datetime>
-      endpointConfiguration: optional<EndpointType>
-      accessLogSettings: optional<AccessLogSettings>
-      # V1 (REST API) specific configuration
-      baseUrl: optional<string>
-      apiKeySource: optional<string>
       stage: optional<string>
-      clientCertificateId: optional<string>
-      minimumCompressionSize: optional<integer>
-      usagePlans: optional<list<string>>
-      # V2 (HTTP API) specific configuration
-      apiEndpoint: optional<string>
-      protocolType: optional<string>
-      disableExecuteApiEndpoint: optional<boolean>
-      corsConfiguration: optional<CorsConfiguration>
-      mutualTlsAuthentication: optional<MutualTlsAuthentication>
-      authorizers: optional<list<Authorizer>>
-      # Additional metadata
-      tags: optional<list<common.Tag>>
   ApiGatewayResourceInfo:
     properties:
-      certificates: optional<list<Certificate>>
-      # V1 (REST API) specific resources
-      paths: optional<list<Route>>
-      apiKeys: optional<list<string>>
-      # V2 (HTTP API) specific resources
       routes: optional<list<Route>>
-      # AWS Resource References (unidirectional links)
-      vpc: optional<common.VpcReference>
-      lambdaFunctions: optional<list<LambdaReference>>
-      cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
-      iamRoles: optional<list<common.IamRoleReference>>
-      loadBalancers: optional<list<common.LoadBalancerReference>>
-      securityGroups: optional<list<common.SecurityGroupReference>>
-      # Security analysis
-      securityAnalysis: optional<ApiGatewaySecurity>
-# Main API Gateway structs
   ApiGatewayInstance:
     properties:
       identification: ApiGatewayIdentificationInfo
       configuration: ApiGatewayConfigurationInfo
       resources: optional<ApiGatewayResourceInfo>
+      accessLogSettings: optional<AccessLogSettings>
+      corsConfiguration: optional<CorsConfiguration>
+      clientCertificateId: optional<string>
+      certificates: optional<list<Certificate>>
+      security: optional<ApiGatewaySecurity>
+# Results
   ApiGatewayEnumerateResult:
     properties:
       apis: optional<list<ApiGatewayInstance>>
-# Report Struct
   ApiGatewayEnumerateReport:
     properties:
       result: ApiGatewayEnumerateResult

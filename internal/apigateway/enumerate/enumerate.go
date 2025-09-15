@@ -71,17 +71,7 @@ func convertInt32PtrToIntPtr(val *int32) *int {
 	return &converted
 }
 
-func convertStringPtrToSlice(val *string) []string {
-	if val == nil {
-		return nil
-	}
-	return []string{*val}
-}
-
 // Helper functions for resource identification
-func isLambdaFunction(arn string) bool {
-	return strings.Contains(arn, ":lambda:")
-}
 
 func isIAMRole(arn string) bool {
 	return strings.Contains(arn, ":iam:") && strings.Contains(arn, ":role/")
@@ -91,127 +81,7 @@ func isCloudWatchLogGroup(arn string) bool {
 	return strings.Contains(arn, ":logs:") && strings.Contains(arn, ":log-group:")
 }
 
-func isSNSTopic(arn string) bool {
-	return strings.Contains(arn, ":sns:")
-}
-
-func isSQSQueue(arn string) bool {
-	return strings.Contains(arn, ":sqs:")
-}
-
-func isKinesisStream(arn string) bool {
-	return strings.Contains(arn, ":kinesis:") && (strings.Contains(arn, ":stream/") || strings.Contains(arn, ":delivery-stream/"))
-}
-
-func isDynamoDBTable(arn string) bool {
-	return strings.Contains(arn, ":dynamodb:") && strings.Contains(arn, ":table/")
-}
-
-func isEventBridge(arn string) bool {
-	return strings.Contains(arn, ":events:") && (strings.Contains(arn, ":event-bus/") || strings.Contains(arn, ":rule/"))
-}
-
-func isWAFWebACL(arn string) bool {
-	return strings.Contains(arn, ":wafv2:") && strings.Contains(arn, ":webacl/")
-}
-
-func isCognitoUserPool(arn string) bool {
-	return strings.Contains(arn, ":cognito-idp:") && strings.Contains(arn, ":userpool/")
-}
-
-func isVPCLink(arn string) bool {
-	return strings.Contains(arn, ":apigatewayv2:") && strings.Contains(arn, ":vpclink/")
-}
-
-func isLoadBalancer(arn string) bool {
-	return strings.Contains(arn, ":elasticloadbalancing:")
-}
-
-func isHTTPEndpoint(uri string) bool {
-	return strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://")
-}
-
-func identifyResourceType(arn, uri string) apigatewayfern.ResourceType {
-	if arn != "" {
-		if isLambdaFunction(arn) {
-			return apigatewayfern.ResourceTypeLambdaFunction
-		}
-		if isIAMRole(arn) {
-			return apigatewayfern.ResourceTypeIamRole
-		}
-		if isCloudWatchLogGroup(arn) {
-			return apigatewayfern.ResourceTypeCloudwatchLogGroup
-		}
-		if isSNSTopic(arn) {
-			return apigatewayfern.ResourceTypeSnsTopic
-		}
-		if isSQSQueue(arn) {
-			return apigatewayfern.ResourceTypeSqsQueue
-		}
-		if isKinesisStream(arn) {
-			return apigatewayfern.ResourceTypeKinesisStream
-		}
-		if isLoadBalancer(arn) {
-			if strings.Contains(arn, ":loadbalancer/app/") {
-				return apigatewayfern.ResourceTypeApplicationLoadBalancer
-			} else if strings.Contains(arn, ":loadbalancer/net/") {
-				return apigatewayfern.ResourceTypeNetworkLoadBalancer
-			}
-			return apigatewayfern.ResourceTypeLoadBalancer
-		}
-		if strings.Contains(arn, ":s3:") {
-			return apigatewayfern.ResourceTypeS3Bucket
-		}
-		if strings.Contains(arn, ":ecs:") && strings.Contains(arn, ":service/") {
-			return apigatewayfern.ResourceTypeEcsService
-		}
-		if isDynamoDBTable(arn) {
-			return apigatewayfern.ResourceTypeDynamodbTable
-		}
-		if isEventBridge(arn) {
-			return apigatewayfern.ResourceTypeEventbridgeRule
-		}
-		if isWAFWebACL(arn) {
-			return apigatewayfern.ResourceTypeWafWebAcl
-		}
-		if isCognitoUserPool(arn) {
-			return apigatewayfern.ResourceTypeCognitoUserPool
-		}
-		if isVPCLink(arn) {
-			return apigatewayfern.ResourceTypeVpcLink
-		}
-	}
-
-	if uri != "" {
-		if isHTTPEndpoint(uri) {
-			// Try to identify if it's pointing to EC2 instances
-			if isEC2Endpoint(uri) {
-				return apigatewayfern.ResourceTypeEc2Instance
-			}
-			return apigatewayfern.ResourceTypeHttpEndpoint
-		}
-	}
-
-	return apigatewayfern.ResourceTypeOther
-}
-
-// createLambdaReference creates a Lambda reference from an ARN
-func createLambdaReference(arn, region string) *apigatewayfern.LambdaReference {
-	if !isLambdaFunction(arn) {
-		return nil
-	}
-
-	functionName := extractResourceNameFromArn(arn)
-	if functionName == nil {
-		return nil
-	}
-
-	return &apigatewayfern.LambdaReference{
-		Arn:          arn,
-		FunctionName: functionName,
-		Region:       region,
-	}
-}
+// Helper function to identify resource type (removed - no longer used in simplified schema)
 
 // createIamRoleReference creates an IAM role reference from an ARN
 func createIamRoleReference(arn, region string) *common.IamRoleReference {
@@ -249,52 +119,6 @@ func createCloudWatchLogReference(arn, region string) *common.CloudWatchLogRefer
 	}
 }
 
-// createLoadBalancerReference creates a load balancer reference from an ARN or URI
-func createLoadBalancerReference(arn, uri, region string) *common.LoadBalancerReference {
-	if arn != "" && isLoadBalancer(arn) {
-		dnsName := ""
-		// Extract DNS name if available in URI
-		if uri != "" {
-			if name := extractResourceNameFromURI(uri); name != nil {
-				dnsName = *name
-			}
-		}
-
-		lbType := "ALB"
-		if strings.Contains(arn, ":loadbalancer/net/") {
-			lbType = "NLB"
-		}
-
-		return &common.LoadBalancerReference{
-			Arn:     arn,
-			DnsName: &dnsName,
-			Region:  region,
-			Type:    common.LoadBalancerType(lbType),
-		}
-	}
-
-	return nil
-}
-
-// isEC2Endpoint checks if URI appears to point to EC2 instances
-func isEC2Endpoint(uri string) bool {
-	// Common patterns for EC2 endpoints
-	if strings.Contains(uri, ".compute.amazonaws.com") ||
-		strings.Contains(uri, ".compute-1.amazonaws.com") ||
-		strings.Contains(uri, "ec2-") {
-		return true
-	}
-
-	// Private IP ranges that might indicate EC2
-	if strings.Contains(uri, "://10.") ||
-		strings.Contains(uri, "://172.") ||
-		strings.Contains(uri, "://192.168.") {
-		return true
-	}
-
-	return false
-}
-
 func extractResourceNameFromArn(arn string) *string {
 	if arn == "" {
 		return nil
@@ -320,54 +144,16 @@ func extractResourceNameFromArn(arn string) *string {
 	return nil
 }
 
-// extractResourceNameFromURI extracts a meaningful name from a URI
-func extractResourceNameFromURI(uri string) *string {
-	if uri == "" {
-		return nil
-	}
-
-	// For EC2 public DNS names
-	if strings.Contains(uri, ".compute.amazonaws.com") {
-		// Extract instance ID or public DNS
-		if strings.Contains(uri, "ec2-") {
-			parts := strings.Split(uri, ".")
-			for _, part := range parts {
-				if strings.HasPrefix(part, "ec2-") {
-					return &part
-				}
-			}
-		}
-	}
-
-	// For load balancers
-	if strings.Contains(uri, ".elb.amazonaws.com") || strings.Contains(uri, ".elb.") {
-		parts := strings.Split(uri, ".")
-		if len(parts) > 0 && parts[0] != "" {
-			// Remove protocol if present
-			name := strings.TrimPrefix(parts[0], "https://")
-			name = strings.TrimPrefix(name, "http://")
-			return &name
-		}
-	}
-
-	// For private IPs, use the whole URI as name
-	if strings.Contains(uri, "://10.") || strings.Contains(uri, "://172.") || strings.Contains(uri, "://192.168.") {
-		return &uri
-	}
-
-	// Default: extract host from URI
+// extractDNSNameFromURI extracts DNS name from URI
+func extractDNSNameFromURI(uri string) string {
 	if strings.Contains(uri, "://") {
 		parts := strings.Split(uri, "://")
 		if len(parts) > 1 {
 			host := strings.Split(parts[1], "/")[0]
-			host = strings.Split(host, ":")[0] // Remove port if present
-			if host != "" {
-				return &host
-			}
+			return strings.Split(host, ":")[0] // Remove port if present
 		}
 	}
-
-	return &uri
+	return uri
 }
 
 // analyzeAPISecurity performs security analysis on API Gateway configurations
@@ -399,18 +185,22 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 		}
 
 		// Count open endpoints (no auth required)
-		if route.Authorization == nil || *route.Authorization == apigatewayfern.AuthorizationTypeNone {
+		if route.Configuration == nil || route.Configuration.Authorization == nil ||
+			*route.Configuration.Authorization == apigatewayfern.AuthorizationTypeNone {
 			analysis.OpenEndpoints++
-			analysis.HighRiskRoutes = append(analysis.HighRiskRoutes, route.Method+" "+route.Path)
+			if route.Identification != nil {
+				analysis.HighRiskRoutes = append(analysis.HighRiskRoutes,
+					route.Identification.Method+" "+route.Identification.Path)
+			}
 		}
 
 		// Track authentication methods
-		if route.Authorization != nil {
-			authMethods[*route.Authorization] = true
+		if route.Configuration != nil && route.Configuration.Authorization != nil {
+			authMethods[*route.Configuration.Authorization] = true
 		}
 
 		// Check for throttling
-		if route.Throttle != nil {
+		if route.Configuration != nil && route.Configuration.Throttle != nil {
 			analysis.HasThrottling = true
 		}
 	}
@@ -486,4 +276,42 @@ func calculateSecurityScore(analysis *apigatewayfern.ApiGatewaySecurity) float64
 	}
 
 	return score
+}
+
+// createRouteResources creates route-specific resource links from integration data (excluding integration itself)
+func createRouteResources(integration *apigatewayfern.Integration, region string) *apigatewayfern.RouteResourceInfo {
+	if integration == nil {
+		return nil
+	}
+
+	links := &apigatewayfern.RouteResourceInfo{}
+
+	// Extract resources based on integration type and backend
+	switch integration.Type {
+	case "aws_proxy":
+		if awsProxy := integration.AwsProxy; awsProxy != nil && awsProxy.Backend != nil {
+			// Set execution role if available
+			links.ExecutionRole = createIamRoleReference(awsProxy.Backend.Arn, region)
+		}
+
+	case "vpc_link":
+		// VPC Link details are stored in integration.backend only, no duplication in route resources
+		// Only set VPC and security group references if needed for the route itself
+
+	case "aws":
+		if aws := integration.Aws; aws != nil && aws.Backend != nil {
+			// Set execution role for AWS service integration
+			links.ExecutionRole = createIamRoleReference(aws.Backend.Arn, region)
+			if isCloudWatchLogGroup(aws.Backend.Arn) {
+				links.CloudWatchLog = createCloudWatchLogReference(aws.Backend.Arn, region)
+			}
+		}
+	}
+
+	// Return nil if no resources were found
+	if links.ExecutionRole == nil && links.CloudWatchLog == nil {
+		return nil
+	}
+
+	return links
 }
