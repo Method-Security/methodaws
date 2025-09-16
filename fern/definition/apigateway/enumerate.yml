@@ -59,16 +59,14 @@ types:
       maxAge: optional<integer>
   ApiGatewaySecurity:
     properties:
-      hasWafIntegration: boolean
-      hasCloudWatchLogging: boolean
-      hasThrottling: boolean
-      openEndpoints: integer
-      highRiskRoutes: list<string>
-      securityScore: double
-      authenticationMethods: list<AuthorizationType>
-      tlsVersions: list<SecurityPolicy>
-      corsConfigured: boolean
-      apiKeysRequired: boolean
+      hasWafIntegration: optional<boolean>
+      hasCloudWatchLogging: optional<boolean>
+      hasThrottling: optional<boolean>
+      openEndpoints: optional<integer>
+      authenticationMethods: optional<list<AuthorizationType>>
+      tlsVersions: optional<list<SecurityPolicy>>
+      corsConfigured: optional<boolean>
+      apiKeysRequired: optional<boolean>
   Throttle:
     properties:
       rateLimit: optional<double>
@@ -156,6 +154,11 @@ types:
       version: ApiGatewayVersion
       description: optional<string>
       stage: optional<string>
+      accessLogSettings: optional<AccessLogSettings>
+      corsConfiguration: optional<CorsConfiguration>
+      clientCertificateId: optional<string>
+      certificates: optional<list<Certificate>>
+      security: optional<ApiGatewaySecurity>
   ApiGatewayResourceInfo:
     properties:
       routes: optional<list<Route>>
@@ -164,11 +167,6 @@ types:
       identification: ApiGatewayIdentificationInfo
       configuration: ApiGatewayConfigurationInfo
       resources: optional<ApiGatewayResourceInfo>
-      accessLogSettings: optional<AccessLogSettings>
-      corsConfiguration: optional<CorsConfiguration>
-      clientCertificateId: optional<string>
-      certificates: optional<list<Certificate>>
-      security: optional<ApiGatewaySecurity>
 # Results
   ApiGatewayEnumerateResult:
     properties:

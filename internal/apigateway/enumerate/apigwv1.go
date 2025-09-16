@@ -130,9 +130,6 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	// Perform security analysis
 	securityAnalysis := analyzeAPISecurity(routes, certificates, accessLogSettings, nil, apiKeys)
 
-	// API key source not used in simplified version
-	_ = api.ApiKeySource
-
 	var stageName string
 	if stage.StageName != nil {
 		stageName = *stage.StageName
@@ -148,9 +145,13 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 
 	// Create configuration info
 	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
-		Version:     apigatewayfern.ApiGatewayVersionV1,
-		Description: api.Description,
-		Stage:       &stageName,
+		Version:             apigatewayfern.ApiGatewayVersionV1,
+		Description:         api.Description,
+		Stage:               &stageName,
+		AccessLogSettings:   accessLogSettings,
+		ClientCertificateId: stage.ClientCertificateId,
+		Certificates:        certificates,
+		Security:            securityAnalysis,
 	}
 
 	// Create resource info
@@ -160,13 +161,9 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 
 	// Create ApiGatewayInstance
 	apiGatewayInstance := &apigatewayfern.ApiGatewayInstance{
-		Identification:      identification,
-		Configuration:       configuration,
-		Resources:           resources,
-		AccessLogSettings:   accessLogSettings,
-		ClientCertificateId: stage.ClientCertificateId,
-		Certificates:        certificates,
-		Security:            securityAnalysis,
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
 	}
 
 	return apiGatewayInstance, errors
@@ -482,9 +479,5 @@ func getAccessLogSettings(stage types.Stage, region string) (*apigatewayfern.Acc
 		Format:         stage.AccessLogSettings.Format,
 	}
 
-	// CloudWatch log reference removed from AccessLogSettings - now handled at route level
-
 	return settings, nil
 }
-
-// Note: Resource discovery functions removed - resources now nested directly under routes
