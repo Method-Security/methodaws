@@ -162,17 +162,15 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 		return nil
 	}
 
+	requiredAPIKeys := len(apiKeys) > 0
+	hasCloudWatchLogging := accessLogSettings != nil
+	hasCorsConfig := corsConfig != nil
 	analysis := &apigatewayfern.ApiGatewaySecurity{
-		HasWafIntegration:     false, // Would need additional API calls to determine
-		HasCloudWatchLogging:  accessLogSettings != nil,
-		HasThrottling:         false,
-		OpenEndpoints:         0,
-		HighRiskRoutes:        []string{},
-		SecurityScore:         0.0,
+		HasCloudWatchLogging:  &hasCloudWatchLogging,
 		AuthenticationMethods: []apigatewayfern.AuthorizationType{},
 		TlsVersions:           []apigatewayfern.SecurityPolicy{},
-		CorsConfigured:        corsConfig != nil,
-		ApiKeysRequired:       len(apiKeys) > 0,
+		CorsConfigured:        &hasCorsConfig,
+		ApiKeysRequired:       &requiredAPIKeys,
 	}
 
 	// Track unique authentication methods
@@ -184,16 +182,6 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 			continue
 		}
 
-		// Count open endpoints (no auth required)
-		if route.Configuration == nil || route.Configuration.Authorization == nil ||
-			*route.Configuration.Authorization == apigatewayfern.AuthorizationTypeNone {
-			analysis.OpenEndpoints++
-			if route.Identification != nil {
-				analysis.HighRiskRoutes = append(analysis.HighRiskRoutes,
-					route.Identification.Method+" "+route.Identification.Path)
-			}
-		}
-
 		// Track authentication methods
 		if route.Configuration != nil && route.Configuration.Authorization != nil {
 			authMethods[*route.Configuration.Authorization] = true
@@ -201,7 +189,8 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 
 		// Check for throttling
 		if route.Configuration != nil && route.Configuration.Throttle != nil {
-			analysis.HasThrottling = true
+			hasThrottling := true
+			analysis.HasThrottling = &hasThrottling
 		}
 	}
 
@@ -221,61 +210,7 @@ func analyzeAPISecurity(routes []*apigatewayfern.Route, certificates []*apigatew
 		analysis.TlsVersions = append(analysis.TlsVersions, tlsVersion)
 	}
 
-	// Calculate security score (0-100)
-	analysis.SecurityScore = calculateSecurityScore(analysis)
-
 	return analysis
-}
-
-// calculateSecurityScore calculates a security score from 0-100 based on various factors
-func calculateSecurityScore(analysis *apigatewayfern.ApiGatewaySecurity) float64 {
-	if analysis == nil {
-		return 0.0
-	}
-
-	score := 100.0
-
-	// Deduct for open endpoints
-	if analysis.OpenEndpoints > 0 {
-		score -= float64(analysis.OpenEndpoints) * 10.0 // -10 points per open endpoint
-	}
-
-	// Add for logging
-	if analysis.HasCloudWatchLogging {
-		score += 10.0
-	}
-
-	// Add for throttling
-	if analysis.HasThrottling {
-		score += 10.0
-	}
-
-	// Add for CORS configuration
-	if analysis.CorsConfigured {
-		score += 5.0
-	}
-
-	// Add for API keys
-	if analysis.ApiKeysRequired {
-		score += 15.0
-	}
-
-	// Deduct for weak TLS versions
-	for _, tlsVersion := range analysis.TlsVersions {
-		if tlsVersion == apigatewayfern.SecurityPolicyTls10 {
-			score -= 20.0 // TLS 1.0 is deprecated
-		}
-	}
-
-	// Ensure score stays within bounds
-	if score < 0 {
-		score = 0
-	}
-	if score > 100 {
-		score = 100
-	}
-
-	return score
 }
 
 // createRouteResources creates route-specific resource links from integration data (excluding integration itself)

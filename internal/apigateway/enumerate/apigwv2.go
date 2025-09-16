@@ -129,29 +129,34 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 		}
 	}
 
-	// Get authorizers
-	_, errs = getHTTPAPIAuthorizers(ctx, client, *api.ApiId)
-	errors = append(errors, errs...)
-
 	// Get domain name certificates (similar to v1 but for HTTP API)
 	certificates, errs := getHTTPAPICertificates(ctx, client, *api.ApiId)
 	errors = append(errors, errs...)
+
+	// Get stages for this API
+	stages, err := client.GetStages(ctx, &apigatewayv2.GetStagesInput{
+		ApiId: api.ApiId,
+	})
+	var primaryStageName *string
+	if err != nil {
+		errors = append(errors, err.Error())
+	} else if len(stages.Items) > 0 {
+		// Use the first non-$default stage found
+		for _, stage := range stages.Items {
+			if stage.StageName != nil && *stage.StageName != "$default" {
+				primaryStageName = stage.StageName
+				break
+			}
+		}
+	}
 
 	// Get access log settings
 	accessLogSettings, err := getHTTPAPIAccessLogSettings(ctx, client, *api.ApiId)
 	if err != nil {
 		errors = append(errors, err.Error())
 	}
-
-	// Discover resource relationships
-	// Resources are now nested within routes, no need for separate discovery
-
 	// Perform security analysis
 	securityAnalysis := analyzeAPISecurity(routes, certificates, accessLogSettings, corsConfig, nil) // V2 doesn't use API keys the same way
-
-	// Extract stage name from routes (simplified)
-	stageName := "$default"
-	_ = api.ProtocolType // Not used in simplified version
 
 	var apiEndpoint string
 	if api.ApiEndpoint != nil {
@@ -166,11 +171,14 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 		Url:    apiEndpoint,
 	}
 
-	// Create configuration info
 	configuration := &apigatewayfern.ApiGatewayConfigurationInfo{
-		Version:     apigatewayfern.ApiGatewayVersionV2,
-		Description: api.Description,
-		Stage:       &stageName,
+		Version:           apigatewayfern.ApiGatewayVersionV2,
+		Description:       api.Description,
+		Stage:             primaryStageName,
+		AccessLogSettings: accessLogSettings,
+		CorsConfiguration: corsConfig,
+		Certificates:      certificates,
+		Security:          securityAnalysis,
 	}
 
 	// Create resource info
@@ -180,13 +188,9 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 
 	// Create ApiGatewayInstance
 	apiGatewayInstance := &apigatewayfern.ApiGatewayInstance{
-		Identification:    identification,
-		Configuration:     configuration,
-		Resources:         resources,
-		AccessLogSettings: accessLogSettings,
-		CorsConfiguration: corsConfig,
-		Certificates:      certificates,
-		Security:          securityAnalysis,
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
 	}
 
 	return apiGatewayInstance, errors
@@ -385,43 +389,6 @@ func createV2LoadBalancerBackend(integration *apigatewayv2.GetIntegrationOutput,
 	}
 }
 
-// getHTTPAPIAuthorizers retrieves authorizers for an HTTP API
-func getHTTPAPIAuthorizers(ctx context.Context, client *apigatewayv2.Client, apiID string) ([]*apigatewayfern.Authorizer, []string) {
-	var authorizers []*apigatewayfern.Authorizer
-	var errors []string
-
-	authorizersResult, err := client.GetAuthorizers(ctx, &apigatewayv2.GetAuthorizersInput{
-		ApiId: &apiID,
-	})
-	if err != nil {
-		return authorizers, []string{err.Error()}
-	}
-
-	for _, auth := range authorizersResult.Items {
-		// Convert authorization type
-		var authType apigatewayfern.AuthorizationType
-		switch auth.AuthorizerType {
-		case types.AuthorizerTypeJwt:
-			authType = apigatewayfern.AuthorizationTypeJwt
-		default:
-			// Skip unsupported types or log them
-			svc1log.FromContext(ctx).Warn("Unsupported authorizer type",
-				svc1log.SafeParam("authorizerType", auth.AuthorizerType))
-			continue
-		}
-
-		authTypeString := string(authType)
-		authorizer := &apigatewayfern.Authorizer{
-			Id:   *auth.AuthorizerId,
-			Name: auth.Name,
-			Type: &authTypeString,
-		}
-		authorizers = append(authorizers, authorizer)
-	}
-
-	return authorizers, errors
-}
-
 // getHTTPAPICertificates retrieves certificates for an HTTP API
 func getHTTPAPICertificates(ctx context.Context, client *apigatewayv2.Client, apiID string) ([]*apigatewayfern.Certificate, []string) {
 	var certificates []*apigatewayfern.Certificate
@@ -493,5 +460,3 @@ func getHTTPAPIAccessLogSettings(ctx context.Context, client *apigatewayv2.Clien
 
 	return nil, nil
 }
-
-// Note: Resource discovery functions removed - resources now nested directly under routes
