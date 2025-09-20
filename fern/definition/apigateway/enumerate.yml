@@ -134,7 +134,7 @@ types:
       throttle: optional<Throttle>
   RouteResourceInfo:
     properties:
-      integration: Integration
+      integration: optional<Integration>
       executionRole: optional<common.IamRoleReference>
       cloudWatchLog: optional<common.CloudWatchLogReference>
   Route:
