@@ -227,15 +227,18 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 			// Create route-specific resource links
 			resourceLinks := createRouteResources(integration, region)
 
-			// Create resources with integration and other links
-			resources := &apigatewayfern.RouteResourceInfo{
-				Integration: integration,
-			}
+			// Create resources only if there's something to include
+			var resources *apigatewayfern.RouteResourceInfo
+			if integration != nil || (resourceLinks != nil && (resourceLinks.ExecutionRole != nil || resourceLinks.CloudWatchLog != nil)) {
+				resources = &apigatewayfern.RouteResourceInfo{
+					Integration: integration,
+				}
 
-			// Add other resource links if they exist
-			if resourceLinks != nil {
-				resources.ExecutionRole = resourceLinks.ExecutionRole
-				resources.CloudWatchLog = resourceLinks.CloudWatchLog
+				// Add other resource links if they exist
+				if resourceLinks != nil {
+					resources.ExecutionRole = resourceLinks.ExecutionRole
+					resources.CloudWatchLog = resourceLinks.CloudWatchLog
+				}
 			}
 
 			route := &apigatewayfern.Route{
