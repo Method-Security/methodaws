@@ -230,8 +230,11 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 			// Create resources only if there's something to include
 			var resources *apigatewayfern.RouteResourceInfo
 			if integration != nil || (resourceLinks != nil && (resourceLinks.ExecutionRole != nil || resourceLinks.CloudWatchLog != nil)) {
-				resources = &apigatewayfern.RouteResourceInfo{
-					Integration: integration,
+				resources = &apigatewayfern.RouteResourceInfo{}
+
+				// Add integration if it exists
+				if integration != nil {
+					resources.Integration = integration
 				}
 
 				// Add other resource links if they exist
@@ -250,7 +253,10 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 					Authorization:  authType,
 					ApiKeyRequired: method.ApiKeyRequired,
 				},
-				Resources: resources,
+			}
+			// Add resources if they exist
+			if resources != nil && (resources.Integration != nil || resources.ExecutionRole != nil || resources.CloudWatchLog != nil) {
+				route.Resources = resources
 			}
 			routes = append(routes, route)
 		}
