@@ -264,15 +264,21 @@ func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID, r
 		// Create route-specific resource links
 		resourceLinks := createRouteResources(integration, region)
 
-		// Create resources with integration and other links
-		resources := &apigatewayfern.RouteResourceInfo{
-			Integration: integration,
-		}
+		// Create resources only if there's something to include
+		var resources *apigatewayfern.RouteResourceInfo
+		if integration != nil || (resourceLinks != nil && (resourceLinks.ExecutionRole != nil || resourceLinks.CloudWatchLog != nil)) {
+			resources = &apigatewayfern.RouteResourceInfo{}
 
-		// Add other resource links if they exist
-		if resourceLinks != nil {
-			resources.ExecutionRole = resourceLinks.ExecutionRole
-			resources.CloudWatchLog = resourceLinks.CloudWatchLog
+			// Add integration if it exists
+			if integration != nil {
+				resources.Integration = integration
+			}
+
+			// Add other resource links if they exist
+			if resourceLinks != nil {
+				resources.ExecutionRole = resourceLinks.ExecutionRole
+				resources.CloudWatchLog = resourceLinks.CloudWatchLog
+			}
 		}
 
 		fernRoute := &apigatewayfern.Route{
@@ -284,7 +290,10 @@ func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID, r
 				Authorization: authType,
 				// Note: HTTP API doesn't have API key requirement per route like REST API
 			},
-			Resources: resources,
+		}
+		// Add resources if they exist
+		if resources != nil && (resources.Integration != nil || resources.ExecutionRole != nil || resources.CloudWatchLog != nil) {
+			fernRoute.Resources = resources
 		}
 
 		routes = append(routes, fernRoute)
