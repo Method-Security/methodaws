@@ -9,7 +9,7 @@ The enumerate command will gather information about all of the EKS clsuters that
 ### Usage
 
 ```bash
-methodaws eks enumerate --region us-east-1 --output json
+methodaws eks enumerate --regions us-east-1 --output json
 
 ```
 
@@ -26,9 +26,9 @@ Flags:
   -h, --help   help for enumerate
 
 Global Flags:
-  -o, --output string        Output format (signal, json, yaml). Default value is signal (default "signal")
-  -f, --output-file string   Path to output file. If blank, will output to STDOUT
-  -q, --quiet                Suppress output
-  -r, --region string        AWS region
-  -v, --verbose              Verbose output
+  -o, --output string          Output format (signal, json). Default value is signal (default "signal")
+  -f, --output-file string     Path to output file. If blank, will output to STDOUT
+  -q, --quiet                  Suppress output
+  -r, --regions stringArray    AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.
+  -v, --verbose                Verbose output
 ```

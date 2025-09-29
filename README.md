@@ -35,17 +35,25 @@ methodaws is built using the AWS Go SDK and leverages the same AWS Credentials t
 ### General Usage
 
 ```bash
-methodaws <resource> enumerate --region <AWS Region>
+methodaws <resource> enumerate --regions <AWS Region>
 ```
 
 #### Examples
 
 ```bash
-methodaws s3 enumerate --region us-east-1
+methodaws s3 enumerate --regions us-east-1
 ```
 
 ```bash
-methodaws ec2 enumerate --region us-east-1
+methodaws ec2 enumerate --regions us-east-1
+```
+
+```bash
+methodaws api-gateway enumerate --regions us-east-1 --regions us-west-2
+```
+
+```bash
+methodaws lambda enumerate
 ```
 
 ## Contributing

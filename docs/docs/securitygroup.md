@@ -9,11 +9,11 @@ The enumerate command will gather information about all of the Security Groups t
 ### Usage
 
 ```bash
-methodaws securitygroup enumerate --region us-east-1 --output json
+methodaws securitygroup enumerate --regions us-east-1 --output json
 ```
 
 ```bash
-methodaws sg enumerate --region us-east-1 --output json
+methodaws sg enumerate --regions us-east-1 --output json
 ```
 
 ### Help Text
@@ -30,9 +30,9 @@ Flags:
       --vpc string   VPC ID to filter security groups by
 
 Global Flags:
-  -o, --output string        Output format (signal, json, yaml). Default value is signal (default "signal")
-  -f, --output-file string   Path to output file. If blank, will output to STDOUT
-  -q, --quiet                Suppress output
-  -r, --region string        AWS region
-  -v, --verbose              Verbose output
+  -o, --output string          Output format (signal, json). Default value is signal (default "signal")
+  -f, --output-file string     Path to output file. If blank, will output to STDOUT
+  -q, --quiet                  Suppress output
+  -r, --regions stringArray    AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.
+  -v, --verbose                Verbose output
 ```
