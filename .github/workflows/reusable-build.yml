@@ -174,6 +174,8 @@ jobs:
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.16.0
+        with:
+          syft-version: v1.17.0
 
       - name: Login to ghcr.io registry
         uses: docker/login-action@v3

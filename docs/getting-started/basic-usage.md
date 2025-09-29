@@ -7,7 +7,7 @@ Before you get started, you will need to export AWS credentials that you want me
 Running as a binary means you don't need to do anything additional for methodaws to leverage the environment variables you have already exported. You can test that things are working properly by running:
 
 ```bash
-methodaws sts arn --region us-east-1
+methodaws sts arn --regions us-east-1
 ```
 
 ## Docker
@@ -19,5 +19,5 @@ docker run \
   -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
-  methodsecurity/methodaws sts arn --region us-east-1 --output json
+  methodsecurity/methodaws sts arn --regions us-east-1 --output json
 ```

@@ -14,16 +14,21 @@ nav:
   - Docs:
       - Overview: docs/index.md
       - Capabilities:
+        - API Gateway: docs/apigateway.md
+        - CloudFront: docs/cloudfront.md
         - Current Instance: docs/current.md
         - EC2: docs/ec2.md
         - EKS: docs/eks.md
         - IAM: docs/iam.md
+        - Lambda: docs/lambda.md
+        - Load Balancer: docs/loadbalancer.md
         - RDS: docs/rds.md
         - Route53: docs/route53.md
         - S3: docs/s3.md
         - Security Groups: docs/securitygroup.md
         - STS: docs/sts.md
         - VPC: docs/vpc.md
+        - WAF: docs/waf.md
   - Contributing:
       - How to contribute: community/community.md
       - Development:
