@@ -100,7 +100,6 @@ find s3_content/ -type f -exec ls -la {} \;
 # Upload to S3 if S3_BUCKET_URL is set
 if [ -n "$S3_BUCKET_URL" ]; then
     echo "=== Uploading to S3 ==="
-    echo "Uploading to S3 bucket: $S3_BUCKET_URL"
 
     # Upload to version-specific path with SHA256 checksums
     aws s3 sync "s3_content/$REPO_NAME/$VERSION_CLEAN/" "$S3_BUCKET_URL/$REPO_NAME/$VERSION_CLEAN/" --checksum-algorithm SHA256
