@@ -243,9 +243,12 @@ func targetGroupForLoadBalancerV2(ctx context.Context, client *elasticloadbalanc
 			}
 
 			// Create configuration info
-			portValue := int(*awsTargetGroup.Port)
-			configuration := &loadbalancerfern.TargetGroupConfigurationInfo{
-				Port: &portValue,
+			configuration := &loadbalancerfern.TargetGroupConfigurationInfo{}
+
+			// Set port if available
+			if awsTargetGroup.Port != nil {
+				portValue := int(*awsTargetGroup.Port)
+				configuration.Port = &portValue
 			}
 
 			// Convert IP address type

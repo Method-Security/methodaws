@@ -34,7 +34,7 @@ func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRoles, []
 	for _, role := range roles {
 		if role.Arn == nil {
 			log.Warn("role ARN is nil for role", svc1log.SafeParam("role", role))
-			errors = append(errors, fmt.Sprintf("role ARN is nil for role %s", *role.RoleName))
+			errors = append(errors, fmt.Sprintf("role ARN is nil for role %s", aws.ToString(role.RoleName)))
 			continue
 		}
 		if role.RoleName == nil {
@@ -131,10 +131,6 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 				var policyDoc *string
 				// Get policy document if it's customer managed
 				if isCustomerManaged {
-					if policy.PolicyArn == nil {
-						errors = append(errors, fmt.Sprintf("policy ARN is nil for policy %s", *policy.PolicyName))
-						continue
-					}
 					doc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
 					if err != nil {
 						errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
