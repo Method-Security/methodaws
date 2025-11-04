@@ -57,27 +57,35 @@ func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 			log.Warn("Failed to retrieve REST APIs page",
 				svc1log.SafeParam("region", region),
 				svc1log.Stacktrace(err))
-			errors = append(errors, fmt.Sprintf("Failed to retrieve REST APIs in region %s: %s", region, err.Error()))
+			errors = append(errors, fmt.Sprintf("GetRestApis pagination failed in region %s: %s", region, err.Error()))
 			break
 		}
 
 		// Process APIs sequentially
 		for _, api := range result.Items {
 			if api.Id == nil {
+				log.Warn("REST API ID is nil, skipping API", svc1log.SafeParam("region", region))
 				errors = append(errors, "REST API ID is nil")
 				continue
 			}
 
 			stages, err := client.GetStages(ctx, &apigateway.GetStagesInput{RestApiId: api.Id})
 			if err != nil {
-				errors = append(errors, err.Error())
+				log.Warn("Failed to get stages for API",
+					svc1log.SafeParam("region", region),
+					svc1log.SafeParam("apiId", *api.Id),
+					svc1log.Stacktrace(err))
+				errors = append(errors, fmt.Sprintf("GetStages failed for API %s: %s", *api.Id, err.Error()))
 				continue
 			}
 
 			// Process each stage as a separate API Gateway instance
 			for _, stage := range stages.Item {
 				if stage.StageName == nil {
-					errors = append(errors, "REST API Stage Name is nil")
+					log.Warn("Stage name is nil, skipping stage",
+						svc1log.SafeParam("region", region),
+						svc1log.SafeParam("apiId", *api.Id))
+					errors = append(errors, fmt.Sprintf("Stage name is nil for API %s", *api.Id))
 					continue
 				}
 				apiGw, errs := convertV1RestAPIToFern(ctx, client, api, stage, region)
@@ -85,7 +93,10 @@ func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 				if apiGw != nil {
 					apiGateways = append(apiGateways, apiGw)
 				}
-				errors = append(errors, errs...)
+				// Add context to conversion errors
+				for _, err := range errs {
+					errors = append(errors, fmt.Sprintf("API %s stage %s: %s", *api.Id, *stage.StageName, err))
+				}
 			}
 		}
 	}
@@ -95,6 +106,7 @@ func enumerateV1ApiGatewaysForRegion(ctx context.Context, cfg aws.Config, region
 
 // convertV1RestAPIToFern converts AWS REST API to Fern RestApiGateway struct
 func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api types.RestApi, stage types.Stage, region string) (*apigatewayfern.ApiGatewayInstance, []string) {
+	log := svc1log.FromContext(ctx)
 	var errors []string
 
 	// Construct base URL for this stage
@@ -107,21 +119,31 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 	// Get endpoint configuration (not used in simplified version)
 	_, err := getEndpointConfiguration(api.EndpointConfiguration)
 	if err != nil {
-		errors = append(errors, err.Error())
+		errors = append(errors, fmt.Sprintf("Endpoint configuration parsing failed for API %s: %s", *api.Id, err.Error()))
 	}
 
 	// Get certificates
 	certificates, errs := getAPICertificates(ctx, client)
-	errors = append(errors, errs...)
+	for _, err := range errs {
+		log.Warn("Certificate retrieval error",
+			svc1log.SafeParam("apiId", *api.Id),
+			svc1log.SafeParam("error", err))
+		errors = append(errors, fmt.Sprintf("Certificate retrieval failed for API %s: %s", *api.Id, err))
+	}
 
 	// Get API keys and usage plans
 	apiKeys, _, errs := getAPIKeysAndUsagePlans(ctx, client, *api.Id)
-	errors = append(errors, errs...)
+	for _, err := range errs {
+		log.Warn("API keys/usage plans retrieval error",
+			svc1log.SafeParam("apiId", *api.Id),
+			svc1log.SafeParam("error", err))
+		errors = append(errors, fmt.Sprintf("API keys/usage plans retrieval failed for API %s: %s", *api.Id, err))
+	}
 
 	// Get access log settings from stage
-	accessLogSettings, err := getAccessLogSettings(stage, region)
+	accessLogSettings, err := getAccessLogSettings(stage)
 	if err != nil {
-		errors = append(errors, err.Error())
+		errors = append(errors, fmt.Sprintf("Access log settings parsing failed for API %s stage %s: %s", *api.Id, *stage.StageName, err.Error()))
 	}
 
 	// Discover resource relationships
@@ -171,12 +193,17 @@ func convertV1RestAPIToFern(ctx context.Context, client *apigateway.Client, api 
 
 // getRestAPIRoutes retrieves routes/paths for a REST API
 func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, region string) ([]*apigatewayfern.Route, []string) {
+	log := svc1log.FromContext(ctx)
 	var routes []*apigatewayfern.Route
 	var errors []string
 
 	resources, err := client.GetResources(ctx, &apigateway.GetResourcesInput{RestApiId: &apiID})
 	if err != nil {
-		return routes, []string{err.Error()}
+		log.Warn("Failed to get resources for API",
+			svc1log.SafeParam("region", region),
+			svc1log.SafeParam("apiId", apiID),
+			svc1log.Stacktrace(err))
+		return routes, []string{fmt.Sprintf("GetResources failed for API %s: %s", apiID, err.Error())}
 	}
 
 	for _, resource := range resources.Items {
@@ -187,7 +214,19 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 				HttpMethod: &methodName,
 			})
 			if err != nil {
-				errors = append(errors, err.Error())
+				resourcePath := "unknown"
+				if resource.Path != nil {
+					resourcePath = *resource.Path
+				}
+				log.Warn("Failed to get method for resource",
+					svc1log.SafeParam("region", region),
+					svc1log.SafeParam("apiId", apiID),
+					svc1log.SafeParam("resourcePath", resourcePath),
+					svc1log.SafeParam("resourceId", *resource.Id),
+					svc1log.SafeParam("method", methodName),
+					svc1log.Stacktrace(err))
+				errors = append(errors, fmt.Sprintf("GetMethod failed for API %s, resource %s (%s), method %s: %s",
+					apiID, resourcePath, *resource.Id, methodName, err.Error()))
 				continue
 			}
 
@@ -196,7 +235,18 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 			if method.MethodIntegration != nil {
 				integ, err := convertV1Integration(method.MethodIntegration, region)
 				if err != nil {
-					errors = append(errors, err.Error())
+					resourcePath := "unknown"
+					if resource.Path != nil {
+						resourcePath = *resource.Path
+					}
+					log.Warn("Failed to convert integration",
+						svc1log.SafeParam("region", region),
+						svc1log.SafeParam("apiId", apiID),
+						svc1log.SafeParam("resourcePath", resourcePath),
+						svc1log.SafeParam("method", methodName),
+						svc1log.Stacktrace(err))
+					errors = append(errors, fmt.Sprintf("Integration conversion failed for API %s, resource %s, method %s: %s",
+						apiID, resourcePath, methodName, err.Error()))
 				} else {
 					integration = integ
 				}
@@ -266,6 +316,7 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 }
 
 // convertV1Integration converts AWS API Gateway integration to Fern Integration with backend structure
+// Returns detailed error messages for debugging integration conversion failures
 func convertV1Integration(methodIntegration *types.Integration, region string) (*apigatewayfern.Integration, error) {
 	switch methodIntegration.Type {
 	case types.IntegrationTypeHttp:
@@ -402,13 +453,16 @@ func getEndpointConfiguration(endpointConfig *types.EndpointConfiguration) (*api
 
 // getAPICertificates retrieves domain name certificates for the API
 func getAPICertificates(ctx context.Context, client *apigateway.Client) ([]*apigatewayfern.Certificate, []string) {
+	log := svc1log.FromContext(ctx)
 	var certificates []*apigatewayfern.Certificate
 	var errors []string
 
 	// Get domain names associated with the API
 	domainNames, err := client.GetDomainNames(ctx, &apigateway.GetDomainNamesInput{})
 	if err != nil {
-		return certificates, []string{err.Error()}
+		log.Warn("Failed to get domain names",
+			svc1log.Stacktrace(err))
+		return certificates, []string{fmt.Sprintf("GetDomainNames failed: %s", err.Error())}
 	}
 
 	for _, domain := range domainNames.Items {
@@ -439,6 +493,7 @@ func getAPICertificates(ctx context.Context, client *apigateway.Client) ([]*apig
 
 // getAPIKeysAndUsagePlans retrieves API keys and usage plans associated with the API
 func getAPIKeysAndUsagePlans(ctx context.Context, client *apigateway.Client, apiID string) ([]string, []string, []string) {
+	log := svc1log.FromContext(ctx)
 	var apiKeys []string
 	var usagePlans []string
 	var errors []string
@@ -446,7 +501,10 @@ func getAPIKeysAndUsagePlans(ctx context.Context, client *apigateway.Client, api
 	// Get API keys - filter for those associated with this API
 	keysResult, err := client.GetApiKeys(ctx, &apigateway.GetApiKeysInput{})
 	if err != nil {
-		errors = append(errors, err.Error())
+		log.Warn("Failed to get API keys",
+			svc1log.SafeParam("apiId", apiID),
+			svc1log.Stacktrace(err))
+		errors = append(errors, fmt.Sprintf("GetApiKeys failed: %s", err.Error()))
 	} else {
 		for _, key := range keysResult.Items {
 			if key.Id != nil {
@@ -459,7 +517,10 @@ func getAPIKeysAndUsagePlans(ctx context.Context, client *apigateway.Client, api
 	// Get usage plans associated with this API
 	plansResult, err := client.GetUsagePlans(ctx, &apigateway.GetUsagePlansInput{})
 	if err != nil {
-		errors = append(errors, err.Error())
+		log.Warn("Failed to get usage plans",
+			svc1log.SafeParam("apiId", apiID),
+			svc1log.Stacktrace(err))
+		errors = append(errors, fmt.Sprintf("GetUsagePlans failed: %s", err.Error()))
 	} else {
 		for _, plan := range plansResult.Items {
 			if plan.Id != nil && plan.ApiStages != nil {
@@ -478,7 +539,7 @@ func getAPIKeysAndUsagePlans(ctx context.Context, client *apigateway.Client, api
 }
 
 // getAccessLogSettings converts stage access log settings
-func getAccessLogSettings(stage types.Stage, region string) (*apigatewayfern.AccessLogSettings, error) {
+func getAccessLogSettings(stage types.Stage) (*apigatewayfern.AccessLogSettings, error) {
 	if stage.AccessLogSettings == nil || stage.AccessLogSettings.DestinationArn == nil {
 		return nil, nil
 	}
