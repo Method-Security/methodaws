@@ -41,20 +41,48 @@ methodaws <resource> enumerate --regions <AWS Region>
 #### Examples
 
 ```bash
+# Enumerate S3 buckets in a specific region
 methodaws s3 enumerate --regions us-east-1
-```
 
-```bash
+# Enumerate EC2 instances in a specific region
 methodaws ec2 enumerate --regions us-east-1
-```
 
-```bash
+# Enumerate API Gateway resources in multiple regions
 methodaws api-gateway enumerate --regions us-east-1 --regions us-west-2
+
+# Enumerate Lambda functions in all regions (default)
+methodaws lambda enumerate
+
+# Get current AWS caller identity
+methodaws sts arn --regions us-east-1
+
+# Generate EKS credentials for a cluster
+methodaws eks creds --regions us-east-1 --name my-cluster
+
+# List objects in a specific S3 bucket
+methodaws s3 list --regions us-east-1 --name my-bucket
 ```
 
-```bash
-methodaws lambda enumerate
-```
+### Available Resources and Commands
+
+methodaws supports enumeration and management of the following AWS resources:
+
+| Resource | Commands | Description |
+|----------|----------|-------------|
+| **api-gateway** (alias: `agw`) | `enumerate` | API Gateway REST and HTTP APIs |
+| **cloudfront** | `enumerate` | CloudFront distributions |
+| **ec2** | `enumerate` | EC2 instances |
+| **eks** | `enumerate`, `creds` | EKS clusters and Kubernetes credentials |
+| **iam** | `enumerate` | IAM users, roles, and policies |
+| **lambda** | `enumerate` | Lambda functions |
+| **load-balancer** | `enumerate` | Application and Network Load Balancers |
+| **rds** | `enumerate` | RDS database instances |
+| **route53** | `enumerate` | Route53 DNS records |
+| **s3** | `enumerate`, `list`, `external` | S3 buckets and objects |
+| **security-group** | `enumerate` | EC2 security groups |
+| **sts** | `arn` | AWS Security Token Service |
+| **vpc** | `enumerate` | Virtual Private Clouds |
+| **waf** | `enumerate` | Web Application Firewalls |
 
 ## Contributing
 
