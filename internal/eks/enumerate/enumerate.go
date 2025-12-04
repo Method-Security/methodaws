@@ -2,7 +2,10 @@ package eks
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"net"
+	"net/url"
 	"strings"
 
 	common "github.com/Method-Security/methodaws/generated/go/common"
@@ -120,18 +123,15 @@ func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clu
 	// Convert cluster to Fern format with new structure
 	cluster := convertClusterToFern(clusterDetail.Cluster, region)
 
-	// Enumerate Kubernetes resources (pods, nodes, external services) if cluster is active
+	// Enumerate Kubernetes resources (nodes with nested pods, external services) if cluster is active
 	if clusterDetail.Cluster.Status == eksTypes.ClusterStatusActive && clusterDetail.Cluster.Endpoint != nil {
-		pods, nodes, services, k8sErrors := enumerateKubernetesResources(ctx, cfg, clusterDetail.Cluster, region)
+		nodes, services, k8sErrors := enumerateKubernetesResources(ctx, cfg, clusterDetail.Cluster, region)
 		errors = append(errors, k8sErrors...)
 
 		if cluster.Resources == nil {
 			cluster.Resources = &eksfern.EksResourceInfo{}
 		}
 
-		if len(pods) > 0 {
-			cluster.Resources.Pods = pods
-		}
 		if len(nodes) > 0 {
 			cluster.Resources.Nodes = nodes
 		}
@@ -143,9 +143,8 @@ func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clu
 	return cluster, errors
 }
 
-// enumerateKubernetesResources enumerates pods, nodes, and external services from an active EKS cluster
-func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *eksTypes.Cluster, region string) ([]*eksfern.KubernetesPod, []*eksfern.KubernetesNode, []*eksfern.KubernetesService, []string) {
-	var fernPods []*eksfern.KubernetesPod
+// enumerateKubernetesResources enumerates nodes and external services from an active EKS cluster (pods are nested under nodes)
+func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *eksTypes.Cluster, region string) ([]*eksfern.KubernetesNode, []*eksfern.KubernetesService, []string) {
 	var fernNodes []*eksfern.KubernetesNode
 	var fernServices []*eksfern.KubernetesService
 	var errors []string
@@ -154,59 +153,64 @@ func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *
 
 	if cluster.Name == nil || cluster.Endpoint == nil {
 		errors = append(errors, "Cluster name or endpoint is nil")
-		return fernPods, fernNodes, fernServices, errors
+		return fernNodes, fernServices, errors
 	}
 
 	log.Info("Enumerating Kubernetes resources for cluster", svc1log.SafeParam("clusterName", *cluster.Name))
 
 	// Create Kubernetes client
-	kubeClient, err := createKubernetesClient(ctx, cfg, *cluster.Name, *cluster.Endpoint, region)
+	kubeClient, err := createKubernetesClient(ctx, cfg, cluster)
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to create Kubernetes client for cluster %s: %s", *cluster.Name, err.Error()))
-		return fernPods, fernNodes, fernServices, errors
+		return fernNodes, fernServices, errors
 	}
 
 	// Get raw Kubernetes resources
 	podList, err := kubeClient.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list pods in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernPods, fernNodes, fernServices, errors
+		return fernNodes, fernServices, errors
 	}
 
 	nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list nodes in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernPods, fernNodes, fernServices, errors
+		return fernNodes, fernServices, errors
 	}
 
 	serviceList, err := kubeClient.CoreV1().Services("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list services in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernPods, fernNodes, fernServices, errors
+		return fernNodes, fernServices, errors
 	}
 
 	// Build service-pod relationships
-	servicePodMap, podServiceMap := buildServicePodRelationships(serviceList.Items, podList.Items)
+	servicePodMap, podServiceMap := buildServicePodRelationships(serviceList.Items, podList.Items, region)
 
-	// Convert pods with service relationships
+	// Convert all pods to Fern structures
+	podMap := make(map[string]*eksfern.KubernetesPod)
 	for _, pod := range podList.Items {
 		fernPod := convertPodToFern(&pod, region)
 		if fernPod != nil {
-			// Add service relationships
+			// Add service relationships (deduplicated)
 			if services, exists := podServiceMap[getPodKey(&pod)]; exists && len(services) > 0 {
-				if fernPod.Resources == nil {
-					fernPod.Resources = &eksfern.KubernetesPodResourceInfo{}
-				}
-				fernPod.Resources.Services = services
+				fernPod.Resources.Services = deduplicateStrings(services)
 			}
-			fernPods = append(fernPods, fernPod)
+			podMap[getPodKey(&pod)] = fernPod
 		}
 	}
 
-	// Convert nodes
+	// Build node-pod relationships with full pod structures
+	nodePodMap := buildNodePodStructures(nodeList.Items, podList.Items, podMap)
+
+	// Convert nodes with full pod structures nested under them
 	for _, node := range nodeList.Items {
 		fernNode := convertNodeToFern(&node, region)
 		if fernNode != nil {
+			// Add full pod structures
+			if pods, exists := nodePodMap[node.Name]; exists && len(pods) > 0 {
+				fernNode.Resources.Pods = pods
+			}
 			fernNodes = append(fernNodes, fernNode)
 		}
 	}
@@ -219,12 +223,9 @@ func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *
 			len(service.Spec.ExternalIPs) > 0 {
 			fernService := convertServiceToFern(&service, region)
 			if fernService != nil {
-				// Add pod relationships to resources section
-				if pods, exists := servicePodMap[getServiceKey(&service)]; exists && len(pods) > 0 {
-					if fernService.Resources == nil {
-						fernService.Resources = &eksfern.KubernetesServiceResourceInfo{}
-					}
-					fernService.Resources.TargetPods = pods
+				// Add pod relationships to resources section (resources is guaranteed to exist from convertServiceToFern)
+				if podIds, exists := servicePodMap[getServiceKey(&service)]; exists && len(podIds) > 0 {
+					fernService.Resources.TargetPods = podIds
 				}
 				fernServices = append(fernServices, fernService)
 			}
@@ -233,15 +234,14 @@ func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *
 
 	log.Info("Successfully enumerated Kubernetes resources with relationships",
 		svc1log.SafeParam("clusterName", *cluster.Name),
-		svc1log.SafeParam("podCount", len(fernPods)),
 		svc1log.SafeParam("nodeCount", len(fernNodes)),
 		svc1log.SafeParam("serviceCount", len(fernServices)))
 
-	return fernPods, fernNodes, fernServices, errors
+	return fernNodes, fernServices, errors
 }
 
 // createKubernetesClient creates a Kubernetes client for the EKS cluster
-func createKubernetesClient(ctx context.Context, cfg aws.Config, clusterName, endpoint, region string) (*kubernetes.Clientset, error) {
+func createKubernetesClient(ctx context.Context, cfg aws.Config, cluster *eksTypes.Cluster) (*kubernetes.Clientset, error) {
 	// Create token generator for AWS IAM authentication
 	tokenGenerator, err := token.NewGenerator(true, false)
 	if err != nil {
@@ -250,18 +250,24 @@ func createKubernetesClient(ctx context.Context, cfg aws.Config, clusterName, en
 
 	// Generate token
 	tok, err := tokenGenerator.GetWithOptions(ctx, &token.GetTokenOptions{
-		ClusterID: clusterName,
+		ClusterID: *cluster.Name,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
+	// Decode the certificate authority data
+	caCert, err := base64.StdEncoding.DecodeString(*cluster.CertificateAuthority.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode certificate authority data: %w", err)
+	}
+
 	// Create Kubernetes config
 	config := &rest.Config{
-		Host:        endpoint,
+		Host:        *cluster.Endpoint,
 		BearerToken: tok.Token,
 		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: false,
+			CAData: caCert,
 		},
 	}
 
@@ -274,28 +280,105 @@ func createKubernetesClient(ctx context.Context, cfg aws.Config, clusterName, en
 	return clientset, nil
 }
 
+// buildNodePodStructures builds relationships between nodes and their full pod structures
+func buildNodePodStructures(nodes []v1.Node, pods []v1.Pod, podMap map[string]*eksfern.KubernetesPod) map[string][]*eksfern.KubernetesPod {
+	// nodePodMap: node name -> list of full pod structures
+	nodePodMap := make(map[string][]*eksfern.KubernetesPod)
+
+	for _, pod := range pods {
+		if pod.Spec.NodeName != "" {
+			podKey := getPodKey(&pod)
+			if fernPod, exists := podMap[podKey]; exists {
+				nodePodMap[pod.Spec.NodeName] = append(nodePodMap[pod.Spec.NodeName], fernPod)
+			}
+		}
+	}
+
+	return nodePodMap
+}
+
+// deduplicateStrings removes duplicate strings from a slice while preserving order
+func deduplicateStrings(input []string) []string {
+	seen := make(map[string]bool)
+	result := []string{}
+	
+	for _, item := range input {
+		if !seen[item] {
+			seen[item] = true
+			result = append(result, item)
+		}
+	}
+	
+	return result
+}
+
+// resolveHostnameToIPs performs DNS lookup to get IP addresses for a hostname
+func resolveHostnameToIPs(hostname string) []string {
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil
+	}
+	
+	var ipStrings []string
+	for _, ip := range ips {
+		ipStrings = append(ipStrings, ip.String())
+	}
+	
+	return deduplicateStrings(ipStrings)
+}
+
+// extractHostnameFromURL extracts hostname from a URL (for cluster endpoints)
+func extractHostnameFromURL(endpoint string) string {
+	if endpoint == "" {
+		return ""
+	}
+	
+	// Parse the URL
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return ""
+	}
+	
+	return u.Hostname()
+}
+
+// isIPAddress checks if a string is an IP address (IPv4 or IPv6)
+func isIPAddress(host string) bool {
+	return net.ParseIP(host) != nil
+}
+
 // buildServicePodRelationships builds bidirectional relationships between services and pods
-func buildServicePodRelationships(services []v1.Service, pods []v1.Pod) (map[string][]string, map[string][]string) {
-	// servicePodMap: service key -> list of pod names
-	servicePodMap := make(map[string][]string)
+func buildServicePodRelationships(services []v1.Service, pods []v1.Pod, region string) (map[string][]*eksfern.KubernetesPodIdentificationInfo, map[string][]string) {
+	// servicePodMap: service key -> list of pod identification info
+	servicePodMap := make(map[string][]*eksfern.KubernetesPodIdentificationInfo)
 	// podServiceMap: pod key -> list of service names
 	podServiceMap := make(map[string][]string)
 
 	for _, service := range services {
 		serviceKey := getServiceKey(&service)
-		var targetPods []string
+		var targetPodIds []*eksfern.KubernetesPodIdentificationInfo
 
 		// Check if service has a selector
-		if service.Spec.Selector != nil && len(service.Spec.Selector) > 0 {
+		if len(service.Spec.Selector) > 0 {
 			for _, pod := range pods {
 				// Check if pod matches service selector
 				if podMatchesServiceSelector(&pod, service.Spec.Selector) {
 					podKey := getPodKey(&pod)
-					podName := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
 					serviceName := fmt.Sprintf("%s/%s", service.Namespace, service.Name)
 
+					// Create pod identification info
+					podId := &eksfern.KubernetesPodIdentificationInfo{
+						Name:      pod.Name,
+						Namespace: pod.Namespace,
+						Region:    region,
+					}
+					if pod.UID != "" {
+						uid := string(pod.UID)
+						podId.Uid = &uid
+					}
+
 					// Add to service -> pods mapping
-					targetPods = append(targetPods, podName)
+					targetPodIds = append(targetPodIds, podId)
 
 					// Add to pod -> services mapping
 					if _, exists := podServiceMap[podKey]; !exists {
@@ -306,8 +389,8 @@ func buildServicePodRelationships(services []v1.Service, pods []v1.Pod) (map[str
 			}
 		}
 
-		if len(targetPods) > 0 {
-			servicePodMap[serviceKey] = targetPods
+		if len(targetPodIds) > 0 {
+			servicePodMap[serviceKey] = targetPodIds
 		}
 	}
 
@@ -361,9 +444,8 @@ func convertPodToFern(pod *v1.Pod, region string) *eksfern.KubernetesPod {
 	// Create configuration
 	configuration := &eksfern.KubernetesPodConfigurationInfo{}
 
-	if pod.Status.Phase != "" {
-		phase := string(pod.Status.Phase)
-		configuration.Phase = &phase
+	if podStatus := convertPodStatusToEnum(pod.Status.Phase); podStatus != nil {
+		configuration.Status = podStatus
 	}
 
 	if pod.Spec.NodeName != "" {
@@ -388,15 +470,43 @@ func convertPodToFern(pod *v1.Pod, region string) *eksfern.KubernetesPod {
 		for _, container := range pod.Spec.Containers {
 			containerNames = append(containerNames, container.Name)
 		}
-		configuration.Containers = containerNames
+		configuration.Containers = deduplicateStrings(containerNames)
 	}
 
-	// Create resources
-	var resources *eksfern.KubernetesPodResourceInfo
-	if pod.Spec.NodeName != "" {
-		resources = &eksfern.KubernetesPodResourceInfo{
-			Node: &pod.Spec.NodeName,
+	// Create resources section
+	resources := &eksfern.KubernetesPodResourceInfo{}
+
+	// Extract IP addresses from pod status
+	var ipAddresses []string
+	var fqdns []string
+
+	// Add primary pod IP
+	if pod.Status.PodIP != "" {
+		ipAddresses = append(ipAddresses, pod.Status.PodIP)
+	}
+
+	// Add additional IPs (for dual-stack networking)
+	for _, podIP := range pod.Status.PodIPs {
+		if podIP.IP != "" && podIP.IP != pod.Status.PodIP {
+			ipAddresses = append(ipAddresses, podIP.IP)
 		}
+	}
+
+	// Extract FQDN from hostname and subdomain if available
+	if pod.Spec.Hostname != "" {
+		hostname := pod.Spec.Hostname
+		if pod.Spec.Subdomain != "" {
+			hostname = fmt.Sprintf("%s.%s", pod.Spec.Hostname, pod.Spec.Subdomain)
+		}
+		fqdns = append(fqdns, hostname)
+	}
+
+	// Set IP addresses and FQDNs if we found any (deduplicated)
+	if len(ipAddresses) > 0 {
+		resources.IpAddresses = deduplicateStrings(ipAddresses)
+	}
+	if len(fqdns) > 0 {
+		resources.Fqdns = deduplicateStrings(fqdns)
 	}
 
 	return &eksfern.KubernetesPod{
@@ -456,28 +566,44 @@ func convertNodeToFern(node *v1.Node, region string) *eksfern.KubernetesNode {
 		configuration.Allocatable = allocatable
 	}
 
-	// Simplify addresses to string list
-	if len(node.Status.Addresses) > 0 {
-		var addresses []string
-		for _, addr := range node.Status.Addresses {
-			addresses = append(addresses, fmt.Sprintf("%s:%s", addr.Type, addr.Address))
-		}
-		configuration.Addresses = addresses
-	}
-
 	// Simplify conditions to string list
 	if len(node.Status.Conditions) > 0 {
 		var conditions []string
 		for _, condition := range node.Status.Conditions {
 			conditions = append(conditions, fmt.Sprintf("%s:%s", condition.Type, condition.Status))
 		}
-		configuration.Conditions = conditions
+		configuration.Conditions = deduplicateStrings(conditions)
+	}
+
+	// Create resources section with parsed addresses
+	resources := &eksfern.KubernetesNodeResourceInfo{}
+
+	// Parse addresses into IP addresses and FQDNs
+	if len(node.Status.Addresses) > 0 {
+		var ipAddresses []string
+		var fqdns []string
+
+		for _, addr := range node.Status.Addresses {
+			switch addr.Type {
+			case v1.NodeInternalIP, v1.NodeExternalIP:
+				ipAddresses = append(ipAddresses, addr.Address)
+			case v1.NodeInternalDNS, v1.NodeExternalDNS, v1.NodeHostName:
+				fqdns = append(fqdns, addr.Address)
+			}
+		}
+
+		if len(ipAddresses) > 0 {
+			resources.IpAddresses = deduplicateStrings(ipAddresses)
+		}
+		if len(fqdns) > 0 {
+			resources.Fqdns = deduplicateStrings(fqdns)
+		}
 	}
 
 	return &eksfern.KubernetesNode{
 		Identification: identification,
 		Configuration:  configuration,
-		Resources:      &eksfern.KubernetesNodeResourceInfo{}, // Will populate with pods later if needed
+		Resources:      resources,
 	}
 }
 
@@ -500,8 +626,11 @@ func convertServiceToFern(service *v1.Service, region string) *eksfern.Kubernete
 	}
 
 	// Create configuration
-	configuration := &eksfern.KubernetesServiceConfigurationInfo{
-		Type: string(service.Spec.Type),
+	configuration := &eksfern.KubernetesServiceConfigurationInfo{}
+
+	// Service type belongs in configuration
+	if serviceType := convertServiceTypeToEnum(service.Spec.Type); serviceType != nil {
+		configuration.ServiceType = serviceType
 	}
 
 	if !service.CreationTimestamp.IsZero() {
@@ -516,48 +645,130 @@ func convertServiceToFern(service *v1.Service, region string) *eksfern.Kubernete
 		configuration.Annotations = service.Annotations
 	}
 
-	if service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
-		configuration.ClusterIp = &service.Spec.ClusterIP
-	}
-
-	if len(service.Spec.ExternalIPs) > 0 {
-		configuration.ExternalIps = service.Spec.ExternalIPs
-	}
-
 	if service.Spec.Selector != nil {
 		configuration.Selector = service.Spec.Selector
 	}
 
-	// Simplify load balancer ingress to string list
-	if len(service.Status.LoadBalancer.Ingress) > 0 {
-		var lbIngress []string
-		for _, ingress := range service.Status.LoadBalancer.Ingress {
-			if ingress.IP != "" {
-				lbIngress = append(lbIngress, fmt.Sprintf("IP:%s", ingress.IP))
-			}
-			if ingress.Hostname != "" {
-				lbIngress = append(lbIngress, fmt.Sprintf("Hostname:%s", ingress.Hostname))
-			}
-		}
-		configuration.LoadBalancerIngress = lbIngress
+	// Create resources section with exposure information
+	resources := &eksfern.KubernetesServiceResourceInfo{}
+
+	// Cluster IP address
+	if service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
+		resources.ClusterIpAddress = &service.Spec.ClusterIP
 	}
 
-	// Simplify ports to string list
-	if len(service.Spec.Ports) > 0 {
-		var ports []string
-		for _, port := range service.Spec.Ports {
-			portStr := fmt.Sprintf("%d/%s", port.Port, port.Protocol)
-			if port.NodePort > 0 {
-				portStr += fmt.Sprintf(" (NodePort: %d)", port.NodePort)
+	// External IP addresses and endpoints
+	if len(service.Spec.ExternalIPs) > 0 {
+		// Set external IP addresses array
+		resources.ExternalIpAddresses = deduplicateStrings(service.Spec.ExternalIPs)
+		
+		// Create external endpoints
+		var externalEndpoints []*eksfern.ServiceEndpoint
+		ports := getServicePorts(service)
+
+		for _, ip := range service.Spec.ExternalIPs {
+			endpoint := &eksfern.ServiceEndpoint{
+				IpAddress: &ip,
+				Ports:     ports,
 			}
-			ports = append(ports, portStr)
+			externalEndpoints = append(externalEndpoints, endpoint)
 		}
-		configuration.Ports = ports
+		resources.ExternalEndpoints = externalEndpoints
+	}
+
+	// Load balancer endpoints
+	if len(service.Status.LoadBalancer.Ingress) > 0 {
+		var lbEndpoints []*eksfern.ServiceEndpoint
+		ports := getServicePorts(service)
+
+		for _, ingress := range service.Status.LoadBalancer.Ingress {
+			if ingress.IP != "" {
+				// Create endpoint
+				endpoint := &eksfern.ServiceEndpoint{
+					IpAddress: &ingress.IP,
+					Ports:     ports,
+				}
+				lbEndpoints = append(lbEndpoints, endpoint)
+			}
+			if ingress.Hostname != "" {
+				endpoint := &eksfern.ServiceEndpoint{
+					Hostname: &ingress.Hostname,
+					Ports:    ports,
+				}
+				
+				// Resolve hostname to IP addresses only if it's actually a hostname (not an IP)
+				if !isIPAddress(ingress.Hostname) {
+					if resolvedIPs := resolveHostnameToIPs(ingress.Hostname); len(resolvedIPs) > 0 {
+						endpoint.ResolvedIpAddresses = resolvedIPs
+					}
+				}
+				
+				lbEndpoints = append(lbEndpoints, endpoint)
+			}
+		}
+		
+		resources.LoadBalancerEndpoints = lbEndpoints
 	}
 
 	return &eksfern.KubernetesService{
 		Identification: identification,
 		Configuration:  configuration,
+		Resources:      resources,
+	}
+}
+
+// getServicePorts extracts port information from a Kubernetes service as structured objects
+func getServicePorts(service *v1.Service) []*eksfern.ServicePort {
+	if len(service.Spec.Ports) == 0 {
+		return nil
+	}
+
+	var ports []*eksfern.ServicePort
+	for _, port := range service.Spec.Ports {
+		servicePort := &eksfern.ServicePort{
+			Port:     int(port.Port),
+			Protocol: string(port.Protocol),
+		}
+		if port.NodePort > 0 {
+			nodePort := int(port.NodePort)
+			servicePort.NodePort = &nodePort
+		}
+		ports = append(ports, servicePort)
+	}
+	return ports
+}
+
+// convertServiceTypeToEnum converts Kubernetes service type to Fern enum
+func convertServiceTypeToEnum(serviceType v1.ServiceType) *eksfern.ServiceType {
+	switch serviceType {
+	case v1.ServiceTypeClusterIP:
+		return eksfern.ServiceTypeClusterIp.Ptr()
+	case v1.ServiceTypeNodePort:
+		return eksfern.ServiceTypeNodePort.Ptr()
+	case v1.ServiceTypeLoadBalancer:
+		return eksfern.ServiceTypeLoadBalancer.Ptr()
+	case v1.ServiceTypeExternalName:
+		return eksfern.ServiceTypeExternalName.Ptr()
+	default:
+		return nil
+	}
+}
+
+// convertPodStatusToEnum converts Kubernetes pod phase to Fern enum
+func convertPodStatusToEnum(phase v1.PodPhase) *eksfern.PodStatus {
+	switch phase {
+	case v1.PodPending:
+		return eksfern.PodStatusPending.Ptr()
+	case v1.PodRunning:
+		return eksfern.PodStatusRunning.Ptr()
+	case v1.PodSucceeded:
+		return eksfern.PodStatusSucceeded.Ptr()
+	case v1.PodFailed:
+		return eksfern.PodStatusFailed.Ptr()
+	case v1.PodUnknown:
+		return eksfern.PodStatusUnknown.Ptr()
+	default:
+		return eksfern.PodStatusUnknown.Ptr()
 	}
 }
 
