@@ -12,6 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	eksTypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/aws-iam-authenticator/pkg/token"
 )
 
 // EnumerateEks enumerates EKS clusters based on the provided configuration
@@ -111,42 +116,449 @@ func processCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clu
 		errors = append(errors, "Cluster ARN is nil")
 		return nil, errors
 	}
-	// Get node groups
-	_, errs := getNodeGroupsForCluster(ctx, cfg, eksSvc, clusterName)
-	errors = append(errors, errs...)
 
 	// Convert cluster to Fern format with new structure
 	cluster := convertClusterToFern(clusterDetail.Cluster, region)
 
+	// Enumerate Kubernetes resources (pods, nodes, external services) if cluster is active
+	if clusterDetail.Cluster.Status == eksTypes.ClusterStatusActive && clusterDetail.Cluster.Endpoint != nil {
+		pods, nodes, services, k8sErrors := enumerateKubernetesResources(ctx, cfg, clusterDetail.Cluster, region)
+		errors = append(errors, k8sErrors...)
+
+		if cluster.Resources == nil {
+			cluster.Resources = &eksfern.EksResourceInfo{}
+		}
+
+		if len(pods) > 0 {
+			cluster.Resources.Pods = pods
+		}
+		if len(nodes) > 0 {
+			cluster.Resources.Nodes = nodes
+		}
+		if len(services) > 0 {
+			cluster.Resources.Services = services
+		}
+	}
+
 	return cluster, errors
 }
 
-// getNodeGroupsForCluster gets all node groups for a cluster (currently disabled)
-func getNodeGroupsForCluster(ctx context.Context, cfg aws.Config, eksSvc *eks.Client, clusterName string) (interface{}, []string) {
-	// NodeGroup type not available in generated code, returning nil
-	return nil, nil
-	/*
-		var nodeGroups []*eksfern.NodeGroup
-		var errors []string
+// enumerateKubernetesResources enumerates pods, nodes, and external services from an active EKS cluster
+func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *eksTypes.Cluster, region string) ([]*eksfern.KubernetesPod, []*eksfern.KubernetesNode, []*eksfern.KubernetesService, []string) {
+	var fernPods []*eksfern.KubernetesPod
+	var fernNodes []*eksfern.KubernetesNode
+	var fernServices []*eksfern.KubernetesService
+	var errors []string
 
-		// List node groups
-		nodeGroupList, err := eksSvc.ListNodegroups(ctx, &eks.ListNodegroupsInput{ClusterName: &clusterName})
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("Error listing node groups for cluster %s: %s", clusterName, err.Error()))
-			return nodeGroups, errors
-		}
+	log := svc1log.FromContext(ctx)
 
-		// Process each node group
-		for _, nodeGroupName := range nodeGroupList.Nodegroups {
-			nodeGroup, errs := processNodeGroup(ctx, cfg, eksSvc, clusterName, nodeGroupName)
-			if nodeGroup != nil {
-				nodeGroups = append(nodeGroups, nodeGroup)
+	if cluster.Name == nil || cluster.Endpoint == nil {
+		errors = append(errors, "Cluster name or endpoint is nil")
+		return fernPods, fernNodes, fernServices, errors
+	}
+
+	log.Info("Enumerating Kubernetes resources for cluster", svc1log.SafeParam("clusterName", *cluster.Name))
+
+	// Create Kubernetes client
+	kubeClient, err := createKubernetesClient(ctx, cfg, *cluster.Name, *cluster.Endpoint, region)
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Failed to create Kubernetes client for cluster %s: %s", *cluster.Name, err.Error()))
+		return fernPods, fernNodes, fernServices, errors
+	}
+
+	// Get raw Kubernetes resources
+	podList, err := kubeClient.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Failed to list pods in cluster %s: %s", *cluster.Name, err.Error()))
+		return fernPods, fernNodes, fernServices, errors
+	}
+
+	nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Failed to list nodes in cluster %s: %s", *cluster.Name, err.Error()))
+		return fernPods, fernNodes, fernServices, errors
+	}
+
+	serviceList, err := kubeClient.CoreV1().Services("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		errors = append(errors, fmt.Sprintf("Failed to list services in cluster %s: %s", *cluster.Name, err.Error()))
+		return fernPods, fernNodes, fernServices, errors
+	}
+
+	// Build service-pod relationships
+	servicePodMap, podServiceMap := buildServicePodRelationships(serviceList.Items, podList.Items)
+
+	// Convert pods with service relationships
+	for _, pod := range podList.Items {
+		fernPod := convertPodToFern(&pod, region)
+		if fernPod != nil {
+			// Add service relationships
+			if services, exists := podServiceMap[getPodKey(&pod)]; exists && len(services) > 0 {
+				if fernPod.Resources == nil {
+					fernPod.Resources = &eksfern.KubernetesPodResourceInfo{}
+				}
+				fernPod.Resources.Services = services
 			}
-			errors = append(errors, errs...)
+			fernPods = append(fernPods, fernPod)
+		}
+	}
+
+	// Convert nodes
+	for _, node := range nodeList.Items {
+		fernNode := convertNodeToFern(&node, region)
+		if fernNode != nil {
+			fernNodes = append(fernNodes, fernNode)
+		}
+	}
+
+	// Convert services (focus on external access) with pod relationships
+	for _, service := range serviceList.Items {
+		// Only capture services with external access (LoadBalancer, NodePort, or external IPs)
+		if service.Spec.Type == v1.ServiceTypeLoadBalancer ||
+			service.Spec.Type == v1.ServiceTypeNodePort ||
+			len(service.Spec.ExternalIPs) > 0 {
+			fernService := convertServiceToFern(&service, region)
+			if fernService != nil {
+				// Add pod relationships to resources section
+				if pods, exists := servicePodMap[getServiceKey(&service)]; exists && len(pods) > 0 {
+					if fernService.Resources == nil {
+						fernService.Resources = &eksfern.KubernetesServiceResourceInfo{}
+					}
+					fernService.Resources.TargetPods = pods
+				}
+				fernServices = append(fernServices, fernService)
+			}
+		}
+	}
+
+	log.Info("Successfully enumerated Kubernetes resources with relationships",
+		svc1log.SafeParam("clusterName", *cluster.Name),
+		svc1log.SafeParam("podCount", len(fernPods)),
+		svc1log.SafeParam("nodeCount", len(fernNodes)),
+		svc1log.SafeParam("serviceCount", len(fernServices)))
+
+	return fernPods, fernNodes, fernServices, errors
+}
+
+// createKubernetesClient creates a Kubernetes client for the EKS cluster
+func createKubernetesClient(ctx context.Context, cfg aws.Config, clusterName, endpoint, region string) (*kubernetes.Clientset, error) {
+	// Create token generator for AWS IAM authentication
+	tokenGenerator, err := token.NewGenerator(true, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token generator: %w", err)
+	}
+
+	// Generate token
+	tok, err := tokenGenerator.GetWithOptions(ctx, &token.GetTokenOptions{
+		ClusterID: clusterName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	// Create Kubernetes config
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: tok.Token,
+		TLSClientConfig: rest.TLSClientConfig{
+			Insecure: false,
+		},
+	}
+
+	// Create Kubernetes clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+	}
+
+	return clientset, nil
+}
+
+// buildServicePodRelationships builds bidirectional relationships between services and pods
+func buildServicePodRelationships(services []v1.Service, pods []v1.Pod) (map[string][]string, map[string][]string) {
+	// servicePodMap: service key -> list of pod names
+	servicePodMap := make(map[string][]string)
+	// podServiceMap: pod key -> list of service names
+	podServiceMap := make(map[string][]string)
+
+	for _, service := range services {
+		serviceKey := getServiceKey(&service)
+		var targetPods []string
+
+		// Check if service has a selector
+		if service.Spec.Selector != nil && len(service.Spec.Selector) > 0 {
+			for _, pod := range pods {
+				// Check if pod matches service selector
+				if podMatchesServiceSelector(&pod, service.Spec.Selector) {
+					podKey := getPodKey(&pod)
+					podName := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+					serviceName := fmt.Sprintf("%s/%s", service.Namespace, service.Name)
+
+					// Add to service -> pods mapping
+					targetPods = append(targetPods, podName)
+
+					// Add to pod -> services mapping
+					if _, exists := podServiceMap[podKey]; !exists {
+						podServiceMap[podKey] = []string{}
+					}
+					podServiceMap[podKey] = append(podServiceMap[podKey], serviceName)
+				}
+			}
 		}
 
-		return nodeGroups, errors
-	*/
+		if len(targetPods) > 0 {
+			servicePodMap[serviceKey] = targetPods
+		}
+	}
+
+	return servicePodMap, podServiceMap
+}
+
+// getServiceKey returns a unique key for a service
+func getServiceKey(service *v1.Service) string {
+	return fmt.Sprintf("%s/%s", service.Namespace, service.Name)
+}
+
+// getPodKey returns a unique key for a pod
+func getPodKey(pod *v1.Pod) string {
+	return fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
+}
+
+// podMatchesServiceSelector checks if a pod matches a service selector
+func podMatchesServiceSelector(pod *v1.Pod, selector map[string]string) bool {
+	if pod.Labels == nil {
+		return len(selector) == 0
+	}
+
+	// All selector labels must match pod labels
+	for key, value := range selector {
+		if podLabel, exists := pod.Labels[key]; !exists || podLabel != value {
+			return false
+		}
+	}
+
+	return true
+}
+
+// convertPodToFern converts a Kubernetes Pod to Fern format (simplified)
+func convertPodToFern(pod *v1.Pod, region string) *eksfern.KubernetesPod {
+	if pod == nil {
+		return nil
+	}
+
+	// Create identification
+	identification := &eksfern.KubernetesPodIdentificationInfo{
+		Name:      pod.Name,
+		Namespace: pod.Namespace,
+		Region:    region,
+	}
+
+	if pod.UID != "" {
+		uid := string(pod.UID)
+		identification.Uid = &uid
+	}
+
+	// Create configuration
+	configuration := &eksfern.KubernetesPodConfigurationInfo{}
+
+	if pod.Status.Phase != "" {
+		phase := string(pod.Status.Phase)
+		configuration.Phase = &phase
+	}
+
+	if pod.Spec.NodeName != "" {
+		configuration.NodeName = &pod.Spec.NodeName
+	}
+
+	if !pod.CreationTimestamp.IsZero() {
+		configuration.CreatedAt = &pod.CreationTimestamp.Time
+	}
+
+	if pod.Labels != nil {
+		configuration.Labels = pod.Labels
+	}
+
+	if pod.Annotations != nil {
+		configuration.Annotations = pod.Annotations
+	}
+
+	// Simplify containers to just names
+	if len(pod.Spec.Containers) > 0 {
+		var containerNames []string
+		for _, container := range pod.Spec.Containers {
+			containerNames = append(containerNames, container.Name)
+		}
+		configuration.Containers = containerNames
+	}
+
+	// Create resources
+	var resources *eksfern.KubernetesPodResourceInfo
+	if pod.Spec.NodeName != "" {
+		resources = &eksfern.KubernetesPodResourceInfo{
+			Node: &pod.Spec.NodeName,
+		}
+	}
+
+	return &eksfern.KubernetesPod{
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      resources,
+	}
+}
+
+// convertNodeToFern converts a Kubernetes Node to Fern format (simplified)
+func convertNodeToFern(node *v1.Node, region string) *eksfern.KubernetesNode {
+	if node == nil {
+		return nil
+	}
+
+	// Create identification
+	identification := &eksfern.KubernetesNodeIdentificationInfo{
+		Name:   node.Name,
+		Region: region,
+	}
+
+	if node.UID != "" {
+		uid := string(node.UID)
+		identification.Uid = &uid
+	}
+
+	// Create configuration
+	configuration := &eksfern.KubernetesNodeConfigurationInfo{}
+
+	if !node.CreationTimestamp.IsZero() {
+		configuration.CreatedAt = &node.CreationTimestamp.Time
+	}
+
+	if node.Labels != nil {
+		configuration.Labels = node.Labels
+	}
+
+	if node.Annotations != nil {
+		configuration.Annotations = node.Annotations
+	}
+
+	// Simplify capacity to string map
+	if node.Status.Capacity != nil {
+		capacity := make(map[string]string)
+		for k, v := range node.Status.Capacity {
+			capacity[string(k)] = v.String()
+		}
+		configuration.Capacity = capacity
+	}
+
+	// Simplify allocatable to string map
+	if node.Status.Allocatable != nil {
+		allocatable := make(map[string]string)
+		for k, v := range node.Status.Allocatable {
+			allocatable[string(k)] = v.String()
+		}
+		configuration.Allocatable = allocatable
+	}
+
+	// Simplify addresses to string list
+	if len(node.Status.Addresses) > 0 {
+		var addresses []string
+		for _, addr := range node.Status.Addresses {
+			addresses = append(addresses, fmt.Sprintf("%s:%s", addr.Type, addr.Address))
+		}
+		configuration.Addresses = addresses
+	}
+
+	// Simplify conditions to string list
+	if len(node.Status.Conditions) > 0 {
+		var conditions []string
+		for _, condition := range node.Status.Conditions {
+			conditions = append(conditions, fmt.Sprintf("%s:%s", condition.Type, condition.Status))
+		}
+		configuration.Conditions = conditions
+	}
+
+	return &eksfern.KubernetesNode{
+		Identification: identification,
+		Configuration:  configuration,
+		Resources:      &eksfern.KubernetesNodeResourceInfo{}, // Will populate with pods later if needed
+	}
+}
+
+// convertServiceToFern converts a Kubernetes Service to Fern format (simplified for external access)
+func convertServiceToFern(service *v1.Service, region string) *eksfern.KubernetesService {
+	if service == nil {
+		return nil
+	}
+
+	// Create identification
+	identification := &eksfern.KubernetesServiceIdentificationInfo{
+		Name:      service.Name,
+		Namespace: service.Namespace,
+		Region:    region,
+	}
+
+	if service.UID != "" {
+		uid := string(service.UID)
+		identification.Uid = &uid
+	}
+
+	// Create configuration
+	configuration := &eksfern.KubernetesServiceConfigurationInfo{
+		Type: string(service.Spec.Type),
+	}
+
+	if !service.CreationTimestamp.IsZero() {
+		configuration.CreatedAt = &service.CreationTimestamp.Time
+	}
+
+	if service.Labels != nil {
+		configuration.Labels = service.Labels
+	}
+
+	if service.Annotations != nil {
+		configuration.Annotations = service.Annotations
+	}
+
+	if service.Spec.ClusterIP != "" && service.Spec.ClusterIP != "None" {
+		configuration.ClusterIp = &service.Spec.ClusterIP
+	}
+
+	if len(service.Spec.ExternalIPs) > 0 {
+		configuration.ExternalIps = service.Spec.ExternalIPs
+	}
+
+	if service.Spec.Selector != nil {
+		configuration.Selector = service.Spec.Selector
+	}
+
+	// Simplify load balancer ingress to string list
+	if len(service.Status.LoadBalancer.Ingress) > 0 {
+		var lbIngress []string
+		for _, ingress := range service.Status.LoadBalancer.Ingress {
+			if ingress.IP != "" {
+				lbIngress = append(lbIngress, fmt.Sprintf("IP:%s", ingress.IP))
+			}
+			if ingress.Hostname != "" {
+				lbIngress = append(lbIngress, fmt.Sprintf("Hostname:%s", ingress.Hostname))
+			}
+		}
+		configuration.LoadBalancerIngress = lbIngress
+	}
+
+	// Simplify ports to string list
+	if len(service.Spec.Ports) > 0 {
+		var ports []string
+		for _, port := range service.Spec.Ports {
+			portStr := fmt.Sprintf("%d/%s", port.Port, port.Protocol)
+			if port.NodePort > 0 {
+				portStr += fmt.Sprintf(" (NodePort: %d)", port.NodePort)
+			}
+			ports = append(ports, portStr)
+		}
+		configuration.Ports = ports
+	}
+
+	return &eksfern.KubernetesService{
+		Identification: identification,
+		Configuration:  configuration,
+	}
 }
 
 // convertClusterToFern converts AWS EKS cluster to Fern format with new structure
