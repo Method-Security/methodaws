@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
-	"net/url"
 	"strings"
 
 	common "github.com/Method-Security/methodaws/generated/go/common"
@@ -301,14 +300,14 @@ func buildNodePodStructures(nodes []v1.Node, pods []v1.Pod, podMap map[string]*e
 func deduplicateStrings(input []string) []string {
 	seen := make(map[string]bool)
 	result := []string{}
-	
+
 	for _, item := range input {
 		if !seen[item] {
 			seen[item] = true
 			result = append(result, item)
 		}
 	}
-	
+
 	return result
 }
 
@@ -318,28 +317,13 @@ func resolveHostnameToIPs(hostname string) []string {
 	if err != nil {
 		return nil
 	}
-	
+
 	var ipStrings []string
 	for _, ip := range ips {
 		ipStrings = append(ipStrings, ip.String())
 	}
-	
-	return deduplicateStrings(ipStrings)
-}
 
-// extractHostnameFromURL extracts hostname from a URL (for cluster endpoints)
-func extractHostnameFromURL(endpoint string) string {
-	if endpoint == "" {
-		return ""
-	}
-	
-	// Parse the URL
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return ""
-	}
-	
-	return u.Hostname()
+	return deduplicateStrings(ipStrings)
 }
 
 // isIPAddress checks if a string is an IP address (IPv4 or IPv6)
@@ -367,18 +351,18 @@ func buildServicePodRelationships(services []v1.Service, pods []v1.Pod, region s
 					serviceName := fmt.Sprintf("%s/%s", service.Namespace, service.Name)
 
 					// Create pod identification info
-					podId := &eksfern.KubernetesPodIdentificationInfo{
+					podID := &eksfern.KubernetesPodIdentificationInfo{
 						Name:      pod.Name,
 						Namespace: pod.Namespace,
 						Region:    region,
 					}
 					if pod.UID != "" {
 						uid := string(pod.UID)
-						podId.Uid = &uid
+						podID.Uid = &uid
 					}
 
 					// Add to service -> pods mapping
-					targetPodIds = append(targetPodIds, podId)
+					targetPodIds = append(targetPodIds, podID)
 
 					// Add to pod -> services mapping
 					if _, exists := podServiceMap[podKey]; !exists {
@@ -661,7 +645,7 @@ func convertServiceToFern(service *v1.Service, region string) *eksfern.Kubernete
 	if len(service.Spec.ExternalIPs) > 0 {
 		// Set external IP addresses array
 		resources.ExternalIpAddresses = deduplicateStrings(service.Spec.ExternalIPs)
-		
+
 		// Create external endpoints
 		var externalEndpoints []*eksfern.ServiceEndpoint
 		ports := getServicePorts(service)
@@ -695,18 +679,18 @@ func convertServiceToFern(service *v1.Service, region string) *eksfern.Kubernete
 					Hostname: &ingress.Hostname,
 					Ports:    ports,
 				}
-				
+
 				// Resolve hostname to IP addresses only if it's actually a hostname (not an IP)
 				if !isIPAddress(ingress.Hostname) {
 					if resolvedIPs := resolveHostnameToIPs(ingress.Hostname); len(resolvedIPs) > 0 {
 						endpoint.ResolvedIpAddresses = resolvedIPs
 					}
 				}
-				
+
 				lbEndpoints = append(lbEndpoints, endpoint)
 			}
 		}
-		
+
 		resources.LoadBalancerEndpoints = lbEndpoints
 	}
 
