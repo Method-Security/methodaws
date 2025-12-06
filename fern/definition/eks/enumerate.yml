@@ -17,11 +17,95 @@ types:
       - FAILED
       - UPDATING
       - PENDING
+  ServiceType:
+    enum:
+      - CLUSTER_IP
+      - NODE_PORT
+      - LOAD_BALANCER
+      - EXTERNAL_NAME
+  PodStatus:
+    enum:
+      - PENDING
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+      - UNKNOWN
 # Simple access config (only used fields)
   EksAccessConfig:
     properties:
       authenticationMode: optional<string>
       bootstrapClusterCreatorAdminPermissions: optional<boolean>
+# Kubernetes Pod Structures
+  KubernetesPodIdentificationInfo:
+    properties:
+      name: string
+      namespace: string
+      uid: optional<string>
+      region: string
+  KubernetesPodConfigurationInfo:
+    properties:
+      status: optional<PodStatus>
+      nodeName: optional<string>
+      createdAt: optional<datetime>
+      labels: optional<map<string, string>>
+      annotations: optional<map<string, string>>
+      containers: optional<list<string>>
+  KubernetesPodResourceInfo:
+    properties:
+      services: optional<list<string>>
+      ipAddresses: optional<list<string>>
+      fqdns: optional<list<string>>
+# Kubernetes Node Structures  
+  KubernetesNodeIdentificationInfo:
+    properties:
+      name: string
+      uid: optional<string>
+      region: string
+  KubernetesNodeConfigurationInfo:
+    properties:
+      createdAt: optional<datetime>
+      labels: optional<map<string, string>>
+      annotations: optional<map<string, string>>
+      capacity: optional<map<string, string>>
+      allocatable: optional<map<string, string>>
+      conditions: optional<list<string>>
+  KubernetesNodeResourceInfo:
+    properties:
+      pods: optional<list<KubernetesPod>>
+      ipAddresses: optional<list<string>>
+      fqdns: optional<list<string>>
+# Kubernetes Service Structures (for external access)
+  ServicePort:
+    properties:
+      port: integer
+      protocol: string
+      nodePort: optional<integer>
+  ServiceEndpoint:
+    properties:
+      ipAddress: optional<string>
+      hostname: optional<string>
+      resolvedIpAddresses: optional<list<string>>
+      ports: optional<list<ServicePort>>
+  KubernetesServiceIdentificationInfo:
+    properties:
+      name: string
+      namespace: string
+      uid: optional<string>
+      region: string
+  KubernetesServiceConfigurationInfo:
+    properties:
+      serviceType: optional<ServiceType>
+      createdAt: optional<datetime>
+      labels: optional<map<string, string>>
+      annotations: optional<map<string, string>>
+      selector: optional<map<string, string>>
+  KubernetesServiceResourceInfo:
+    properties:
+      targetPods: optional<list<KubernetesPodIdentificationInfo>>
+      clusterIpAddress: optional<string>
+      externalIpAddresses: optional<list<string>>
+      externalEndpoints: optional<list<ServiceEndpoint>>
+      loadBalancerEndpoints: optional<list<ServiceEndpoint>>
 # EKS High level structs
   EksIdentificationInfo:
     properties:
@@ -48,6 +132,24 @@ types:
       ec2Instances: optional<list<ec2.Ec2Instance>>
       kmsKeys: optional<list<common.KmsKeyReference>>
       cloudWatchLogs: optional<list<common.CloudWatchLogReference>>
+      nodes: optional<list<KubernetesNode>>
+      services: optional<list<KubernetesService>>
+# Main Kubernetes Structs (following Lambda pattern)
+  KubernetesPod:
+    properties:
+      identification: KubernetesPodIdentificationInfo
+      configuration: KubernetesPodConfigurationInfo
+      resources: optional<KubernetesPodResourceInfo>
+  KubernetesNode:
+    properties:
+      identification: KubernetesNodeIdentificationInfo
+      configuration: KubernetesNodeConfigurationInfo
+      resources: optional<KubernetesNodeResourceInfo>
+  KubernetesService:
+    properties:
+      identification: KubernetesServiceIdentificationInfo
+      configuration: KubernetesServiceConfigurationInfo
+      resources: optional<KubernetesServiceResourceInfo>
 # Main EKS structs
   EksInstance:
     properties:
