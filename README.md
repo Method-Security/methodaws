@@ -5,6 +5,7 @@
 [![Verify][verify-img]][verify]
 [![Go Report Card][go-report-img]][go-report]
 [![License: Apache-2.0][license-img]][license]
+[![Acceptable Use Policy][acceptable-use-policy-img]][acceptable-use-policy]
 
 [![GitHub Downloads][github-downloads-img]][release]
 [![Docker Pulls][docker-pulls-img]][docker-pull]
@@ -120,3 +121,5 @@ Have an idea for a Tool to contribute? Open a Discussion [here](discussion).
 [discussion]: https://github.com/Method-Security/methodaws/discussions
 [github-org]: https://github.com/Method-Security
 [aws_env_vars]: https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-envvars.html
+[acceptable-use-policy]: https://github.com/Method-Security/methodaws/blob/main/ACCEPTABLE_USE_POLICY.md
+[acceptable-use-policy-img]: https://img.shields.io/badge/acceptable_use-policy-blue
