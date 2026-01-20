@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strings"
 
 	common "github.com/Method-Security/methodaws/generated/go/common"
 	iam "github.com/Method-Security/methodaws/generated/go/iam"
@@ -16,7 +17,7 @@ import (
 )
 
 // enumerateIamRoles retrieves all IAM roles with their attached policies
-func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRoles, []string) {
+func enumerateIamRoles(ctx context.Context, cfg aws.Config, excludeDefaultRoles bool) ([]*iam.IamRoles, []string) {
 	log := svc1log.FromContext(ctx)
 	client := iamaws.NewFromConfig(cfg)
 	var iamRoles []*iam.IamRoles
@@ -30,6 +31,19 @@ func enumerateIamRoles(ctx context.Context, cfg aws.Config) ([]*iam.IamRoles, []
 	}
 
 	log.Info("Processing IAM roles", svc1log.SafeParam("roleCount", len(roles)))
+
+	// Filter out default roles if requested
+	if excludeDefaultRoles {
+		filteredRoles := make([]types.Role, 0, len(roles))
+		for _, role := range roles {
+			if !isDefaultAwsRole(role) {
+				filteredRoles = append(filteredRoles, role)
+			}
+		}
+		roles = filteredRoles
+		log.Info("Filtered default roles",
+			svc1log.SafeParam("remainingRoleCount", len(roles)))
+	}
 
 	for _, role := range roles {
 		if role.Arn == nil {
@@ -293,4 +307,54 @@ func discoverEc2ReferencesFromPolicies(policies []*iam.AttachedPolicy) []*common
 		ec2Instances = append(ec2Instances, instance)
 	}
 	return ec2Instances
+}
+
+var serviceLinkedRoleArnRe = regexp.MustCompile(
+	`^arn:aws[a-z-]*:iam::\d{12}:role/aws-service-role/`,
+)
+
+// isServiceLinkedRole returns true if the role is an AWS service-linked role.
+func isServiceLinkedRole(role types.Role) bool {
+	if role.Path != nil && strings.HasPrefix(*role.Path, "/aws-service-role/") {
+		return true
+	}
+
+	// Fallback if Path is missing
+	if role.Arn != nil && serviceLinkedRoleArnRe.MatchString(*role.Arn) {
+		return true
+	}
+
+	return false
+}
+
+// isIdentityCenterRole returns true if the role was created by IAM Identity Center (SSO).
+func isIdentityCenterRole(role types.Role) bool {
+	// Identity Center roles always start with AWSReservedSSO_
+	if role.RoleName != nil && strings.HasPrefix(*role.RoleName, "AWSReservedSSO_") {
+		return true
+	}
+
+	// Extra safety: path used by SSO-managed roles
+	if role.Path != nil && strings.Contains(*role.Path, "/aws-reserved/sso.amazonaws.com/") {
+		return true
+	}
+
+	return false
+}
+
+// isControlTowerRole returns true if the role is created/required by AWS Control Tower.
+func isControlTowerRole(role types.Role) bool {
+	return role.RoleName != nil && *role.RoleName == "AWSControlTowerExecution"
+}
+
+// isDefaultAwsRole returns true if the role is AWS-shipped (created and managed by AWS).
+//
+// This includes:
+//   - Service-linked roles
+//   - IAM Identity Center (SSO) roles
+//   - Control Tower roles
+func isDefaultAwsRole(role types.Role) bool {
+	return isServiceLinkedRole(role) ||
+		isIdentityCenterRole(role) ||
+		isControlTowerRole(role)
 }
