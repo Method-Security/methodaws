@@ -27,8 +27,14 @@ func (a *MethodAws) InitIamCommand() {
 				return
 			}
 
+			excludeDefaultRoles, err := cmd.Flags().GetBool("exclude-default-roles")
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+
 			// Get Config
-			config := getIamEnumerateConfig(a.RootFlags.Regions, accountID)
+			config := getIamEnumerateConfig(accountID, excludeDefaultRoles)
 
 			// Get Report
 			report := iamInternal.EnumerateIam(cmd.Context(), *a.AwsConfig, config)
@@ -36,13 +42,16 @@ func (a *MethodAws) InitIamCommand() {
 		},
 	}
 
+	enumerateCmd.Flags().Bool("exclude-default-roles", false, "Exclude default roles")
+
 	iamCmd.AddCommand(enumerateCmd)
 	a.RootCmd.AddCommand(iamCmd)
 }
 
 // getIamEnumerateConfig returns an IamEnumerateConfig with the given regions and account ID
-func getIamEnumerateConfig(regions []string, accountID string) iam.IamEnumerateConfig {
+func getIamEnumerateConfig(accountID string, excludeDefaultRoles bool) iam.IamEnumerateConfig {
 	return iam.IamEnumerateConfig{
-		AccountId: accountID,
+		AccountId:           accountID,
+		ExcludeDefaultRoles: excludeDefaultRoles,
 	}
 }
