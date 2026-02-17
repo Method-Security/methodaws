@@ -62,6 +62,7 @@ jobs:
             --rm armbuilder \
             goreleaser build --single-target --clean --snapshot --timeout 60m \
             -f .goreleaser/goreleaser-build.yml ${{ inputs.goreleaser_options }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: linux-arm64-dist
@@ -98,6 +99,7 @@ jobs:
         env:
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
 
+      # Build AMD64 builder image natively (no QEMU needed)
       - name: Build AMD64 Builder Image
         run: docker buildx build . --platform linux/amd64 --load --tag amdbuilder -f Dockerfile.builder
 
@@ -198,15 +200,6 @@ jobs:
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@v10
-        with:
-          root-reserve-mb: 32768 # The Go cache (`~/.cache/go-build` and `~/go/pkg`) requires a lot of storage space.
-          remove-android: "true"
-          remove-docker-images: "true"
-          remove-dotnet: "true"
-          remove-haskell: "true"
-
       - name: Install Dependences
         run: sudo apt install libpcap-dev
 
@@ -295,4 +288,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-          COSIGN_EXPERIMENTAL: "true" 
+          COSIGN_EXPERIMENTAL: "true"
