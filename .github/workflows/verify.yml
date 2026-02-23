@@ -19,6 +19,11 @@ jobs:
           name: fern-generated-code
           path: generated/
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
       - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
 
