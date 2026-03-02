@@ -4,6 +4,7 @@ package route53
 import (
 	// Standard
 	"context"
+	"fmt"
 	"strings"
 
 	// Generated
@@ -23,9 +24,10 @@ const (
 	REGION = "us-east-1"
 )
 
-func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]route53fern.EnrichedHostedZone, error) {
+func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]route53fern.EnrichedHostedZone, []string) {
 	log := svc1log.FromContext(ctx)
 	var zones []route53fern.EnrichedHostedZone
+	var errors []string
 
 	log.Info("Starting Route53 hosted zones enumeration")
 	paginator := route53.NewListHostedZonesPaginator(route53Client, &route53.ListHostedZonesInput{})
@@ -34,7 +36,8 @@ func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]rout
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			log.Error("Failed to get next page of hosted zones", svc1log.Stacktrace(err))
-			return nil, err
+			errors = append(errors, fmt.Sprintf("Failed to get next page of hosted zones: %s", err.Error()))
+			break
 		}
 
 		log.Info("Retrieved hosted zones page", svc1log.SafeParam("zoneCount", len(page.HostedZones)))
@@ -90,13 +93,12 @@ func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]rout
 
 			log.Info("Processing hosted zone", svc1log.SafeParam("zoneName", identification.Name), svc1log.SafeParam("zoneId", identification.Id))
 
-			resourceRecordSets, err := listDNSRecords(ctx, route53Client, identification.Id)
-			if err != nil {
-				log.Error("Failed to get DNS records for hosted zone",
+			resourceRecordSets, dnsErrors := listDNSRecords(ctx, route53Client, identification.Id)
+			if len(dnsErrors) > 0 {
+				log.Warn("Errors getting DNS records for hosted zone",
 					svc1log.SafeParam("zoneName", identification.Name),
-					svc1log.SafeParam("zoneId", identification.Id),
-					svc1log.Stacktrace(err))
-				return nil, err
+					svc1log.SafeParam("zoneId", identification.Id))
+				errors = append(errors, dnsErrors...)
 			}
 
 			// Add resources if there are record sets
@@ -119,12 +121,13 @@ func listHostedZones(ctx context.Context, route53Client *route53.Client) ([]rout
 	}
 
 	log.Info("Completed Route53 hosted zones enumeration", svc1log.SafeParam("totalZones", len(zones)))
-	return zones, nil
+	return zones, errors
 }
 
-func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID string) ([]*route53fern.ResourceRecordSet, error) {
+func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID string) ([]*route53fern.ResourceRecordSet, []string) {
 	log := svc1log.FromContext(ctx)
 	var recordSets []*route53fern.ResourceRecordSet
+	var errors []string
 
 	log.Info("Retrieving DNS records for zone", svc1log.SafeParam("zoneId", zoneID))
 
@@ -140,7 +143,8 @@ func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID s
 			log.Error("Failed to get next page of DNS records",
 				svc1log.SafeParam("zoneId", zoneID),
 				svc1log.Stacktrace(err))
-			return nil, err
+			errors = append(errors, fmt.Sprintf("Failed to get DNS records for zone %s: %s", zoneID, err.Error()))
+			break
 		}
 
 		log.Info("Retrieved DNS records page",
@@ -232,7 +236,7 @@ func listDNSRecords(ctx context.Context, route53Client *route53.Client, zoneID s
 		svc1log.SafeParam("zoneId", zoneID),
 		svc1log.SafeParam("totalRecords", len(recordSets)))
 
-	return recordSets, nil
+	return recordSets, errors
 }
 
 // EnumerateRoute53 retrieves all Route 53 hosted zones available to the caller and returns a Route53EnumerateReport struct
@@ -254,12 +258,12 @@ func EnumerateRoute53(ctx context.Context, awscfg aws.Config, config route53fern
 	route53Client := route53.NewFromConfig(awscfg)
 
 	// List hosted zones
-	hostedZones, err := listHostedZones(ctx, route53Client)
-	if err != nil {
-		log.Error("Failed to list hosted zones",
+	hostedZones, zoneErrors := listHostedZones(ctx, route53Client)
+	if len(zoneErrors) > 0 {
+		log.Warn("Errors occurred while listing hosted zones",
 			svc1log.SafeParam("region", awscfg.Region),
-			svc1log.Stacktrace(err))
-		errors = append(errors, err.Error())
+			svc1log.SafeParam("errorCount", len(zoneErrors)))
+		errors = append(errors, zoneErrors...)
 	}
 
 	// Add hosted zones to report

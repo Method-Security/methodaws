@@ -75,11 +75,8 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 	client := ec2aws.NewFromConfig(regionConfig)
 
 	// Get all instances
-	awsInstances, err := getAllInstances(ctx, client, region)
-	if err != nil {
-		errors = append(errors, err.Error())
-		return instances, errors
-	}
+	awsInstances, errs := getAllInstances(ctx, client, region)
+	errors = append(errors, errs...)
 
 	log.Info("Processing ec2aws instances",
 		svc1log.SafeParam("region", region),
@@ -103,14 +100,16 @@ func enumerateEc2ForRegion(ctx context.Context, awsConfig aws.Config, region str
 }
 
 // getAllInstances retrieves all ec2aws instances in a region
-func getAllInstances(ctx context.Context, client *ec2aws.Client, region string) ([]types.Instance, error) {
+func getAllInstances(ctx context.Context, client *ec2aws.Client, region string) ([]types.Instance, []string) {
 	var instances []types.Instance
+	var errors []string
 
 	paginator := ec2aws.NewDescribeInstancesPaginator(client, &ec2aws.DescribeInstancesInput{})
 	for paginator.HasMorePages() {
 		result, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list instances in region %s: %w", region, err)
+			errors = append(errors, fmt.Sprintf("failed to list instances in region %s: %s", region, err.Error()))
+			break
 		}
 
 		// Extract instances from reservations
@@ -119,7 +118,7 @@ func getAllInstances(ctx context.Context, client *ec2aws.Client, region string) 
 		}
 	}
 
-	return instances, nil
+	return instances, errors
 }
 
 // processInstance converts an AWS instance to Fern format

@@ -98,7 +98,7 @@ func convertV2HttpAPIToFern(ctx context.Context, client *apigatewayv2.Client, ap
 	var errors []string
 
 	if api.ApiId == nil {
-		log.Warn("API Gateway API ID is nil", svc1log.SafeParam("apiId", *api.ApiId))
+		log.Warn("API Gateway API ID is nil")
 		errors = append(errors, "api gateway API ID is nil")
 		return nil, errors
 	}
@@ -201,13 +201,26 @@ func getHTTPAPIRoutes(ctx context.Context, client *apigatewayv2.Client, apiID, r
 	var routes []*apigatewayfern.Route
 	var errors []string
 
-	// Get routes for the API
-	routesResult, err := client.GetRoutes(ctx, &apigatewayv2.GetRoutesInput{ApiId: &apiID})
-	if err != nil {
-		return routes, []string{err.Error()}
+	// Get routes for the API with pagination
+	var allRoutes []types.Route
+	var nextToken *string
+	for {
+		routesResult, err := client.GetRoutes(ctx, &apigatewayv2.GetRoutesInput{
+			ApiId:     &apiID,
+			NextToken: nextToken,
+		})
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("GetRoutes failed for API %s: %s", apiID, err.Error()))
+			break
+		}
+		allRoutes = append(allRoutes, routesResult.Items...)
+		if routesResult.NextToken == nil {
+			break
+		}
+		nextToken = routesResult.NextToken
 	}
 
-	for _, route := range routesResult.Items {
+	for _, route := range allRoutes {
 		// Get integration for this route if it exists
 		var integration *apigatewayfern.Integration
 		if route.Target != nil {
@@ -403,13 +416,25 @@ func getHTTPAPICertificates(ctx context.Context, client *apigatewayv2.Client, ap
 	var certificates []*apigatewayfern.Certificate
 	var errors []string
 
-	// Get domain names for this API
-	domainNames, err := client.GetDomainNames(ctx, &apigatewayv2.GetDomainNamesInput{})
-	if err != nil {
-		return certificates, []string{err.Error()}
+	// Get domain names for this API with pagination
+	var allDomains []types.DomainName
+	var domainNextToken *string
+	for {
+		domainResult, err := client.GetDomainNames(ctx, &apigatewayv2.GetDomainNamesInput{
+			NextToken: domainNextToken,
+		})
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("GetDomainNames failed: %s", err.Error()))
+			break
+		}
+		allDomains = append(allDomains, domainResult.Items...)
+		if domainResult.NextToken == nil {
+			break
+		}
+		domainNextToken = domainResult.NextToken
 	}
 
-	for _, domain := range domainNames.Items {
+	for _, domain := range allDomains {
 		// Check if this domain is associated with our API
 		mappings, err := client.GetApiMappings(ctx, &apigatewayv2.GetApiMappingsInput{
 			DomainName: domain.DomainName,
@@ -421,13 +446,18 @@ func getHTTPAPICertificates(ctx context.Context, client *apigatewayv2.Client, ap
 		// Check if any mapping is for our API
 		for _, mapping := range mappings.Items {
 			if mapping.ApiId != nil && *mapping.ApiId == apiID {
+				if len(domain.DomainNameConfigurations) == 0 || domain.DomainNameConfigurations[0].CertificateArn == nil {
+					errors = append(errors, fmt.Sprintf("Domain %s has no certificate configuration", aws.ToString(domain.DomainName)))
+					break
+				}
+
 				cert := &apigatewayfern.Certificate{
 					Arn:        *domain.DomainNameConfigurations[0].CertificateArn,
 					DomainName: domain.DomainName,
 				}
 
 				// Convert security policy
-				if len(domain.DomainNameConfigurations) > 0 && domain.DomainNameConfigurations[0].SecurityPolicy != "" {
+				if domain.DomainNameConfigurations[0].SecurityPolicy != "" {
 					switch domain.DomainNameConfigurations[0].SecurityPolicy {
 					case types.SecurityPolicyTls10:
 						policy := apigatewayfern.SecurityPolicyTls10

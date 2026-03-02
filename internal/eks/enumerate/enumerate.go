@@ -71,15 +71,26 @@ func enumerateEksForRegion(ctx context.Context, cfg aws.Config, region string) (
 	var clusters []*eksfern.EksInstance
 	var errors []string
 
-	// List clusters
-	clusterList, err := eksSvc.ListClusters(ctx, &eks.ListClustersInput{})
-	if err != nil {
-		errors = append(errors, fmt.Sprintf("Error listing clusters in region %s: %s", region, err.Error()))
-		return clusters, errors
+	// List clusters with pagination
+	var allClusterNames []string
+	var nextToken *string
+	for {
+		clusterList, err := eksSvc.ListClusters(ctx, &eks.ListClustersInput{
+			NextToken: nextToken,
+		})
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Error listing clusters in region %s: %s", region, err.Error()))
+			break
+		}
+		allClusterNames = append(allClusterNames, clusterList.Clusters...)
+		if clusterList.NextToken == nil {
+			break
+		}
+		nextToken = clusterList.NextToken
 	}
 
 	// Process each cluster
-	for _, clusterName := range clusterList.Clusters {
+	for _, clusterName := range allClusterNames {
 		cluster, errs := processCluster(ctx, cfg, eksSvc, clusterName, region)
 		if cluster != nil {
 			clusters = append(clusters, cluster)
@@ -164,23 +175,23 @@ func enumerateKubernetesResources(ctx context.Context, cfg aws.Config, cluster *
 		return fernNodes, fernServices, errors
 	}
 
-	// Get raw Kubernetes resources
+	// Get raw Kubernetes resources - collect what we can, don't discard on partial failure
 	podList, err := kubeClient.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list pods in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernNodes, fernServices, errors
+		podList = &v1.PodList{}
 	}
 
 	nodeList, err := kubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list nodes in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernNodes, fernServices, errors
+		nodeList = &v1.NodeList{}
 	}
 
 	serviceList, err := kubeClient.CoreV1().Services("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to list services in cluster %s: %s", *cluster.Name, err.Error()))
-		return fernNodes, fernServices, errors
+		serviceList = &v1.ServiceList{}
 	}
 
 	// Build service-pod relationships
@@ -256,6 +267,9 @@ func createKubernetesClient(ctx context.Context, cfg aws.Config, cluster *eksTyp
 	}
 
 	// Decode the certificate authority data
+	if cluster.CertificateAuthority == nil || cluster.CertificateAuthority.Data == nil {
+		return nil, fmt.Errorf("cluster %s has no certificate authority data", *cluster.Name)
+	}
 	caCert, err := base64.StdEncoding.DecodeString(*cluster.CertificateAuthority.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode certificate authority data: %w", err)

@@ -78,7 +78,10 @@ func CredsEks(ctx context.Context, cfg aws.Config, clusterName string) (*eksfern
 	}
 
 	expiration := tok.Expiration
-	caCert := aws.ToString(clusterOutput.Cluster.CertificateAuthority.Data)
+	var caCert string
+	if clusterOutput.Cluster.CertificateAuthority != nil {
+		caCert = aws.ToString(clusterOutput.Cluster.CertificateAuthority.Data)
+	}
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(tok.Token))
 	credInfo := eksfern.CredentialInfo{
 		Url:        aws.ToString(clusterOutput.Cluster.Endpoint),

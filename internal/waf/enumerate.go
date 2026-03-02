@@ -63,20 +63,32 @@ func enumerateWAFForRegion(ctx context.Context, awsConfig aws.Config, region str
 	wafClient := wafv2.NewFromConfig(awsConfig)
 	var errors []string
 
-	// List WAF WebACLs
-	listWebACLsInput := &wafv2.ListWebACLsInput{Scope: types.ScopeRegional}
-	webACLsOutput, err := wafClient.ListWebACLs(ctx, listWebACLsInput)
-	if err != nil {
-		errorMsg := "Failed to list WAF WebACLs in region " + region + ": " + err.Error()
-		log.Error("Error listing WAF WebACLs", svc1log.SafeParam("error", err.Error()))
-		errors = append(errors, errorMsg)
-		return nil, errors
+	// List WAF WebACLs with pagination
+	var allWebACLs []types.WebACLSummary
+	var nextMarker *string
+	for {
+		listWebACLsInput := &wafv2.ListWebACLsInput{
+			Scope:      types.ScopeRegional,
+			NextMarker: nextMarker,
+		}
+		webACLsOutput, err := wafClient.ListWebACLs(ctx, listWebACLsInput)
+		if err != nil {
+			errorMsg := "Failed to list WAF WebACLs in region " + region + ": " + err.Error()
+			log.Error("Error listing WAF WebACLs", svc1log.SafeParam("error", err.Error()))
+			errors = append(errors, errorMsg)
+			break
+		}
+		allWebACLs = append(allWebACLs, webACLsOutput.WebACLs...)
+		if webACLsOutput.NextMarker == nil {
+			break
+		}
+		nextMarker = webACLsOutput.NextMarker
 	}
 
-	log.Info("Successfully listed WAF WebACLs", svc1log.SafeParam("count", len(webACLsOutput.WebACLs)))
+	log.Info("Successfully listed WAF WebACLs", svc1log.SafeParam("count", len(allWebACLs)))
 
 	var wafs []*waffern.WafInstance
-	for _, webACL := range webACLsOutput.WebACLs {
+	for _, webACL := range allWebACLs {
 		// check if WAF has an ID
 		if webACL.ARN == nil {
 			log.Warn("WAF WebACL ARN is nil", svc1log.SafeParam("webACL", webACL))
@@ -267,9 +279,14 @@ func getStatementType(statement *types.Statement) waffern.StatementType {
 
 // Resource discovery functions
 func discoverLoadBalancerFromWebACL(ctx context.Context, wafClient *wafv2.Client, webACLArn *string, region string) *common.LoadBalancerReference {
+	log := svc1log.FromContext(ctx)
 	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
 	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
 	if err != nil {
+		log.Warn("Failed to list resources for WebACL (LB discovery)",
+			svc1log.SafeParam("webACLArn", aws.ToString(webACLArn)),
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
 		return nil
 	}
 
@@ -295,9 +312,14 @@ func discoverLoadBalancerFromWebACL(ctx context.Context, wafClient *wafv2.Client
 
 // discoverAPIGatewayFromWebACL discovers the API Gateway from the WebACL
 func discoverAPIGatewayFromWebACL(ctx context.Context, wafClient *wafv2.Client, webACLArn *string, region string) *common.ApiGatewayReference {
+	log := svc1log.FromContext(ctx)
 	listResourcesInput := &wafv2.ListResourcesForWebACLInput{WebACLArn: webACLArn}
 	listResourcesOutput, err := wafClient.ListResourcesForWebACL(ctx, listResourcesInput)
 	if err != nil {
+		log.Warn("Failed to list resources for WebACL (API GW discovery)",
+			svc1log.SafeParam("webACLArn", aws.ToString(webACLArn)),
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
 		return nil
 	}
 
