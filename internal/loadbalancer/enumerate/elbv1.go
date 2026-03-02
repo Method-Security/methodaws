@@ -126,16 +126,6 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*lo
 	targets := []*loadbalancerfern.Target{}
 	errorMessages := []string{}
 
-	// Build a map of instance port from BackendServerDescriptions for port lookup.
-	// BackendServerDescriptions only contains entries for instances with custom policies,
-	// so it will typically have fewer entries than Instances.
-	backendPortMap := make(map[int32]int32)
-	for _, backend := range loadBalancer.BackendServerDescriptions {
-		if backend.InstancePort != nil {
-			backendPortMap[*backend.InstancePort] = *backend.InstancePort
-		}
-	}
-
 	for _, instance := range loadBalancer.Instances {
 		targetType := loadbalancerfern.TargetTypeInstance
 		target := &loadbalancerfern.Target{

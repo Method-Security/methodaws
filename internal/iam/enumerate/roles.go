@@ -138,17 +138,9 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 
 		for _, policy := range result.AttachedPolicies {
 			if policy.PolicyArn != nil && policy.PolicyName != nil {
-				// Determine if it's customer managed (Local scope) or AWS managed
-				isCustomerManaged := !isAWSManagedRole(role)
-				var policyDoc *string
-				// Get policy document if it's customer managed
-				if isCustomerManaged {
-					doc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
-					if err != nil {
-						errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
-					} else {
-						policyDoc = doc
-					}
+				policyDoc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
+				if err != nil {
+					errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
 				}
 
 				attachedPolicy := &iam.AttachedPolicy{
@@ -157,8 +149,7 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 						PolicyName: *policy.PolicyName,
 					},
 					Configuration: &iam.AttachedPolicyConfigurationInfo{
-						PolicyDocument:    policyDoc,
-						IsCustomerManaged: &isCustomerManaged,
+						PolicyDocument: policyDoc,
 					},
 				}
 

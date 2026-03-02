@@ -20,7 +20,6 @@ types:
   AttachedPolicyConfigurationInfo:
     properties:
       policyDocument: optional<string>
-      isCustomerManaged: optional<boolean>
   AttachedPolicy:
     properties:
       identification: AttachedPolicyIdentificationInfo
