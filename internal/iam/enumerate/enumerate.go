@@ -24,7 +24,7 @@ func EnumerateIam(ctx context.Context, awsConfig aws.Config, config iam.IamEnume
 
 	// Enumerate roles (with nested policy information)
 	log.Info("Enumerating IAM roles with attached policies")
-	roles, rolesErrors := enumerateIamRoles(ctx, awsConfig, config.ExcludeAWSManagedRoles)
+	roles, rolesErrors := enumerateIamRoles(ctx, awsConfig, config.ExcludeAwsManagedRoles)
 	if len(rolesErrors) > 0 {
 		log.Warn("Errors encountered during role enumeration",
 			svc1log.SafeParam("errorCount", len(rolesErrors)))

@@ -138,7 +138,7 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 
 		for _, policy := range result.AttachedPolicies {
 			if policy.PolicyArn != nil && policy.PolicyName != nil {
-			// Determine if it's customer managed (Local scope) or AWS managed
+				// Determine if it's customer managed (Local scope) or AWS managed
 				isCustomerManaged := !isAWSManagedRole(role)
 				var policyDoc *string
 				// Get policy document if it's customer managed
