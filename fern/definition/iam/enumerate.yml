@@ -23,7 +23,7 @@ types:
   AttachedPolicy:
     properties:
       identification: AttachedPolicyIdentificationInfo
-      configuration: AttachedPolicyConfigurationInfo
+      configuration: optional<AttachedPolicyConfigurationInfo>
 # IAM Role High level structs
   IamRoleIdentificationInfo:
     properties:
