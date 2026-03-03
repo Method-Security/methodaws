@@ -66,6 +66,7 @@ func objectVersioning(ctx context.Context, s3Client *s3.Client, bucket *s3fern.S
 	result, err := s3Client.GetBucketVersioning(ctx, input)
 	if err != nil {
 		errors = append(errors, err.Error())
+		return bucket, errors
 	}
 
 	if result.Status != "" {

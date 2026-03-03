@@ -37,7 +37,7 @@ func ListS3Bucket(ctx context.Context, awscfg aws.Config, config s3fern.ListS3Bu
 	pageCount := 0
 	for paginator.HasMorePages() {
 		pageCount++
-		output, err := paginator.NextPage(context.Background())
+		output, err := paginator.NextPage(ctx)
 		if err != nil {
 			log.Error("Error fetching page from S3 bucket",
 				svc1log.SafeParam("bucketName", config.BucketName),

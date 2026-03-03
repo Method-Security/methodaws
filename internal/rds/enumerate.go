@@ -72,12 +72,13 @@ func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region str
 	var errors []string
 
 	// List RDS instances
-	instances, err := listRDSInstances(ctx, rdsClient)
-	if err != nil {
-		errorMsg := "Failed to list RDS instances in region " + region + ": " + err.Error()
-		log.Error("Error listing RDS instances", svc1log.SafeParam("error", err.Error()))
-		errors = append(errors, errorMsg)
-		return nil, errors
+	instances, listErrors := listRDSInstances(ctx, rdsClient)
+	if len(listErrors) > 0 {
+		for _, e := range listErrors {
+			errorMsg := "Failed to list RDS instances in region " + region + ": " + e
+			log.Warn("Error listing RDS instances", svc1log.SafeParam("error", e))
+			errors = append(errors, errorMsg)
+		}
 	}
 
 	log.Info("Successfully listed RDS instances", svc1log.SafeParam("count", len(instances)))
@@ -101,20 +102,22 @@ func enumerateRDSForRegion(ctx context.Context, awsConfig aws.Config, region str
 	return rdsInstances, errors
 }
 
-func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBInstance, error) {
+func listRDSInstances(ctx context.Context, rdsClient *rds.Client) ([]types.DBInstance, []string) {
 	var instances []types.DBInstance
+	var errors []string
 	paginator := rds.NewDescribeDBInstancesPaginator(rdsClient, &rds.DescribeDBInstancesInput{})
 
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, err
+			errors = append(errors, err.Error())
+			break
 		}
 
 		instances = append(instances, page.DBInstances...)
 	}
 
-	return instances, nil
+	return instances, errors
 }
 
 // convertAWSDBInstanceToFern converts an AWS RDS DB Instance to a Fern RDS Instance

@@ -264,11 +264,14 @@ func convertAWSEC2SecurityGroupToFern(ctx context.Context, cfg aws.Config, awsSG
 		}
 
 		// Extract referenced security group (missing bidirectional connection!)
-		if rule.ReferencedGroupInfo != nil {
-			fernPerm.Configuration.Peer.ReferencedSecurityGroup = &fernsecuritygroup.ReferencedSecurityGroup{
+		if rule.ReferencedGroupInfo != nil && rule.ReferencedGroupInfo.GroupId != nil {
+			refSG := &fernsecuritygroup.ReferencedSecurityGroup{
 				GroupId: *rule.ReferencedGroupInfo.GroupId,
-				UserId:  *rule.ReferencedGroupInfo.UserId,
 			}
+			if rule.ReferencedGroupInfo.UserId != nil {
+				refSG.UserId = *rule.ReferencedGroupInfo.UserId
+			}
+			fernPerm.Configuration.Peer.ReferencedSecurityGroup = refSG
 		}
 
 		if len(cidrs) == 0 && fernPerm.Configuration.Peer.ReferencedSecurityGroup == nil {

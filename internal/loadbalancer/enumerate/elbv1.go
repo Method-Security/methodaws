@@ -57,7 +57,7 @@ func enumerateV1LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 			errorMsg := fmt.Sprintf("Failed to list v1 load balancers in region %s: %s", region, err.Error())
 			log.Error("Error listing v1 load balancers", svc1log.SafeParam("error", err.Error()), svc1log.SafeParam("region", region))
 			errorMessages = append(errorMessages, errorMsg)
-			return loadBalancers, errorMessages
+			break
 		}
 
 		for _, lb := range page.LoadBalancerDescriptions {
@@ -126,26 +126,20 @@ func targetsForLoadBalancerV1(loadBalancer types.LoadBalancerDescription) ([]*lo
 	targets := []*loadbalancerfern.Target{}
 	errorMessages := []string{}
 
-	if len(loadBalancer.Instances) == len(loadBalancer.BackendServerDescriptions) {
-		for i, instance := range loadBalancer.Instances {
-			backendServer := loadBalancer.BackendServerDescriptions[i]
-			var port *int
-			if backendServer.InstancePort != nil {
-				portValue := int(*backendServer.InstancePort)
-				port = &portValue
-			}
-			targetType := loadbalancerfern.TargetTypeInstance
-			target := &loadbalancerfern.Target{
-				Id:   aws.ToString(instance.InstanceId),
-				Type: &targetType, // Classic ELB can only point to EC2 instances
-				Port: port,
-			}
-			targets = append(targets, target)
+	for _, instance := range loadBalancer.Instances {
+		targetType := loadbalancerfern.TargetTypeInstance
+		target := &loadbalancerfern.Target{
+			Id:   aws.ToString(instance.InstanceId),
+			Type: &targetType,
 		}
-	} else {
-		errorMessages = append(errorMessages, fmt.Sprintf("Mismatch between instances (%d) and backend server descriptions (%d) for load balancer %s",
-			len(loadBalancer.Instances), len(loadBalancer.BackendServerDescriptions), aws.ToString(loadBalancer.LoadBalancerName)))
+		// Use the listener instance port if available from the load balancer's listener descriptions
+		if len(loadBalancer.ListenerDescriptions) > 0 && loadBalancer.ListenerDescriptions[0].Listener != nil && loadBalancer.ListenerDescriptions[0].Listener.InstancePort != nil {
+			portValue := int(*loadBalancer.ListenerDescriptions[0].Listener.InstancePort)
+			target.Port = &portValue
+		}
+		targets = append(targets, target)
 	}
+
 	return targets, errorMessages
 }
 

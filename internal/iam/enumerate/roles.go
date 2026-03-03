@@ -17,26 +17,23 @@ import (
 )
 
 // enumerateIamRoles retrieves all IAM roles with their attached policies
-func enumerateIamRoles(ctx context.Context, cfg aws.Config, excludeDefaultRoles bool) ([]*iam.IamRoles, []string) {
+func enumerateIamRoles(ctx context.Context, cfg aws.Config, excludeAWSManagedRoles bool) ([]*iam.IamRoles, []string) {
 	log := svc1log.FromContext(ctx)
 	client := iamaws.NewFromConfig(cfg)
 	var iamRoles []*iam.IamRoles
 	var errors []string
 
 	// Get all roles
-	roles, err := getAllRoles(ctx, client)
-	if err != nil {
-		errors = append(errors, err.Error())
-		return iamRoles, errors
-	}
+	roles, errs := getAllRoles(ctx, client)
+	errors = append(errors, errs...)
 
 	log.Info("Processing IAM roles", svc1log.SafeParam("roleCount", len(roles)))
 
 	// Filter out default roles if requested
-	if excludeDefaultRoles {
+	if excludeAWSManagedRoles {
 		filteredRoles := make([]types.Role, 0, len(roles))
 		for _, role := range roles {
-			if !isDefaultAwsRole(role) {
+			if !isAWSManagedRole(role) {
 				filteredRoles = append(filteredRoles, role)
 			}
 		}
@@ -67,19 +64,21 @@ func enumerateIamRoles(ctx context.Context, cfg aws.Config, excludeDefaultRoles 
 }
 
 // getAllRoles retrieves all IAM roles
-func getAllRoles(ctx context.Context, client *iamaws.Client) ([]types.Role, error) {
+func getAllRoles(ctx context.Context, client *iamaws.Client) ([]types.Role, []string) {
 	var roles []types.Role
+	var errors []string
 
 	paginator := iamaws.NewListRolesPaginator(client, &iamaws.ListRolesInput{})
 	for paginator.HasMorePages() {
 		result, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list roles: %w", err)
+			errors = append(errors, fmt.Sprintf("failed to list roles: %s", err.Error()))
+			break
 		}
 		roles = append(roles, result.Roles...)
 	}
 
-	return roles, nil
+	return roles, errors
 }
 
 // processRole converts a role and enriches it with policy information
@@ -87,7 +86,7 @@ func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*
 	var errors []string
 
 	// Get attached policies
-	attachedPolicies, errs := getAttachedPoliciesForRole(ctx, client, *role.RoleName)
+	attachedPolicies, errs := getAttachedPoliciesForRole(ctx, client, role)
 	errors = append(errors, errs...)
 
 	// Convert role last used if present
@@ -121,36 +120,27 @@ func processRole(ctx context.Context, client *iamaws.Client, role types.Role) (*
 }
 
 // getAttachedPoliciesForRole gets all attached policies for a role with their documents
-func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, roleName string) ([]*iam.AttachedPolicy, []string) {
+func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role types.Role) ([]*iam.AttachedPolicy, []string) {
 	var attachedPolicies []*iam.AttachedPolicy
 	var errors []string
 
 	// List attached policies
 	paginator := iamaws.NewListAttachedRolePoliciesPaginator(client, &iamaws.ListAttachedRolePoliciesInput{
-		RoleName: &roleName,
+		RoleName: role.RoleName,
 	})
 
 	for paginator.HasMorePages() {
 		result, err := paginator.NextPage(ctx)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("failed to list attached policies for role %s: %v", roleName, err))
+			errors = append(errors, fmt.Sprintf("failed to list attached policies for role %s: %v", *role.RoleName, err))
 			break
 		}
 
 		for _, policy := range result.AttachedPolicies {
 			if policy.PolicyArn != nil && policy.PolicyName != nil {
-				// Determine if it's customer managed (Local scope) or AWS managed
-				isCustomerManaged := !isAWSManagedPolicy(*policy.PolicyArn)
-
-				var policyDoc *string
-				// Get policy document if it's customer managed
-				if isCustomerManaged {
-					doc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
-					if err != nil {
-						errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
-					} else {
-						policyDoc = doc
-					}
+				policyDoc, err := getPolicyDocument(ctx, client, *policy.PolicyArn)
+				if err != nil {
+					errors = append(errors, fmt.Sprintf("failed to get policy document for %s: %v", *policy.PolicyArn, err))
 				}
 
 				attachedPolicy := &iam.AttachedPolicy{
@@ -159,8 +149,7 @@ func getAttachedPoliciesForRole(ctx context.Context, client *iamaws.Client, role
 						PolicyName: *policy.PolicyName,
 					},
 					Configuration: &iam.AttachedPolicyConfigurationInfo{
-						PolicyDocument:    policyDoc,
-						IsCustomerManaged: &isCustomerManaged,
+						PolicyDocument: policyDoc,
 					},
 				}
 
@@ -215,11 +204,6 @@ func getPolicyDocument(ctx context.Context, client *iamaws.Client, policyArn str
 	}
 
 	return &decodedDoc, nil
-}
-
-// isAWSManagedPolicy checks if a policy ARN represents an AWS managed policy
-func isAWSManagedPolicy(arn string) bool {
-	return len(arn) > 13 && arn[:13] == "arn:aws:iam::"
 }
 
 // Resource discovery functions with deduplication
@@ -347,13 +331,13 @@ func isControlTowerRole(role types.Role) bool {
 	return role.RoleName != nil && *role.RoleName == "AWSControlTowerExecution"
 }
 
-// isDefaultAwsRole returns true if the role is AWS-shipped (created and managed by AWS).
+// isAWSManagedRole returns true if the role is AWS-shipped (created and managed by AWS).
 //
 // This includes:
 //   - Service-linked roles
 //   - IAM Identity Center (SSO) roles
 //   - Control Tower roles
-func isDefaultAwsRole(role types.Role) bool {
+func isAWSManagedRole(role types.Role) bool {
 	return isServiceLinkedRole(role) ||
 		isIdentityCenterRole(role) ||
 		isControlTowerRole(role)

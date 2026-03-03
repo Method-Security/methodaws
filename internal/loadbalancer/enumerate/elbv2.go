@@ -71,7 +71,7 @@ func enumerateV2LoadBalancersForRegion(ctx context.Context, cfg aws.Config, regi
 			errorMsg := fmt.Sprintf("Failed to list v2 load balancers in region %s: %s", region, err.Error())
 			log.Error("Error listing v2 load balancers", svc1log.SafeParam("error", err.Error()), svc1log.SafeParam("region", region))
 			errorMessages = append(errorMessages, errorMsg)
-			return loadBalancers, errorMessages
+			break
 		}
 
 		for _, lb := range page.LoadBalancers {

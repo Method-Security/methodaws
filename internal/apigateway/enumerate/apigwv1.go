@@ -197,16 +197,23 @@ func getRestAPIRoutes(ctx context.Context, client *apigateway.Client, apiID, reg
 	var routes []*apigatewayfern.Route
 	var errors []string
 
-	resources, err := client.GetResources(ctx, &apigateway.GetResourcesInput{RestApiId: &apiID})
-	if err != nil {
-		log.Warn("Failed to get resources for API",
-			svc1log.SafeParam("region", region),
-			svc1log.SafeParam("apiId", apiID),
-			svc1log.Stacktrace(err))
-		return routes, []string{fmt.Sprintf("GetResources failed for API %s: %s", apiID, err.Error())}
+	// Paginate through all resources
+	var allResources []types.Resource
+	paginator := apigateway.NewGetResourcesPaginator(client, &apigateway.GetResourcesInput{RestApiId: &apiID})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			log.Warn("Failed to get resources for API",
+				svc1log.SafeParam("region", region),
+				svc1log.SafeParam("apiId", apiID),
+				svc1log.Stacktrace(err))
+			errors = append(errors, fmt.Sprintf("GetResources failed for API %s: %s", apiID, err.Error()))
+			break
+		}
+		allResources = append(allResources, page.Items...)
 	}
 
-	for _, resource := range resources.Items {
+	for _, resource := range allResources {
 		for methodName := range resource.ResourceMethods {
 			method, err := client.GetMethod(ctx, &apigateway.GetMethodInput{
 				RestApiId:  &apiID,
@@ -457,15 +464,21 @@ func getAPICertificates(ctx context.Context, client *apigateway.Client) ([]*apig
 	var certificates []*apigatewayfern.Certificate
 	var errors []string
 
-	// Get domain names associated with the API
-	domainNames, err := client.GetDomainNames(ctx, &apigateway.GetDomainNamesInput{})
-	if err != nil {
-		log.Warn("Failed to get domain names",
-			svc1log.Stacktrace(err))
-		return certificates, []string{fmt.Sprintf("GetDomainNames failed: %s", err.Error())}
+	// Get domain names associated with the API with pagination
+	var allDomains []types.DomainName
+	domainPaginator := apigateway.NewGetDomainNamesPaginator(client, &apigateway.GetDomainNamesInput{})
+	for domainPaginator.HasMorePages() {
+		page, err := domainPaginator.NextPage(ctx)
+		if err != nil {
+			log.Warn("Failed to get domain names",
+				svc1log.Stacktrace(err))
+			errors = append(errors, fmt.Sprintf("GetDomainNames failed: %s", err.Error()))
+			break
+		}
+		allDomains = append(allDomains, page.Items...)
 	}
 
-	for _, domain := range domainNames.Items {
+	for _, domain := range allDomains {
 		if domain.CertificateArn != nil {
 			cert := &apigatewayfern.Certificate{
 				Arn:        *domain.CertificateArn,
@@ -498,33 +511,37 @@ func getAPIKeysAndUsagePlans(ctx context.Context, client *apigateway.Client, api
 	var usagePlans []string
 	var errors []string
 
-	// Get API keys - filter for those associated with this API
-	keysResult, err := client.GetApiKeys(ctx, &apigateway.GetApiKeysInput{})
-	if err != nil {
-		log.Warn("Failed to get API keys",
-			svc1log.SafeParam("apiId", apiID),
-			svc1log.Stacktrace(err))
-		errors = append(errors, fmt.Sprintf("GetApiKeys failed: %s", err.Error()))
-	} else {
-		for _, key := range keysResult.Items {
+	// Get API keys with pagination
+	keysPaginator := apigateway.NewGetApiKeysPaginator(client, &apigateway.GetApiKeysInput{})
+	for keysPaginator.HasMorePages() {
+		page, err := keysPaginator.NextPage(ctx)
+		if err != nil {
+			log.Warn("Failed to get API keys",
+				svc1log.SafeParam("apiId", apiID),
+				svc1log.Stacktrace(err))
+			errors = append(errors, fmt.Sprintf("GetApiKeys failed: %s", err.Error()))
+			break
+		}
+		for _, key := range page.Items {
 			if key.Id != nil {
-				// Check if this API key is associated with our API by checking usage plans
 				apiKeys = append(apiKeys, *key.Id)
 			}
 		}
 	}
 
-	// Get usage plans associated with this API
-	plansResult, err := client.GetUsagePlans(ctx, &apigateway.GetUsagePlansInput{})
-	if err != nil {
-		log.Warn("Failed to get usage plans",
-			svc1log.SafeParam("apiId", apiID),
-			svc1log.Stacktrace(err))
-		errors = append(errors, fmt.Sprintf("GetUsagePlans failed: %s", err.Error()))
-	} else {
-		for _, plan := range plansResult.Items {
+	// Get usage plans with pagination
+	plansPaginator := apigateway.NewGetUsagePlansPaginator(client, &apigateway.GetUsagePlansInput{})
+	for plansPaginator.HasMorePages() {
+		page, err := plansPaginator.NextPage(ctx)
+		if err != nil {
+			log.Warn("Failed to get usage plans",
+				svc1log.SafeParam("apiId", apiID),
+				svc1log.Stacktrace(err))
+			errors = append(errors, fmt.Sprintf("GetUsagePlans failed: %s", err.Error()))
+			break
+		}
+		for _, plan := range page.Items {
 			if plan.Id != nil && plan.ApiStages != nil {
-				// Check if this usage plan is associated with our API
 				for _, apiStage := range plan.ApiStages {
 					if apiStage.ApiId != nil && *apiStage.ApiId == apiID {
 						usagePlans = append(usagePlans, *plan.Id)

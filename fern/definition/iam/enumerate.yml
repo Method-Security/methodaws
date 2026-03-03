@@ -6,7 +6,7 @@ types:
   IamEnumerateConfig:
     properties:
       accountId: string
-      excludeDefaultRoles: boolean
+      excludeAWSManagedRoles: boolean
 # Supporting Structs
   RoleLastUsed:
     properties:
@@ -20,7 +20,6 @@ types:
   AttachedPolicyConfigurationInfo:
     properties:
       policyDocument: optional<string>
-      isCustomerManaged: optional<boolean>
   AttachedPolicy:
     properties:
       identification: AttachedPolicyIdentificationInfo

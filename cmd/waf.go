@@ -4,8 +4,8 @@ import (
 	// Generated
 	waffern "github.com/Method-Security/methodaws/generated/go/waf"
 	// Internal
-	"github.com/Method-Security/methodaws/internal/sts"
 	"github.com/Method-Security/methodaws/internal/waf"
+	"github.com/Method-Security/methodaws/utils"
 
 	// External
 	"github.com/spf13/cobra"
@@ -28,14 +28,14 @@ func (a *MethodAws) InitWAFCommand() {
 		Long:  `Enumerate WAFs in your AWS account.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// Get Account ID
-			accountID, err := sts.GetAccountID(cmd.Context(), *a.AwsConfig)
+			accountID, err := utils.GetAccountID(cmd.Context(), *a.AwsConfig)
 			if err != nil {
 				a.OutputSignal.AddError(err)
 				return
 			}
 
 			// Config
-			config := getWafEnumerateConfig(*accountID, a.RootFlags.Regions)
+			config := getWafEnumerateConfig(accountID, a.RootFlags.Regions)
 
 			// Report
 			report := waf.EnumerateWAF(cmd.Context(), *a.AwsConfig, config)

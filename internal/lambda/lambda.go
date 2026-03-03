@@ -49,7 +49,7 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 	}
 
 	var vpcReference *common.VpcReference
-	if function.VpcConfig != nil {
+	if function.VpcConfig != nil && function.VpcConfig.VpcId != nil {
 		vpcReference = createVpcReference(*function.VpcConfig.VpcId, function.VpcConfig.SubnetIds, region)
 	}
 
@@ -88,8 +88,25 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 		return nil, errors.New("function revision id is nil")
 	}
 
-	if function.Handler == nil {
-		return nil, errors.New("function handler is nil")
+	// Handler can be nil for container-image-based Lambda functions
+	var handler string
+	if function.Handler != nil {
+		handler = *function.Handler
+	}
+
+	var timeoutInSeconds int
+	if function.Timeout != nil {
+		timeoutInSeconds = int(*function.Timeout)
+	}
+
+	var memorySizeInMb int
+	if function.MemorySize != nil {
+		memorySizeInMb = int(*function.MemorySize)
+	}
+
+	var ephemeralStorageInMb int
+	if function.EphemeralStorage != nil && function.EphemeralStorage.Size != nil {
+		ephemeralStorageInMb = int(*function.EphemeralStorage.Size)
 	}
 
 	var result = &lambdafern.LambdaFunction{
@@ -101,11 +118,11 @@ func parseLambdaFunctionConfiguration(ctx context.Context, function types.Functi
 		Configuration: &lambdafern.LambdaConfigurationInfo{
 			RevisionId:           *function.RevisionId,
 			Runtime:              string(function.Runtime),
-			Handler:              *function.Handler,
+			Handler:              handler,
 			CodeSizeInBytes:      function.CodeSize,
-			TimeoutInSeconds:     int(*function.Timeout),
-			MemorySizeInMb:       int(*function.MemorySize),
-			EphemeralStorageInMb: int(*function.EphemeralStorage.Size),
+			TimeoutInSeconds:     timeoutInSeconds,
+			MemorySizeInMb:       memorySizeInMb,
+			EphemeralStorageInMb: ephemeralStorageInMb,
 			LastModified:         lastModified,
 			PackageType:          lambdaPackageType,
 			Description:          function.Description,
@@ -136,7 +153,7 @@ func enumerateLambdaForRegion(ctx context.Context, awsConfig aws.Config, region 
 	var functions []*lambdafern.LambdaFunction
 	var errors []error
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(context.TODO())
+		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			log.Error("Failed to get next page of Lambda functions",
 				svc1log.SafeParam("region", region),
