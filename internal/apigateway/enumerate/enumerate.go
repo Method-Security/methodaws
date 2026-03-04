@@ -2,6 +2,7 @@ package apigateway
 
 import (
 	"context"
+	"net"
 	"strings"
 
 	apigatewayfern "github.com/Method-Security/methodaws/generated/go/apigateway"
@@ -149,8 +150,12 @@ func extractDNSNameFromURI(uri string) string {
 	if strings.Contains(uri, "://") {
 		parts := strings.Split(uri, "://")
 		if len(parts) > 1 {
-			host := strings.Split(parts[1], "/")[0]
-			return strings.Split(host, ":")[0] // Remove port if present
+			hostport := strings.Split(parts[1], "/")[0]
+			// Use net.SplitHostPort to correctly handle IPv6 addresses (e.g. [::1]:8080)
+			if host, _, err := net.SplitHostPort(hostport); err == nil {
+				return host
+			}
+			return hostport
 		}
 	}
 	return uri

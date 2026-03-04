@@ -285,6 +285,16 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 		}
 	}
 
+	// Convert subnet IPv6 CIDR block associations
+	var subnetCidrAssociations []*vpcfern.VpcCidrBlockAssociation
+
+	for _, assoc := range awsSubnet.Ipv6CidrBlockAssociationSet {
+		subnetCidrAssociations = append(subnetCidrAssociations, &vpcfern.VpcCidrBlockAssociation{
+			AssociationId: aws.ToString(assoc.AssociationId),
+			CidrBlock:     aws.ToString(assoc.Ipv6CidrBlock),
+		})
+	}
+
 	subnet := &vpcfern.Subnet{
 		Identification: &vpcfern.SubnetIdentificationInfo{
 			Id:     *awsSubnet.SubnetId,
@@ -310,7 +320,8 @@ func convertAWSSubnetToFern(awsSubnet ec2types.Subnet, region string) (*vpcfern.
 			Tags:                          tags,
 		},
 		Resources: &vpcfern.SubnetResourceInfo{
-			CidrBlock: awsSubnet.CidrBlock,
+			CidrBlock:               awsSubnet.CidrBlock,
+			CidrBlockAssociationSet: subnetCidrAssociations,
 		},
 	}
 
