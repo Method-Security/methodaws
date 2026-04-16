@@ -325,9 +325,9 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 		if integration.ConnectionType == types.ConnectionTypeVpcLink &&
 			integration.ConnectionId != nil {
 			backend := createV2LoadBalancerBackend(integration, region)
-			return apigatewayfern.NewIntegrationFromVpcLink(&apigatewayfern.VpcLinkIntegration{
+			return &apigatewayfern.Integration{Type: "vpc_link", VpcLink: &apigatewayfern.VpcLinkIntegration{
 				Backend: backend,
-			}), nil
+			}}, nil
 		}
 
 		backend := &apigatewayfern.HttpBackend{
@@ -335,9 +335,9 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 			IsExternal: !strings.Contains(uri, ".amazonaws.com"),
 		}
 
-		return apigatewayfern.NewIntegrationFromHttp(&apigatewayfern.HttpIntegration{
+		return &apigatewayfern.Integration{Type: "http", Http: &apigatewayfern.HttpIntegration{
 			Backend: backend,
-		}), nil
+		}}, nil
 
 	case types.IntegrationTypeAws:
 		arn := aws.ToString(integration.IntegrationUri)
@@ -347,9 +347,9 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 			Region:  region,
 		}
 
-		return apigatewayfern.NewIntegrationFromAws(&apigatewayfern.AwsIntegration{
+		return &apigatewayfern.Integration{Type: "aws", Aws: &apigatewayfern.AwsIntegration{
 			Backend: backend,
-		}), nil
+		}}, nil
 
 	case types.IntegrationTypeHttpProxy:
 		uri := aws.ToString(integration.IntegrationUri)
@@ -358,9 +358,9 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 		if integration.ConnectionType == types.ConnectionTypeVpcLink &&
 			integration.ConnectionId != nil {
 			backend := createV2LoadBalancerBackend(integration, region)
-			return apigatewayfern.NewIntegrationFromVpcLink(&apigatewayfern.VpcLinkIntegration{
+			return &apigatewayfern.Integration{Type: "vpc_link", VpcLink: &apigatewayfern.VpcLinkIntegration{
 				Backend: backend,
-			}), nil
+			}}, nil
 		}
 
 		backend := &apigatewayfern.HttpBackend{
@@ -368,9 +368,9 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 			IsExternal: !strings.Contains(uri, ".amazonaws.com"),
 		}
 
-		return apigatewayfern.NewIntegrationFromHttpProxy(&apigatewayfern.HttpProxyIntegration{
+		return &apigatewayfern.Integration{Type: "http_proxy", HttpProxy: &apigatewayfern.HttpProxyIntegration{
 			Backend: backend,
-		}), nil
+		}}, nil
 
 	case types.IntegrationTypeAwsProxy:
 		arn := aws.ToString(integration.IntegrationUri)
@@ -380,15 +380,15 @@ func convertV2Integration(integration *apigatewayv2.GetIntegrationOutput, region
 			Region:       region,
 		}
 
-		return apigatewayfern.NewIntegrationFromAwsProxy(&apigatewayfern.AwsProxyIntegration{
+		return &apigatewayfern.Integration{Type: "aws_proxy", AwsProxy: &apigatewayfern.AwsProxyIntegration{
 			Backend: backend,
-		}), nil
+		}}, nil
 
 	case types.IntegrationTypeMock:
 		backend := &apigatewayfern.MockBackend{}
-		return apigatewayfern.NewIntegrationFromMock(&apigatewayfern.MockIntegration{
+		return &apigatewayfern.Integration{Type: "mock", Mock: &apigatewayfern.MockIntegration{
 			Backend: backend,
-		}), nil
+		}}, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported integration type: %s", integration.IntegrationType)
