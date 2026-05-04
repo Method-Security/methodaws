@@ -1,7 +1,7 @@
 FROM alpine:3.20
 
 ARG CLI_NAME="methodaws"
-ARG TARGETARCH
+ARG TARGETPLATFORM
 
 RUN apk update && apk add --no-cache bash jq ca-certificates
 
@@ -15,7 +15,7 @@ RUN \
   mkdir -p /opt/method/${CLI_NAME}/service/bin && \
   mkdir -p /mnt/output
 
-COPY ${CLI_NAME} /opt/method/${CLI_NAME}/service/bin/${CLI_NAME}
+COPY $TARGETPLATFORM/${CLI_NAME} /opt/method/${CLI_NAME}/service/bin/${CLI_NAME}
 
 RUN \
   adduser --disabled-password --gecos '' method && \
