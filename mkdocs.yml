@@ -16,7 +16,6 @@ nav:
       - Capabilities:
         - API Gateway: docs/apigateway.md
         - CloudFront: docs/cloudfront.md
-        - Current Instance: docs/current.md
         - EC2: docs/ec2.md
         - EKS: docs/eks.md
         - IAM: docs/iam.md

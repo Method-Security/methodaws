@@ -2,17 +2,28 @@
 
 The `methodaws eks` family of commands provide information about an account's EKS clusters and Kubernetes credentials.
 
-## Enumerate
+## Usage
+```bash
+methodaws eks [command]
+```
+
+## Available Commands
+- **enumerate**: Gather information about all EKS clusters the provided credentials have access to
+- **creds**: Generate Kubernetes credentials for an EKS cluster
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the EKS clusters that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws eks enumerate --regions us-east-1 --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws eks enumerate -h
@@ -32,17 +43,17 @@ Global Flags:
   -v, --verbose               Verbose output
 ```
 
-## Creds
+### Creds
 
 The creds command generates Kubernetes credentials for an EKS cluster, allowing you to connect to and manage the cluster with kubectl or other Kubernetes tools.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws eks creds --regions us-east-1 --name <cluster-name> --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws eks creds -h

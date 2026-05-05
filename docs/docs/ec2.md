@@ -2,17 +2,24 @@
 
 The `methodaws ec2` family of commands provide information about an account's EC2 instances.
 
-## Enumerate
+## Usage
+```bash
+methodaws ec2 [command]
+```
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the EC2 instances that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws ec2 enumerate --regions us-east-1 --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws ec2 enumerate -h

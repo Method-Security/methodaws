@@ -3,7 +3,15 @@
 methodaws provides the capability to enumerate AWS API Gateway resources across both v1 (REST API) and v2 (HTTP API) versions.
 
 ## Usage
+```bash
+methodaws api-gateway [command]
+```
 
+## Commands
+
+### Enumerate
+
+#### Usage
 ```bash
 methodaws api-gateway enumerate --regions <regions>
 ```

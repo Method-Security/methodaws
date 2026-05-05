@@ -2,18 +2,25 @@
 
 The `methodaws route53` family of commands provide information about an account's Route53 DNS entries and hosted zones.
 
-## Enumerate
+## Usage
+```bash
+methodaws route53 [command]
+```
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the Route53 hosted zones and DNS entries, that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws route53 enumerate --regions us-east-1 --output json
 
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws route53 enumerate --help
