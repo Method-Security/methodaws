@@ -23,7 +23,8 @@ Usage:
   methodaws iam enumerate [flags]
 
 Flags:
-  -h, --help   help for enumerate
+      --exclude-aws-managed-roles   Exclude AWS managed roles
+  -h, --help                        help for enumerate
 
 Global Flags:
   -o, --output string          Output format (signal, json). Default value is signal (default "signal")

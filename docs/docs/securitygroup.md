@@ -26,8 +26,7 @@ Usage:
   methodaws securitygroup enumerate [flags]
 
 Flags:
-  -h, --help         help for enumerate
-      --vpc string   VPC ID to filter security groups by
+  -h, --help   help for enumerate
 
 Global Flags:
   -o, --output string          Output format (signal, json). Default value is signal (default "signal")
