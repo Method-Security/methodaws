@@ -2,11 +2,18 @@
 
 The `methodaws securitygroup` family of commands provide information about an account's EC2 instances.
 
-## Enumerate
+## Usage
+```bash
+methodaws securitygroup [command]
+```
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the Security Groups that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws securitygroup enumerate --regions us-east-1 --output json
@@ -16,7 +23,7 @@ methodaws securitygroup enumerate --regions us-east-1 --output json
 methodaws sg enumerate --regions us-east-1 --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws securitygroup enumerate -h

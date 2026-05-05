@@ -3,7 +3,15 @@
 methodaws provides the capability to enumerate AWS Load Balancers including both Classic Load Balancers (v1) and Application/Network Load Balancers (v2).
 
 ## Usage
+```bash
+methodaws load-balancer [command]
+```
 
+## Commands
+
+### Enumerate
+
+#### Usage
 ```bash
 methodaws load-balancer enumerate --regions <regions> --versions <versions>
 ```

@@ -3,7 +3,15 @@
 methodaws provides the capability to enumerate AWS Lambda functions and their configurations.
 
 ## Usage
+```bash
+methodaws lambda [command]
+```
 
+## Commands
+
+### Enumerate
+
+#### Usage
 ```bash
 methodaws lambda enumerate --regions <regions>
 ```

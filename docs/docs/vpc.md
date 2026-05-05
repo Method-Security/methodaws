@@ -2,17 +2,24 @@
 
 The `methodaws vpc` family of commands provide information about an account's VPCs.
 
-## Enumerate
+## Usage
+```bash
+methodaws vpc [command]
+```
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the VPCs that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws vpc enumerate --regions us-east-1 --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws vpc enumerate -h

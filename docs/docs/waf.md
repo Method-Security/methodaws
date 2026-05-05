@@ -3,7 +3,15 @@
 methodaws provides the capability to enumerate AWS WAF (Web Application Firewall) resources.
 
 ## Usage
+```bash
+methodaws waf [command]
+```
 
+## Commands
+
+### Enumerate
+
+#### Usage
 ```bash
 methodaws waf enumerate --regions <regions>
 ```

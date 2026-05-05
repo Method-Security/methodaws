@@ -3,7 +3,15 @@
 methodaws provides the capability to enumerate AWS CloudFront distributions and their related resources.
 
 ## Usage
+```bash
+methodaws cloudfront [command]
+```
 
+## Commands
+
+### Enumerate
+
+#### Usage
 ```bash
 methodaws cloudfront enumerate
 ```

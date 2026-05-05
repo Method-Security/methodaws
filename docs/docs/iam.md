@@ -2,18 +2,25 @@
 
 The `methodaws iam` family of commands provide information about an account's IAM roles and policies.
 
-## Enumerate
+## Usage
+```bash
+methodaws iam [command]
+```
+
+## Commands
+
+### Enumerate
 
 The enumerate command will gather information about all of the IAM roles, along with their attached and/or inline policies, that the provided credentials have access to.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws iam enumerate --regions us-east-1 --output json
 
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws iam enumerate -h

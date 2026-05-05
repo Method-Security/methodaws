@@ -2,17 +2,24 @@
 
 The `methodaws sts` family of commands provide common utilities that are leveraged by other commands when interacting with the AWS STS service.
 
-## arn
+## Usage
+```bash
+methodaws sts [command]
+```
+
+## Commands
+
+### arn
 
 The arn command returns the ARN of the caller. This is leveraged when information about the provided AWS IAM role or credentials are needed by other commands. Primarily necessary to provide a clean data picture and improving data integration quality.
 
-### Usage
+#### Usage
 
 ```bash
 methodaws sts arn --regions us-east-1 --output json
 ```
 
-### Help Text
+#### Help Text
 
 ```bash
 $ methodaws sts arn -h
