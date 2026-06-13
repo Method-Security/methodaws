@@ -107,6 +107,11 @@ func candidateNames(targetSeed string, maxCandidates int) []string {
 				continue
 			}
 			seen[name] = struct{}{}
+			// Skip invalid names here so they don't consume a cap slot and
+			// starve real candidates further down the permutation list.
+			if !isValidBucketName(name) {
+				continue
+			}
 			candidates = append(candidates, name)
 			if len(candidates) >= maxCandidates {
 				return candidates
@@ -147,9 +152,6 @@ func enumerateBySeed(ctx context.Context, config s3fern.S3ExternalConfig) (*s3fe
 	}
 
 	for _, name := range candidates {
-		if !isValidBucketName(name) {
-			continue
-		}
 		for _, region := range regionsToCheck {
 			exists, err := bucketExists(ctx, region, name)
 			if err != nil {

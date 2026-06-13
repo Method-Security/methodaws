@@ -3,6 +3,7 @@ package cmd
 import (
 	// Standard
 	"fmt"
+	"strings"
 
 	// Internal
 	"github.com/Method-Security/methodaws/internal/s3"
@@ -75,6 +76,9 @@ func (a *MethodAws) InitS3Command() {
 				a.OutputSignal.AddError(err)
 				return
 			}
+			// A whitespace-only seed normalizes to zero candidates, so treat it
+			// as unset rather than silently completing with no probes.
+			targetSeed = strings.TrimSpace(targetSeed)
 
 			maxCandidates, err := cmd.Flags().GetInt("max-candidates")
 			if err != nil {

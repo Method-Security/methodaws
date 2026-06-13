@@ -354,8 +354,9 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 	result := s3fern.ExternalS3BucketResult{}
 	errors := []string{}
 
-	// Seed-based candidate discovery takes precedence when provided.
-	if config.TargetSeed != nil && *config.TargetSeed != "" {
+	// Seed-based candidate discovery takes precedence when provided. A
+	// whitespace-only seed normalizes to zero candidates, so treat it as unset.
+	if config.TargetSeed != nil && strings.TrimSpace(*config.TargetSeed) != "" {
 		seedResult, seedErrors := enumerateBySeed(ctx, config)
 		report.Result = seedResult
 		report.Errors = seedErrors
