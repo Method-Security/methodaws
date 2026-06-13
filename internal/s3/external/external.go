@@ -344,17 +344,35 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 	return &report, errors
 }
 
-// EnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials
+// EnumerateS3 attempts to enumerate a public facing S3 bucket with no credentials.
+// When TargetSeed is set, candidate bucket names are generated from the seed and
+// each is probed; otherwise a single bucket is enumerated from Url.
 func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.ExternalS3Report {
 	log := svc1log.FromContext(ctx)
-	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", config.Url))
 
 	report := s3fern.ExternalS3Report{Config: &config}
 	result := s3fern.ExternalS3BucketResult{}
 	errors := []string{}
 
+	// Seed-based candidate discovery takes precedence when provided.
+	if config.TargetSeed != nil && *config.TargetSeed != "" {
+		seedResult, seedErrors := enumerateBySeed(ctx, config)
+		report.Result = seedResult
+		report.Errors = seedErrors
+		return report
+	}
+
+	if config.Url == nil || *config.Url == "" {
+		report.Result = &result
+		report.Errors = []string{"either url or targetSeed must be provided"}
+		return report
+	}
+
+	bucketURL := *config.Url
+	log.Info("Starting external S3 enumeration", svc1log.SafeParam("bucketURL", bucketURL))
+
 	// Parse the bucket URL to get name and potentially region
-	bucketName, urlRegion := parseBucketURL(config.Url)
+	bucketName, urlRegion := parseBucketURL(bucketURL)
 
 	// If we got a region from the URL, only check that region
 	// First try user input, then URL region, then all regions if no input or URL region
@@ -382,7 +400,7 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 			log.Info("Found bucket in region",
 				svc1log.SafeParam("bucketName", bucketName),
 				svc1log.SafeParam("region", region))
-			functionResult, functionErrors := externalS3Region(ctx, config.Url, bucketName, region)
+			functionResult, functionErrors := externalS3Region(ctx, bucketURL, bucketName, region)
 			if functionResult != nil {
 				result = *functionResult
 			}

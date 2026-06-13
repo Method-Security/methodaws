@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	// Standard
+	"fmt"
+
 	// Internal
 	"github.com/Method-Security/methodaws/internal/s3"
 	"github.com/Method-Security/methodaws/utils"
@@ -67,6 +70,23 @@ func (a *MethodAws) InitS3Command() {
 				return
 			}
 
+			targetSeed, err := cmd.Flags().GetString("target-seed")
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+
+			maxCandidates, err := cmd.Flags().GetInt("max-candidates")
+			if err != nil {
+				a.OutputSignal.AddError(err)
+				return
+			}
+
+			if bucketURL == "" && targetSeed == "" {
+				a.OutputSignal.AddError(fmt.Errorf("either --url or --target-seed must be provided"))
+				return
+			}
+
 			// Check if specific region was provided via --region flag
 			// Overide since this is an external command and we dont want to default check all regions
 			regionFlag, err := cmd.Flags().GetString("region")
@@ -81,7 +101,7 @@ func (a *MethodAws) InitS3Command() {
 			}
 
 			// Get Config
-			config := getExternalS3BucketConfig(regions, bucketURL)
+			config := getExternalS3BucketConfig(regions, bucketURL, targetSeed, maxCandidates)
 
 			// Get Report
 			report := external.EnumerateS3(cmd.Context(), config)
@@ -90,10 +110,10 @@ func (a *MethodAws) InitS3Command() {
 	}
 
 	// Flags
-	externalCmd.Flags().String("url", "", "URL of the S3 bucket")
+	externalCmd.Flags().String("url", "", "URL of a single S3 bucket to enumerate")
 	externalCmd.Flags().String("region", "", "Region of the S3 bucket")
-
-	_ = externalCmd.MarkFlagRequired("url")
+	externalCmd.Flags().String("target-seed", "", "Org/domain seed used to generate and probe candidate bucket names")
+	externalCmd.Flags().Int("max-candidates", 50, "Max candidate bucket names to probe when --target-seed is set (cap 500)")
 
 	// Add Command to S3 Command
 	s3Cmd.AddCommand(externalCmd)
@@ -147,12 +167,20 @@ func (a *MethodAws) getS3EnumerateConfig(accountID string, regions []string) s3f
 	}
 }
 
-// getExternalS3BucketConfig returns a s3fern.ExternalS3BucketConfig with the given regions and bucket URL
-func getExternalS3BucketConfig(regions []string, bucketURL string) s3fern.S3ExternalConfig {
-	return s3fern.S3ExternalConfig{
-		Url:     bucketURL,
+// getExternalS3BucketConfig returns a s3fern.S3ExternalConfig for either a single
+// bucket URL or seed-based candidate discovery.
+func getExternalS3BucketConfig(regions []string, bucketURL string, targetSeed string, maxCandidates int) s3fern.S3ExternalConfig {
+	config := s3fern.S3ExternalConfig{
 		Regions: regions,
 	}
+	if bucketURL != "" {
+		config.Url = &bucketURL
+	}
+	if targetSeed != "" {
+		config.TargetSeed = &targetSeed
+		config.MaxCandidates = &maxCandidates
+	}
+	return config
 }
 
 // getS3ListConfig returns a s3fern.ListS3BucketConfig with the given regions, and bucket name
