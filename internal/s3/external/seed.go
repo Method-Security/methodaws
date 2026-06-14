@@ -35,6 +35,7 @@ var (
 	nonDottedRun    = regexp.MustCompile(`[^a-z0-9.-]+`)
 	leadingWww      = regexp.MustCompile(`^www\.`)
 	validBucketName = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]*[a-z0-9]$`)
+	ipFormattedName = regexp.MustCompile(`^\d{1,3}(\.\d{1,3}){3}$`)
 )
 
 // normalizeSeedVariants derives candidate base names from a seed (org name, domain
@@ -98,10 +99,15 @@ func candidateNames(targetSeed string, maxCandidates int) []string {
 		maxCandidates = maxCandidatesCap
 	}
 
+	variants := normalizeSeedVariants(targetSeed)
 	candidates := make([]string, 0, maxCandidates)
 	seen := make(map[string]struct{}, maxCandidates)
-	for _, base := range normalizeSeedVariants(targetSeed) {
-		for _, suffix := range permutationSuffixes {
+	// Iterate suffix-major so every variant's highest-value name (the bare org
+	// name, then -backup/-prod, ...) is probed before any variant's lower-priority
+	// suffix. A variant-major walk would let the first variant consume the whole
+	// cap and starve the bare names of later variants.
+	for _, suffix := range permutationSuffixes {
+		for _, base := range variants {
 			name := base + suffix
 			if _, ok := seen[name]; ok {
 				continue
@@ -124,6 +130,7 @@ func candidateNames(targetSeed string, maxCandidates int) []string {
 func isValidBucketName(name string) bool {
 	return len(name) >= 3 && len(name) <= 63 &&
 		validBucketName.MatchString(name) &&
+		!ipFormattedName.MatchString(name) &&
 		!strings.Contains(name, "..") &&
 		!strings.Contains(name, ".-") &&
 		!strings.Contains(name, "-.")
@@ -137,7 +144,9 @@ func enumerateBySeed(ctx context.Context, config s3fern.S3ExternalConfig) (*s3fe
 	errors := []string{}
 
 	maxCandidates := defaultMaxCandidates
-	if config.MaxCandidates != nil && *config.MaxCandidates > 0 {
+	if config.MaxCandidates != nil {
+		// Out-of-range values (<=0 or >cap) are clamped by candidateNames, so this
+		// path and the bare candidateNames call treat bad input identically.
 		maxCandidates = *config.MaxCandidates
 	}
 
