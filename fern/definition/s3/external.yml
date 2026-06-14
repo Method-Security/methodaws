@@ -4,8 +4,10 @@ types:
 # Config
   S3ExternalConfig:
     properties:
-      url: string
+      url: optional<string>
       regions: optional<list<string>>
+      targetSeed: optional<string>      # Seed (org/domain name) used to generate candidate bucket names to probe
+      maxCandidates: optional<integer>  # Max candidate names to probe when targetSeed is set (default 50, cap 500)
 # Supporting structs
   DirectoryContents:
     properties:
