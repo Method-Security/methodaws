@@ -358,6 +358,14 @@ func EnumerateS3(ctx context.Context, config s3fern.S3ExternalConfig) s3fern.Ext
 	// whitespace-only seed normalizes to zero candidates, so treat it as unset.
 	if config.TargetSeed != nil && strings.TrimSpace(*config.TargetSeed) != "" {
 		seedResult, seedErrors := enumerateBySeed(ctx, config)
+		if config.Url != nil && *config.Url != "" {
+			// The CLI rejects supplying both modes; a programmatic caller still can.
+			// Seed discovery wins, but surface the ignored url rather than silently
+			// dropping it so the caller is not misled into thinking it was probed.
+			log.Warn("Both url and targetSeed provided; enumerating by seed and ignoring url",
+				svc1log.SafeParam("url", *config.Url))
+			seedErrors = append(seedErrors, fmt.Sprintf("both url and targetSeed were provided; enumerated by seed and ignored url %q", *config.Url))
+		}
 		report.Result = seedResult
 		report.Errors = seedErrors
 		return report

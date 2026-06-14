@@ -155,6 +155,14 @@ func enumerateBySeed(ctx context.Context, config s3fern.S3ExternalConfig) (*s3fe
 		svc1log.SafeParam("targetSeed", *config.TargetSeed),
 		svc1log.SafeParam("candidateCount", len(candidates)))
 
+	// A seed that normalizes to nothing probeable (e.g. "..") yields zero
+	// candidates. Surface that explicitly so an empty result is distinguishable
+	// from a successful run that simply found no public buckets.
+	if len(candidates) == 0 {
+		errors = append(errors, fmt.Sprintf("no valid S3 bucket-name candidates could be derived from target seed %q", *config.TargetSeed))
+		return result, errors
+	}
+
 	regionsToCheck := config.Regions
 	if len(regionsToCheck) == 0 {
 		regionsToCheck = seedProbeRegions
@@ -185,6 +193,12 @@ func enumerateBySeed(ctx context.Context, config s3fern.S3ExternalConfig) (*s3fe
 			errors = append(errors, functionErrors...)
 			break
 		}
+	}
+
+	// Mirror the single-URL path, which records an explicit not-found error so a
+	// caller can tell a genuine "no public buckets" result from failed discovery.
+	if len(result.ExternalBuckets) == 0 {
+		errors = append(errors, fmt.Sprintf("no public buckets found among %d candidate names derived from target seed %q", len(candidates), *config.TargetSeed))
 	}
 
 	log.Info("Completed seed-based S3 bucket discovery",

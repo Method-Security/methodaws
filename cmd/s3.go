@@ -90,6 +90,10 @@ func (a *MethodAws) InitS3Command() {
 				a.OutputSignal.AddError(fmt.Errorf("either --url or --target-seed must be provided"))
 				return
 			}
+			if bucketURL != "" && targetSeed != "" {
+				a.OutputSignal.AddError(fmt.Errorf("provide either --url or --target-seed, not both"))
+				return
+			}
 
 			// Check if specific region was provided via --region flag
 			// Overide since this is an external command and we dont want to default check all regions
