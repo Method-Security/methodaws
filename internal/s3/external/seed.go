@@ -155,7 +155,14 @@ func enumerateBySeed(ctx context.Context, config s3fern.S3ExternalConfig) (*s3fe
 		for _, region := range regionsToCheck {
 			exists, err := bucketExists(ctx, region, name)
 			if err != nil {
-				// Probe errors are non-fatal during discovery; try the next region.
+				// Probe errors are non-fatal during discovery (try the next region),
+				// but they must be surfaced so a region/API failure is distinguishable
+				// from a genuine not-found, mirroring the single-URL path.
+				log.Warn("Error checking candidate bucket in region",
+					svc1log.SafeParam("region", region),
+					svc1log.SafeParam("bucketName", name),
+					svc1log.Stacktrace(err))
+				errors = append(errors, fmt.Sprintf("Error checking bucket %s in region %s: %v", name, region, err))
 				continue
 			}
 			if !exists {
