@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,18 @@ func TestAWSLoadOptionsFromContext(t *testing.T) {
 	}
 }
 
+func TestAWSLoadOptionsFromContextIncludesSOCKSServiceOption(t *testing.T) {
+	ctx := SetProxyConfig(context.Background(), ProxyConfig{SOCKSProxy: "socks5://127.0.0.1:1"})
+
+	loadOptions, err := AWSLoadOptionsFromContext(ctx)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(loadOptions) != 2 {
+		t.Fatalf("expected HTTP client and service option load options, got %d", len(loadOptions))
+	}
+}
+
 func TestProxyHTTPClientIsAWSBuildableClient(t *testing.T) {
 	client, err := HTTPClientForProxy(ProxyConfig{HTTPProxy: "http://127.0.0.1:8080"})
 	if err != nil {
@@ -212,6 +225,46 @@ func TestProxyHTTPClientPreservesAWSRedirectPolicy(t *testing.T) {
 
 	if resp.StatusCode != http.StatusFound {
 		t.Fatalf("expected AWS redirect policy not to follow 302, got %d", resp.StatusCode)
+	}
+}
+
+func TestSOCKSProxyServiceOptionRestoresDialContextAfterDefaults(t *testing.T) {
+	const socksProxyURL = "socks5://127.0.0.1:1"
+
+	client, err := HTTPClientForProxy(ProxyConfig{SOCKSProxy: socksProxyURL})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	client = client.WithDialerOptions(func(dialer *net.Dialer) {
+		dialer.Timeout = 50 * time.Millisecond
+	})
+
+	transportOption, err := socksProxyTransportOption(socksProxyURL)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	options := struct {
+		HTTPClient aws.HTTPClient
+	}{
+		HTTPClient: client,
+	}
+	socksProxyServiceOption(transportOption)("test", &options)
+
+	buildableClient, ok := options.HTTPClient.(*awshttp.BuildableClient)
+	if !ok {
+		t.Fatalf("expected buildable client, got %T", options.HTTPClient)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = buildableClient.GetTransport().DialContext(ctx, "tcp", "example.invalid:80")
+	if err == nil {
+		t.Fatal("expected dial through closed SOCKS proxy port to fail")
+	}
+	if !strings.Contains(err.Error(), "127.0.0.1:1") {
+		t.Fatalf("expected dial to target SOCKS proxy endpoint, got %v", err)
 	}
 }
 

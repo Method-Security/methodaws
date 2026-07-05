@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -44,7 +45,15 @@ func AWSLoadOptionsForProxy(proxyConfig ProxyConfig) ([]AWSLoadOption, error) {
 	if client == nil {
 		return nil, nil
 	}
-	return []AWSLoadOption{awsconfig.WithHTTPClient(client)}, nil
+	loadOptions := []AWSLoadOption{awsconfig.WithHTTPClient(client)}
+	if proxyConfig.SOCKSProxy != "" {
+		transportOption, err := socksProxyTransportOption(proxyConfig.SOCKSProxy)
+		if err != nil {
+			return nil, err
+		}
+		loadOptions = append(loadOptions, awsconfig.WithServiceOptions(socksProxyServiceOption(transportOption)))
+	}
+	return loadOptions, nil
 }
 
 // AWSLoadOptionsFromContext returns AWS SDK config load options from context.
@@ -121,4 +130,30 @@ func socksProxyTransportOption(rawProxyURL string) (func(*http.Transport), error
 
 func noHTTPProxy(*http.Request) (*url.URL, error) {
 	return nil, nil
+}
+
+func socksProxyServiceOption(transportOption func(*http.Transport)) func(string, any) {
+	return func(_ string, options any) {
+		optionsValue := reflect.ValueOf(options)
+		if optionsValue.Kind() != reflect.Ptr || optionsValue.IsNil() {
+			return
+		}
+
+		optionsElement := optionsValue.Elem()
+		if optionsElement.Kind() != reflect.Struct {
+			return
+		}
+
+		httpClientField := optionsElement.FieldByName("HTTPClient")
+		if !httpClientField.IsValid() || !httpClientField.CanSet() || httpClientField.IsNil() {
+			return
+		}
+
+		buildableClient, ok := httpClientField.Interface().(*awshttp.BuildableClient)
+		if !ok {
+			return
+		}
+
+		httpClientField.Set(reflect.ValueOf(buildableClient.WithTransportOptions(transportOption)))
+	}
 }
