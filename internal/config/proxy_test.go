@@ -184,7 +184,9 @@ func TestProxyHTTPClientPreservesAWSRedirectPolicy(t *testing.T) {
 		tr.DialContext = func(_ context.Context, _, _ string) (net.Conn, error) {
 			clientConn, serverConn := net.Pipe()
 			go func() {
-				defer serverConn.Close()
+				defer func() {
+					_ = serverConn.Close()
+				}()
 
 				req, err := http.ReadRequest(bufio.NewReader(serverConn))
 				if err == nil {
@@ -204,7 +206,9 @@ func TestProxyHTTPClientPreservesAWSRedirectPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected request to succeed, got %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusFound {
 		t.Fatalf("expected AWS redirect policy not to follow 302, got %d", resp.StatusCode)
