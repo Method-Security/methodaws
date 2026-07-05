@@ -2,7 +2,9 @@
 package config
 
 type RootFlags struct {
-	Quiet   bool
-	Verbose bool
-	Regions []string
+	Quiet      bool
+	Verbose    bool
+	Regions    []string
+	HTTPProxy  string
+	SOCKSProxy string
 }
