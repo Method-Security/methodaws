@@ -32,7 +32,7 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 			svc1log.Stacktrace(err))
 		return false, fmt.Errorf("error configuring proxy: %v", err)
 	}
-	loadOptions = append([]awsconfig.LoadOptionsFunc{
+	loadOptions = append([]methodconfig.AWSLoadOption{
 		awsconfig.WithRegion(region),
 		awsconfig.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	}, loadOptions...)
@@ -300,7 +300,7 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 		errors = append(errors, fmt.Sprintf("error configuring proxy: %v", err))
 		return nil, errors
 	}
-	loadOptions = append([]awsconfig.LoadOptionsFunc{
+	loadOptions = append([]methodconfig.AWSLoadOption{
 		awsconfig.WithRegion(region),
 		awsconfig.WithCredentialsProvider(aws.AnonymousCredentials{}),
 	}, loadOptions...)
