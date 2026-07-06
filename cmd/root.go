@@ -43,9 +43,11 @@ func NewMethodAws(version string) *MethodAws {
 	methodAws := MethodAws{
 		Version: version,
 		RootFlags: config.RootFlags{
-			Quiet:   false,
-			Verbose: false,
-			Regions: []string{},
+			Quiet:      false,
+			Verbose:    false,
+			Regions:    []string{},
+			HTTPProxy:  "",
+			SOCKSProxy: "",
 		},
 		OutputConfig: writer.NewOutputConfig(nil, writer.NewFormat(writer.SIGNAL)),
 		OutputSignal: signal.NewSignal(nil, &startedAt, nil, 0, nil),
@@ -72,9 +74,18 @@ func (a *MethodAws) setupCommonConfig(cmd *cobra.Command, outputFormat string, o
 	}
 	a.OutputConfig = writer.NewOutputConfig(outputFilePointer, format)
 
-	cmd.SetContext(svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags)))
+	ctx := svc1log.WithLogger(cmd.Context(), config.InitializeLogging(cmd, &a.RootFlags))
+	ctx = config.SetProxyConfig(ctx, config.ProxyConfig{
+		HTTPProxy:  a.RootFlags.HTTPProxy,
+		SOCKSProxy: a.RootFlags.SOCKSProxy,
+	})
+	cmd.SetContext(ctx)
 	if authed {
-		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context())
+		loadOptions, err := config.AWSLoadOptionsFromContext(cmd.Context())
+		if err != nil {
+			return err
+		}
+		awsConfig, err := awsconfig.LoadDefaultConfig(cmd.Context(), loadOptions...)
 		if err != nil {
 			return err
 		}
@@ -134,6 +145,8 @@ func (a *MethodAws) InitRootCommand() {
 	a.RootCmd.PersistentFlags().StringArrayVarP(&a.RootFlags.Regions, "regions", "r", []string{}, "AWS Regions to search for resources. You can specify multiple regions by providing the flag multiple times. If blank, will search all regions.")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "f", "", "Path to output file. If blank, will output to STDOUT")
 	a.RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "signal", "Output format (signal, json, yaml). Default value is signal")
+	a.RootCmd.PersistentFlags().StringVar(&a.RootFlags.HTTPProxy, "http-proxy", "", "HTTP/HTTPS proxy URL (e.g., http://proxy.example.com:8080)")
+	a.RootCmd.PersistentFlags().StringVar(&a.RootFlags.SOCKSProxy, "socks-proxy", "", "SOCKS proxy URL (e.g., socks5://proxy.example.com:1080)")
 
 	versionCmd := &cobra.Command{
 		Use:   "version",

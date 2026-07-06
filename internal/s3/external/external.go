@@ -8,11 +8,12 @@ import (
 
 	// Generated
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
+	methodconfig "github.com/Method-Security/methodaws/internal/config"
 	"github.com/Method-Security/methodaws/utils"
 
 	// External
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
@@ -23,9 +24,20 @@ func bucketExists(ctx context.Context, region string, bucketName string) (bool, 
 	log := svc1log.FromContext(ctx)
 
 	// Create a custom AWS config with anonymous credentials
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(region),
-		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
+	loadOptions, err := methodconfig.AWSLoadOptionsFromContext(ctx)
+	if err != nil {
+		log.Error("Failed to configure proxy for bucket existence check",
+			svc1log.SafeParam("bucketName", bucketName),
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
+		return false, fmt.Errorf("error configuring proxy: %v", err)
+	}
+	loadOptions = append([]methodconfig.AWSLoadOption{
+		awsconfig.WithRegion(region),
+		awsconfig.WithCredentialsProvider(aws.AnonymousCredentials{}),
+	}, loadOptions...)
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		loadOptions...,
 	)
 	if err != nil {
 		log.Error("Failed to load AWS config for bucket existence check",
@@ -280,9 +292,20 @@ func externalS3Region(ctx context.Context, bucketURL string, bucketName string, 
 	errors := []string{}
 
 	// Create a custom AWS config with anonymous credentials
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(region),
-		config.WithCredentialsProvider(aws.AnonymousCredentials{}),
+	loadOptions, err := methodconfig.AWSLoadOptionsFromContext(ctx)
+	if err != nil {
+		log.Error("Failed to configure proxy for external enumeration",
+			svc1log.SafeParam("region", region),
+			svc1log.Stacktrace(err))
+		errors = append(errors, fmt.Sprintf("error configuring proxy: %v", err))
+		return nil, errors
+	}
+	loadOptions = append([]methodconfig.AWSLoadOption{
+		awsconfig.WithRegion(region),
+		awsconfig.WithCredentialsProvider(aws.AnonymousCredentials{}),
+	}, loadOptions...)
+	cfg, err := awsconfig.LoadDefaultConfig(ctx,
+		loadOptions...,
 	)
 	if err != nil {
 		log.Error("Failed to load AWS config for external enumeration",

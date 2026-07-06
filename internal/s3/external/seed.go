@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	s3fern "github.com/Method-Security/methodaws/generated/go/s3"
-
 	svc1log "github.com/palantir/witchcraft-go-logging/wlog/svclog/svc1log"
 )
 
