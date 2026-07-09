@@ -5,7 +5,6 @@ package rds
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	presignedurlcust "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
@@ -49,19 +48,18 @@ type CopyDBSnapshotInput struct {
 	// specify a valid DB snapshot identifier. For example, you might specify
 	// rds:mysql-instance1-snapshot-20130805 .
 	//
-	// If the source snapshot is in a different Amazon Web Services Region than the
-	// copy, specify a valid DB snapshot ARN. For example, you might specify
-	// arn:aws:rds:us-west-2:123456789012:snapshot:mysql-instance1-snapshot-20130805 .
-	//
 	// If you are copying from a shared manual DB snapshot, this parameter must be the
 	// Amazon Resource Name (ARN) of the shared DB snapshot.
 	//
-	// If you are copying an encrypted snapshot this parameter must be in the ARN
-	// format for the source Amazon Web Services Region.
+	// If the source snapshot is in a different Amazon Web Services Region than the
+	// copy, specify a valid DB snapshot ARN. You can also specify an ARN of a snapshot
+	// that is in a different account and a different Amazon Web Services Region. For
+	// example, you might specify
+	// arn:aws:rds:us-west-2:123456789012:snapshot:mysql-instance1-snapshot-20130805 .
 	//
 	// Constraints:
 	//
-	//   - Must specify a valid system snapshot in the "available" state.
+	//   - Must specify a valid source snapshot in the "available" state.
 	//
 	// Example: rds:mydb-2012-04-02-00-01
 	//
@@ -241,9 +239,6 @@ type CopyDBSnapshotOutput struct {
 }
 
 func (c *Client) addOperationCopyDBSnapshotMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpCopyDBSnapshot{}, middleware.After)
 	if err != nil {
 		return err
@@ -252,17 +247,8 @@ func (c *Client) addOperationCopyDBSnapshotMiddlewares(stack *middleware.Stack, 
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CopyDBSnapshot"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -274,19 +260,7 @@ func (c *Client) addOperationCopyDBSnapshotMiddlewares(stack *middleware.Stack, 
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -298,25 +272,13 @@ func (c *Client) addOperationCopyDBSnapshotMiddlewares(stack *middleware.Stack, 
 	if err = addCopyDBSnapshotPresignURLMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCopyDBSnapshotValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCopyDBSnapshot(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CopyDBSnapshot"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -331,46 +293,7 @@ func (c *Client) addOperationCopyDBSnapshotMiddlewares(stack *middleware.Stack, 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -453,14 +376,6 @@ func (c *presignAutoFillCopyDBSnapshotClient) PresignURL(ctx context.Context, sr
 	}
 	presignOptFn := WithPresignClientFromClientOptions(optFn)
 	return c.client.PresignCopyDBSnapshot(ctx, input, presignOptFn)
-}
-
-func newServiceMetadataMiddleware_opCopyDBSnapshot(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CopyDBSnapshot",
-	}
 }
 
 // PresignCopyDBSnapshot is used to generate a presigned HTTP Request which

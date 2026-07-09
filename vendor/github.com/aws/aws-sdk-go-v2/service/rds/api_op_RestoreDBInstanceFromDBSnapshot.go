@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -74,6 +72,12 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	// This member is required.
 	DBInstanceIdentifier *string
 
+	// A list of additional storage volumes to create for the DB instance. You can
+	// create up to three additional storage volumes using the names rdsdbdata2 ,
+	// rdsdbdata3 , and rdsdbdata4 . Additional storage volumes are supported for RDS
+	// for Oracle and RDS for SQL Server DB instances only.
+	AdditionalStorageVolumes []types.AdditionalStorageVolume
+
 	// The amount of storage (in gibibytes) to allocate initially for the DB instance.
 	// Follow the allocation rules specified in CreateDBInstance.
 	//
@@ -103,6 +107,29 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	// Example: us-east-1a
 	AvailabilityZone *string
+
+	// The number of days to retain automated backups. Setting this parameter to a
+	// positive number enables backups. Setting this parameter to 0 disables automated
+	// backups.
+	//
+	// Enabling and disabling backups can result in a brief I/O suspension that lasts
+	// from a few seconds to a few minutes, depending on the size and class of your DB
+	// instance.
+	//
+	// This setting doesn't apply to Amazon Aurora DB instances. The retention period
+	// for automated backups is managed by the DB cluster. For more information, see
+	// ModifyDBCluster .
+	//
+	// Default: Uses existing setting
+	//
+	// Constraints:
+	//
+	//   - Must be a value from 0 to 35.
+	//
+	//   - Can't be set to 0 if the DB instance is a source to read replicas.
+	//
+	//   - Can't be set to 0 for an RDS Custom for Oracle DB instance.
+	BackupRetentionPeriod *int32
 
 	// Specifies where automated backups and manual snapshots are stored for the
 	// restored DB instance.
@@ -358,6 +385,8 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	//   - db2-ae
 	//
+	//   - db2-ce
+	//
 	//   - db2-se
 	//
 	//   - mariadb
@@ -424,8 +453,8 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 
 	// License model information for the restored DB instance.
 	//
-	// License models for RDS for Db2 require additional configuration. The Bring Your
-	// Own License (BYOL) model requires a custom parameter group and an Amazon Web
+	// License models for RDS for Db2 require additional configuration. The bring your
+	// own license (BYOL) model requires a custom parameter group and an Amazon Web
 	// Services License Manager self-managed license. The Db2 license through Amazon
 	// Web Services Marketplace model requires an Amazon Web Services Marketplace
 	// subscription. For more information, see [Amazon RDS for Db2 licensing options]in the Amazon RDS User Guide.
@@ -438,7 +467,7 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	//   - RDS for MariaDB - general-public-license
 	//
-	//   - RDS for Microsoft SQL Server - license-included
+	//   - RDS for Microsoft SQL Server - license-included | bring-your-own-media
 	//
 	//   - RDS for MySQL - general-public-license
 	//
@@ -524,6 +553,30 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	// Constraints: Value must be 1150-65535
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, as determined by the BackupRetentionPeriod parameter.
+	// Changing this parameter doesn't result in an outage and the change is
+	// asynchronously applied as soon as possible. The default is a 30-minute window
+	// selected at random from an 8-hour block of time for each Amazon Web Services
+	// Region. For more information, see [Backup window]in the Amazon RDS User Guide.
+	//
+	// This setting doesn't apply to Amazon Aurora DB instances. The daily time range
+	// for creating automated backups is managed by the DB cluster. For more
+	// information, see ModifyDBCluster .
+	//
+	// Constraints:
+	//
+	//   - Must be in the format hh24:mi-hh24:mi .
+	//
+	//   - Must be in Universal Coordinated Time (UTC).
+	//
+	//   - Must not conflict with the preferred maintenance window.
+	//
+	//   - Must be at least 30 minutes.
+	//
+	// [Backup window]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html#USER_WorkingWithAutomatedBackups.BackupWindow
+	PreferredBackupWindow *string
+
 	// The number of CPU cores and the number of threads per core for the DB instance
 	// class of the DB instance.
 	//
@@ -559,6 +612,13 @@ type RestoreDBInstanceFromDBSnapshotInput struct {
 	//
 	// Default: io1 if the Iops parameter is specified, otherwise gp3
 	StorageType *string
+
+	// Tags to assign to resources associated with the DB instance.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	TagSpecifications []types.TagSpecification
 
 	// A list of tags.
 	//
@@ -612,9 +672,6 @@ type RestoreDBInstanceFromDBSnapshotOutput struct {
 }
 
 func (c *Client) addOperationRestoreDBInstanceFromDBSnapshotMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpRestoreDBInstanceFromDBSnapshot{}, middleware.After)
 	if err != nil {
 		return err
@@ -623,17 +680,8 @@ func (c *Client) addOperationRestoreDBInstanceFromDBSnapshotMiddlewares(stack *m
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "RestoreDBInstanceFromDBSnapshot"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -645,19 +693,7 @@ func (c *Client) addOperationRestoreDBInstanceFromDBSnapshotMiddlewares(stack *m
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -666,25 +702,13 @@ func (c *Client) addOperationRestoreDBInstanceFromDBSnapshotMiddlewares(stack *m
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreDBInstanceFromDBSnapshotValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRestoreDBInstanceFromDBSnapshot(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "RestoreDBInstanceFromDBSnapshot"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -699,55 +723,8 @@ func (c *Client) addOperationRestoreDBInstanceFromDBSnapshotMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opRestoreDBInstanceFromDBSnapshot(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "RestoreDBInstanceFromDBSnapshot",
-	}
 }

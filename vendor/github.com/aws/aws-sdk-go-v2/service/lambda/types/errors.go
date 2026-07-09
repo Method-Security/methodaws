@@ -7,6 +7,190 @@ import (
 	smithy "github.com/aws/smithy-go"
 )
 
+// Lambda couldn't create the alias because your Amazon Web Services account has
+// exceeded the maximum number of aliases allowed per Lambda function. For more
+// information, see [Lambda quotas].
+//
+// [Lambda quotas]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+type AliasLimitExceededException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *AliasLimitExceededException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *AliasLimitExceededException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *AliasLimitExceededException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "AliasLimitExceededException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *AliasLimitExceededException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The callback ID token has either expired or the callback associated with the
+// token has already been closed.
+type CallbackTimeoutException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *CallbackTimeoutException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *CallbackTimeoutException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *CallbackTimeoutException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "CallbackTimeoutException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *CallbackTimeoutException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The maximum number of capacity providers for your account has been exceeded.
+// For more information, see [Lambda quotas]
+//
+// [Lambda quotas]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+type CapacityProviderLimitExceededException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *CapacityProviderLimitExceededException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *CapacityProviderLimitExceededException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *CapacityProviderLimitExceededException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "CapacityProviderLimitExceededException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *CapacityProviderLimitExceededException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
+
+// The Lambda function couldn't be invoked because its code artifact user has been
+// deleted. Wait for Lambda to provision a new code artifact user, or update the
+// function's code package to recreate it.
+type CodeArtifactUserDeletedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *CodeArtifactUserDeletedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *CodeArtifactUserDeletedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *CodeArtifactUserDeletedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "CodeArtifactUserDeletedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *CodeArtifactUserDeletedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The Lambda function couldn't be invoked because provisioning of its code
+// artifact user failed. Update the function's code package or check the Lambda
+// function's State and StateReasonCode for additional context.
+type CodeArtifactUserFailedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *CodeArtifactUserFailedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *CodeArtifactUserFailedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *CodeArtifactUserFailedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "CodeArtifactUserFailedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *CodeArtifactUserFailedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The Lambda function couldn't be invoked because its code artifact user is still
+// being provisioned. Wait for the function's State to become Active and try the
+// request again.
+type CodeArtifactUserPendingException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *CodeArtifactUserPendingException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *CodeArtifactUserPendingException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *CodeArtifactUserPendingException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "CodeArtifactUserPendingException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *CodeArtifactUserPendingException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
 // The specified code signing configuration does not exist.
 type CodeSigningConfigNotFoundException struct {
 	Message *string
@@ -97,6 +281,38 @@ func (e *CodeVerificationFailedException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *CodeVerificationFailedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The durable execution with the specified name has already been started. Each
+// durable execution name must be unique within the function. Use a different name
+// or check the status of the existing execution.
+type DurableExecutionAlreadyStartedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *DurableExecutionAlreadyStartedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *DurableExecutionAlreadyStartedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *DurableExecutionAlreadyStartedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "DurableExecutionAlreadyStartedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *DurableExecutionAlreadyStartedException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
 
 // Need additional permissions to configure VPC settings.
 type EC2AccessDeniedException struct {
@@ -331,6 +547,72 @@ func (e *ENILimitReachedException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *ENILimitReachedException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
+
+// Lambda couldn't invoke the Lambda function because the elastic network
+// interface (ENI) configured for its VPC connection isn't ready yet. Wait a few
+// moments and try the request again. For more information about VPC configuration,
+// see [Configuring a Lambda function to access resources in a VPC].
+//
+// [Configuring a Lambda function to access resources in a VPC]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html
+type ENINotReadyException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *ENINotReadyException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *ENINotReadyException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *ENINotReadyException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ENINotReadyException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *ENINotReadyException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
+
+// The maximum number of function versions that can be associated with a single
+// capacity provider has been exceeded. For more information, see [Lambda quotas].
+//
+// [Lambda quotas]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+type FunctionVersionsPerCapacityProviderLimitExceededException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *FunctionVersionsPerCapacityProviderLimitExceededException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *FunctionVersionsPerCapacityProviderLimitExceededException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *FunctionVersionsPerCapacityProviderLimitExceededException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "FunctionVersionsPerCapacityProviderLimitExceededException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *FunctionVersionsPerCapacityProviderLimitExceededException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
 
 // The code signature failed the integrity check. If the integrity check fails,
 // then Lambda blocks deployment, even if the code signing policy is set to WARN.
@@ -647,6 +929,67 @@ func (e *KMSNotFoundException) ErrorCode() string {
 }
 func (e *KMSNotFoundException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
 
+// The Lambda function doesn't support the invocation mode requested. For example,
+// calling Invoke with InvocationType=RequestResponse on a function configured for
+// asynchronous-only invocation, or vice versa. For more information about
+// invocation types, see [Invoking Lambda functions].
+//
+// [Invoking Lambda functions]: https://docs.aws.amazon.com/lambda/latest/dg/invocation-options.html
+type ModeNotSupportedException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *ModeNotSupportedException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *ModeNotSupportedException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *ModeNotSupportedException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ModeNotSupportedException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *ModeNotSupportedException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The function has no published versions available.
+type NoPublishedVersionException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *NoPublishedVersionException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *NoPublishedVersionException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *NoPublishedVersionException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "NoPublishedVersionException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *NoPublishedVersionException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
 // The permissions policy for the resource is too large. For more information, see [Lambda quotas]
 // .
 //
@@ -742,6 +1085,39 @@ func (e *ProvisionedConcurrencyConfigNotFoundException) ErrorCode() string {
 func (e *ProvisionedConcurrencyConfigNotFoundException) ErrorFault() smithy.ErrorFault {
 	return smithy.FaultClient
 }
+
+// The resource-based policy you tried to add to the Lambda function would grant
+// public access to it, and your account's BlockPublicAccess setting prevents
+// public access. For more information about blocking public access to Lambda
+// functions, see [Block public access to Lambda resources].
+//
+// [Block public access to Lambda resources]: https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html#access-control-block-public-access
+type PublicPolicyException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *PublicPolicyException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *PublicPolicyException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *PublicPolicyException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "PublicPolicyException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *PublicPolicyException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 // Lambda has detected your function being invoked in a recursive loop with other
 // Amazon Web Services resources and stopped your function's invocation.
@@ -918,6 +1294,124 @@ func (e *ResourceNotReadyException) ErrorCode() string {
 }
 func (e *ResourceNotReadyException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
 
+// The Lambda function couldn't make a network connection to the configured S3
+// Files access point.
+type S3FilesMountConnectivityException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *S3FilesMountConnectivityException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *S3FilesMountConnectivityException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *S3FilesMountConnectivityException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "S3FilesMountConnectivityException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *S3FilesMountConnectivityException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The Lambda function couldn't mount the configured S3 Files access point due to
+// a permission or configuration issue.
+type S3FilesMountFailureException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *S3FilesMountFailureException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *S3FilesMountFailureException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *S3FilesMountFailureException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "S3FilesMountFailureException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *S3FilesMountFailureException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The Lambda function made a network connection to the configured S3 Files access
+// point, but the mount operation timed out.
+type S3FilesMountTimeoutException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *S3FilesMountTimeoutException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *S3FilesMountTimeoutException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *S3FilesMountTimeoutException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "S3FilesMountTimeoutException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *S3FilesMountTimeoutException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// The request payload exceeded the maximum allowed size for serialized request
+// entities.
+type SerializedRequestEntityTooLargeException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *SerializedRequestEntityTooLargeException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *SerializedRequestEntityTooLargeException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *SerializedRequestEntityTooLargeException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "SerializedRequestEntityTooLargeException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *SerializedRequestEntityTooLargeException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
+
 // The Lambda service encountered an internal error.
 type ServiceException struct {
 	Message *string
@@ -945,6 +1439,39 @@ func (e *ServiceException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *ServiceException) ErrorFault() smithy.ErrorFault { return smithy.FaultServer }
+
+// The request would exceed a service quota. For more information about Lambda
+// service quotas, see [Lambda quotas]. To request a quota increase, see [Requesting a quota increase] in the Service Quotas
+// User Guide.
+//
+// [Requesting a quota increase]: https://docs.aws.amazon.com/servicequotas/latest/userguide/request-quota-increase.html
+// [Lambda quotas]: https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+type ServiceQuotaExceededException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *ServiceQuotaExceededException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *ServiceQuotaExceededException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *ServiceQuotaExceededException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "ServiceQuotaExceededException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *ServiceQuotaExceededException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
 
 // The afterRestore()[runtime hook] encountered an error. For more information, check the Amazon
 // CloudWatch logs.
@@ -1007,6 +1534,42 @@ func (e *SnapStartNotReadyException) ErrorCode() string {
 	return *e.ErrorCodeOverride
 }
 func (e *SnapStartNotReadyException) ErrorFault() smithy.ErrorFault { return smithy.FaultClient }
+
+// Lambda couldn't regenerate the SnapStart snapshot for the function.
+// SnapStart-enabled functions periodically regenerate snapshots when their
+// underlying runtime or dependencies change; this regeneration failed. Wait for
+// Lambda to retry, or update the function's configuration to trigger a new
+// snapshot. For more information, see [Lambda SnapStart].
+//
+// [Lambda SnapStart]: https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html
+type SnapStartRegenerationFailureException struct {
+	Message *string
+
+	ErrorCodeOverride *string
+
+	Type *string
+
+	noSmithyDocumentSerde
+}
+
+func (e *SnapStartRegenerationFailureException) Error() string {
+	return fmt.Sprintf("%s: %s", e.ErrorCode(), e.ErrorMessage())
+}
+func (e *SnapStartRegenerationFailureException) ErrorMessage() string {
+	if e.Message == nil {
+		return ""
+	}
+	return *e.Message
+}
+func (e *SnapStartRegenerationFailureException) ErrorCode() string {
+	if e == nil || e.ErrorCodeOverride == nil {
+		return "SnapStartRegenerationFailureException"
+	}
+	return *e.ErrorCodeOverride
+}
+func (e *SnapStartRegenerationFailureException) ErrorFault() smithy.ErrorFault {
+	return smithy.FaultClient
+}
 
 // Lambda couldn't restore the snapshot within the timeout limit.
 type SnapStartTimeoutException struct {

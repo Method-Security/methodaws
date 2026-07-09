@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -15,22 +13,12 @@ import (
 // one parameter, submit a list of the following: ParameterName , ParameterValue ,
 // and ApplyMethod . A maximum of 20 parameters can be modified in a single request.
 //
-// After you create a DB cluster parameter group, you should wait at least 5
-// minutes before creating your first DB cluster that uses that DB cluster
-// parameter group as the default parameter group. This allows Amazon RDS to fully
-// complete the create operation before the parameter group is used as the default
-// for a new DB cluster. This is especially important for parameters that are
-// critical when creating the default database for a DB cluster, such as the
-// character set for the default database defined by the character_set_database
-// parameter. You can use the Parameter Groups option of the [Amazon RDS console]or the
-// DescribeDBClusterParameters operation to verify that your DB cluster parameter
-// group has been created or modified.
-//
-// If the modified DB cluster parameter group is used by an Aurora Serverless v1
-// cluster, Aurora applies the update immediately. The cluster restart might
-// interrupt your workload. In that case, your application must reopen any
-// connections and retry any transactions that were active when the parameter
-// changes took effect.
+// There are two types of parameters - dynamic parameters and static parameters.
+// Changes to dynamic parameters are applied to the DB cluster immediately without
+// a reboot. Changes to static parameters are applied only after the DB cluster is
+// rebooted, which can be done using RebootDBCluster operation. You can use the
+// Parameter Groups option of the [Amazon RDS console]or the DescribeDBClusterParameters operation to
+// verify that your DB cluster parameter group has been created or modified.
 //
 // For more information on Amazon Aurora DB clusters, see [What is Amazon Aurora?] in the Amazon Aurora
 // User Guide.
@@ -104,9 +92,6 @@ type ModifyDBClusterParameterGroupOutput struct {
 }
 
 func (c *Client) addOperationModifyDBClusterParameterGroupMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpModifyDBClusterParameterGroup{}, middleware.After)
 	if err != nil {
 		return err
@@ -115,17 +100,8 @@ func (c *Client) addOperationModifyDBClusterParameterGroupMiddlewares(stack *mid
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ModifyDBClusterParameterGroup"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -137,19 +113,7 @@ func (c *Client) addOperationModifyDBClusterParameterGroupMiddlewares(stack *mid
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -158,25 +122,13 @@ func (c *Client) addOperationModifyDBClusterParameterGroupMiddlewares(stack *mid
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyDBClusterParameterGroupValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyDBClusterParameterGroup(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "ModifyDBClusterParameterGroup"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -191,55 +143,8 @@ func (c *Client) addOperationModifyDBClusterParameterGroupMiddlewares(stack *mid
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opModifyDBClusterParameterGroup(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ModifyDBClusterParameterGroup",
-	}
 }

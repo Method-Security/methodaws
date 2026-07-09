@@ -5,7 +5,6 @@ package rds
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	presignedurlcust "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
@@ -15,13 +14,9 @@ import (
 
 // Creates a new DB instance that acts as a read replica for an existing source DB
 // instance or Multi-AZ DB cluster. You can create a read replica for a DB instance
-// running MariaDB, MySQL, Oracle, PostgreSQL, or SQL Server. You can create a read
-// replica for a Multi-AZ DB cluster running MySQL or PostgreSQL. For more
+// running Db2, MariaDB, MySQL, Oracle, PostgreSQL, or SQL Server. You can create a
+// read replica for a Multi-AZ DB cluster running MySQL or PostgreSQL. For more
 // information, see [Working with read replicas]and [Migrating from a Multi-AZ DB cluster to a DB instance using a read replica] in the Amazon RDS User Guide.
-//
-// Amazon RDS for Db2 supports this operation for standby replicas. To create a
-// standby replica for a DB instance running Db2, you must set ReplicaMode to
-// mounted .
 //
 // Amazon Aurora doesn't support this operation. To create a DB instance for an
 // Aurora DB cluster, use the CreateDBInstance operation.
@@ -57,6 +52,12 @@ type CreateDBInstanceReadReplicaInput struct {
 	//
 	// This member is required.
 	DBInstanceIdentifier *string
+
+	// A list of additional storage volumes to create for the DB instance. You can
+	// create up to three additional storage volumes using the names rdsdbdata2 ,
+	// rdsdbdata3 , and rdsdbdata4 . Additional storage volumes are supported for RDS
+	// for Oracle and RDS for SQL Server DB instances only.
+	AdditionalStorageVolumes []types.AdditionalStorageVolume
 
 	// The amount of storage (in gibibytes) to allocate initially for the read
 	// replica. Follow the allocation rules specified in CreateDBInstance .
@@ -144,13 +145,13 @@ type CreateDBInstanceReadReplicaInput struct {
 	// The name of the DB parameter group to associate with this read replica DB
 	// instance.
 	//
-	// For the Db2 DB engine, if your source DB instance uses the Bring Your Own
-	// License model, then a custom parameter group must be associated with the
+	// For the Db2 DB engine, if your source DB instance uses the bring your own
+	// license (BYOL) model, then a custom parameter group must be associated with the
 	// replica. For a same Amazon Web Services Region replica, if you don't specify a
 	// custom parameter group, Amazon RDS associates the custom parameter group
 	// associated with the source DB instance. For a cross-Region replica, you must
 	// specify a custom parameter group. This custom parameter group must include your
-	// IBM Site ID and IBM Customer ID. For more information, see [IBM IDs for Bring Your Own License for Db2].
+	// IBM Site ID and IBM Customer ID. For more information, see [IBM IDs for bring your own license (BYOL) for Db2].
 	//
 	// For Single-AZ or Multi-AZ DB instance read replica instances, if you don't
 	// specify a value for DBParameterGroupName , then Amazon RDS uses the
@@ -175,7 +176,7 @@ type CreateDBInstanceReadReplicaInput struct {
 	//
 	//   - Can't end with a hyphen or contain two consecutive hyphens.
 	//
-	// [IBM IDs for Bring Your Own License for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-licensing.html#db2-prereqs-ibm-info
+	// [IBM IDs for bring your own license (BYOL) for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-licensing.html#db2-prereqs-ibm-info
 	DBParameterGroupName *string
 
 	// A DB subnet group for the DB instance. The new DB instance is created in the
@@ -545,13 +546,13 @@ type CreateDBInstanceReadReplicaInput struct {
 	//
 	// This parameter is only supported for Db2 DB instances and Oracle DB instances.
 	//
-	// Db2 Standby DB replicas are included in Db2 Advanced Edition (AE) and Db2
-	// Standard Edition (SE). The main use case for standby replicas is cross-Region
-	// disaster recovery. Because it doesn't accept user connections, a standby replica
-	// can't serve a read-only workload.
+	// Db2 Standby DB replicas are included in Db2 Advanced Edition (AE), Db2
+	// Community Edition (CE), and Db2 Standard Edition (SE). The main use case for
+	// standby replicas is cross-Region disaster recovery. Because it doesn't accept
+	// user connections, a standby replica can't serve a read-only workload.
 	//
 	// You can create a combination of standby and read-only DB replicas for the same
-	// primary DB instance. For more information, see [Working with read replicas for Amazon RDS for Db2]in the Amazon RDS User Guide.
+	// primary DB instance. For more information, see [Working with replicas for Amazon RDS for Db2]in the Amazon RDS User Guide.
 	//
 	// To create standby DB replicas for RDS for Db2, set this parameter to mounted .
 	//
@@ -568,7 +569,7 @@ type CreateDBInstanceReadReplicaInput struct {
 	// value won't be set by default. After replica creation, you can manage the open
 	// mode manually.
 	//
-	// [Working with read replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
+	// [Working with replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
 	// [Working with read replicas for Amazon RDS for Oracle]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/oracle-read-replicas.html
 	ReplicaMode types.ReplicaMode
 
@@ -648,6 +649,13 @@ type CreateDBInstanceReadReplicaInput struct {
 	// Default: io1 if the Iops parameter is specified. Otherwise, gp3 .
 	StorageType *string
 
+	// Tags to assign to resources associated with the DB instance.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	TagSpecifications []types.TagSpecification
+
 	// A list of tags.
 	//
 	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
@@ -700,9 +708,6 @@ type CreateDBInstanceReadReplicaOutput struct {
 }
 
 func (c *Client) addOperationCreateDBInstanceReadReplicaMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpCreateDBInstanceReadReplica{}, middleware.After)
 	if err != nil {
 		return err
@@ -711,17 +716,8 @@ func (c *Client) addOperationCreateDBInstanceReadReplicaMiddlewares(stack *middl
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CreateDBInstanceReadReplica"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -733,19 +729,7 @@ func (c *Client) addOperationCreateDBInstanceReadReplicaMiddlewares(stack *middl
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -757,25 +741,13 @@ func (c *Client) addOperationCreateDBInstanceReadReplicaMiddlewares(stack *middl
 	if err = addCreateDBInstanceReadReplicaPresignURLMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateDBInstanceReadReplicaValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateDBInstanceReadReplica(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CreateDBInstanceReadReplica"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -790,46 +762,7 @@ func (c *Client) addOperationCreateDBInstanceReadReplicaMiddlewares(stack *middl
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -912,14 +845,6 @@ func (c *presignAutoFillCreateDBInstanceReadReplicaClient) PresignURL(ctx contex
 	}
 	presignOptFn := WithPresignClientFromClientOptions(optFn)
 	return c.client.PresignCreateDBInstanceReadReplica(ctx, input, presignOptFn)
-}
-
-func newServiceMetadataMiddleware_opCreateDBInstanceReadReplica(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CreateDBInstanceReadReplica",
-	}
 }
 
 // PresignCreateDBInstanceReadReplica is used to generate a presigned HTTP Request

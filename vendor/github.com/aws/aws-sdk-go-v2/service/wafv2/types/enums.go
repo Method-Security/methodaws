@@ -11,6 +11,7 @@ const (
 	ActionValueCount           ActionValue = "COUNT"
 	ActionValueCaptcha         ActionValue = "CAPTCHA"
 	ActionValueChallenge       ActionValue = "CHALLENGE"
+	ActionValueMonetize        ActionValue = "MONETIZE"
 	ActionValueExcludedAsCount ActionValue = "EXCLUDED_AS_COUNT"
 )
 
@@ -25,6 +26,7 @@ func (ActionValue) Values() []ActionValue {
 		"COUNT",
 		"CAPTCHA",
 		"CHALLENGE",
+		"MONETIZE",
 		"EXCLUDED_AS_COUNT",
 	}
 }
@@ -38,6 +40,7 @@ const (
 	AssociatedResourceTypeCognitoUserPool        AssociatedResourceType = "COGNITO_USER_POOL"
 	AssociatedResourceTypeAppRunnerService       AssociatedResourceType = "APP_RUNNER_SERVICE"
 	AssociatedResourceTypeVerifiedAccessInstance AssociatedResourceType = "VERIFIED_ACCESS_INSTANCE"
+	AssociatedResourceTypeAgentcoreGateway       AssociatedResourceType = "AGENTCORE_GATEWAY"
 )
 
 // Values returns all known values for AssociatedResourceType. Note that this can
@@ -51,6 +54,30 @@ func (AssociatedResourceType) Values() []AssociatedResourceType {
 		"COGNITO_USER_POOL",
 		"APP_RUNNER_SERVICE",
 		"VERIFIED_ACCESS_INSTANCE",
+		"AGENTCORE_GATEWAY",
+	}
+}
+
+type BlockchainChain string
+
+// Enum values for BlockchainChain
+const (
+	BlockchainChainBase         BlockchainChain = "BASE"
+	BlockchainChainSolana       BlockchainChain = "SOLANA"
+	BlockchainChainBaseSepolia  BlockchainChain = "BASE_SEPOLIA"
+	BlockchainChainSolanaDevnet BlockchainChain = "SOLANA_DEVNET"
+)
+
+// Values returns all known values for BlockchainChain. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (BlockchainChain) Values() []BlockchainChain {
+	return []BlockchainChain{
+		"BASE",
+		"SOLANA",
+		"BASE_SEPOLIA",
+		"SOLANA_DEVNET",
 	}
 }
 
@@ -617,6 +644,59 @@ func (CountryCode) Values() []CountryCode {
 	}
 }
 
+type CryptoCurrency string
+
+// Enum values for CryptoCurrency
+const (
+	CryptoCurrencyUsdc CryptoCurrency = "USDC"
+)
+
+// Values returns all known values for CryptoCurrency. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CryptoCurrency) Values() []CryptoCurrency {
+	return []CryptoCurrency{
+		"USDC",
+	}
+}
+
+type Currency string
+
+// Enum values for Currency
+const (
+	CurrencyUsdc Currency = "USDC"
+)
+
+// Values returns all known values for Currency. Note that this can be expanded in
+// the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (Currency) Values() []Currency {
+	return []Currency{
+		"USDC",
+	}
+}
+
+type CurrencyMode string
+
+// Enum values for CurrencyMode
+const (
+	CurrencyModeReal CurrencyMode = "REAL"
+	CurrencyModeTest CurrencyMode = "TEST"
+)
+
+// Values returns all known values for CurrencyMode. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CurrencyMode) Values() []CurrencyMode {
+	return []CurrencyMode{
+		"REAL",
+		"TEST",
+	}
+}
+
 type DataProtectionAction string
 
 // Enum values for DataProtectionAction
@@ -762,6 +842,31 @@ func (ForwardedIPPosition) Values() []ForwardedIPPosition {
 	}
 }
 
+type GroupByType string
+
+// Enum values for GroupByType
+const (
+	GroupByTypeName         GroupByType = "NAME"
+	GroupByTypeCategory     GroupByType = "CATEGORY"
+	GroupByTypeIntent       GroupByType = "INTENT"
+	GroupByTypeOrganization GroupByType = "ORGANIZATION"
+	GroupByTypeWebacl       GroupByType = "WEBACL"
+)
+
+// Values returns all known values for GroupByType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (GroupByType) Values() []GroupByType {
+	return []GroupByType{
+		"NAME",
+		"CATEGORY",
+		"INTENT",
+		"ORGANIZATION",
+		"WEBACL",
+	}
+}
+
 type InspectionLevel string
 
 // Enum values for InspectionLevel
@@ -778,6 +883,29 @@ func (InspectionLevel) Values() []InspectionLevel {
 	return []InspectionLevel{
 		"COMMON",
 		"TARGETED",
+	}
+}
+
+type IntervalType string
+
+// Enum values for IntervalType
+const (
+	IntervalTypeMinutely     IntervalType = "MINUTELY"
+	IntervalTypeFiveMinutely IntervalType = "FIVE_MINUTELY"
+	IntervalTypeHourly       IntervalType = "HOURLY"
+	IntervalTypeDaily        IntervalType = "DAILY"
+)
+
+// Values returns all known values for IntervalType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IntervalType) Values() []IntervalType {
+	return []IntervalType{
+		"MINUTELY",
+		"FIVE_MINUTELY",
+		"HOURLY",
+		"DAILY",
 	}
 }
 
@@ -844,8 +972,9 @@ type LogScope string
 
 // Enum values for LogScope
 const (
-	LogScopeCustomer     LogScope = "CUSTOMER"
-	LogScopeSecurityLake LogScope = "SECURITY_LAKE"
+	LogScopeCustomer                       LogScope = "CUSTOMER"
+	LogScopeSecurityLake                   LogScope = "SECURITY_LAKE"
+	LogScopeCloudwatchTelemetryRuleManaged LogScope = "CLOUDWATCH_TELEMETRY_RULE_MANAGED"
 )
 
 // Values returns all known values for LogScope. Note that this can be expanded in
@@ -856,6 +985,7 @@ func (LogScope) Values() []LogScope {
 	return []LogScope{
 		"CUSTOMER",
 		"SECURITY_LAKE",
+		"CLOUDWATCH_TELEMETRY_RULE_MANAGED",
 	}
 }
 
@@ -1013,6 +1143,10 @@ const (
 	ParameterExceptionFieldAcpRuleSetResponseInspection   ParameterExceptionField = "ACP_RULE_SET_RESPONSE_INSPECTION"
 	ParameterExceptionFieldDataProtectionConfig           ParameterExceptionField = "DATA_PROTECTION_CONFIG"
 	ParameterExceptionFieldLowReputationMode              ParameterExceptionField = "LOW_REPUTATION_MODE"
+	ParameterExceptionFieldMonetizationConfig             ParameterExceptionField = "MONETIZATION_CONFIG"
+	ParameterExceptionFieldWalletAddress                  ParameterExceptionField = "WALLET_ADDRESS"
+	ParameterExceptionFieldPriceAmount                    ParameterExceptionField = "PRICE_AMOUNT"
+	ParameterExceptionFieldPaymentNetwork                 ParameterExceptionField = "PAYMENT_NETWORK"
 )
 
 // Values returns all known values for ParameterExceptionField. Note that this can
@@ -1093,6 +1227,10 @@ func (ParameterExceptionField) Values() []ParameterExceptionField {
 		"ACP_RULE_SET_RESPONSE_INSPECTION",
 		"DATA_PROTECTION_CONFIG",
 		"LOW_REPUTATION_MODE",
+		"MONETIZATION_CONFIG",
+		"WALLET_ADDRESS",
+		"PRICE_AMOUNT",
+		"PAYMENT_NETWORK",
 	}
 }
 
@@ -1159,6 +1297,46 @@ func (PositionalConstraint) Values() []PositionalConstraint {
 	}
 }
 
+type RankingSortBy string
+
+// Enum values for RankingSortBy
+const (
+	RankingSortByRevenue    RankingSortBy = "REVENUE"
+	RankingSortByPercentage RankingSortBy = "PERCENTAGE"
+	RankingSortByName       RankingSortBy = "NAME"
+)
+
+// Values returns all known values for RankingSortBy. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (RankingSortBy) Values() []RankingSortBy {
+	return []RankingSortBy{
+		"REVENUE",
+		"PERCENTAGE",
+		"NAME",
+	}
+}
+
+type RankingStatisticType string
+
+// Enum values for RankingStatisticType
+const (
+	RankingStatisticTypeTopSourcesByRevenue RankingStatisticType = "TOP_SOURCES_BY_REVENUE"
+	RankingStatisticTypeTopPathsByRevenue   RankingStatisticType = "TOP_PATHS_BY_REVENUE"
+)
+
+// Values returns all known values for RankingStatisticType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (RankingStatisticType) Values() []RankingStatisticType {
+	return []RankingStatisticType{
+		"TOP_SOURCES_BY_REVENUE",
+		"TOP_PATHS_BY_REVENUE",
+	}
+}
+
 type RateBasedStatementAggregateKeyType string
 
 // Enum values for RateBasedStatementAggregateKeyType
@@ -1194,6 +1372,7 @@ const (
 	ResourceTypeAppRunnerService        ResourceType = "APP_RUNNER_SERVICE"
 	ResourceTypeVerifiedAccessInstance  ResourceType = "VERIFIED_ACCESS_INSTANCE"
 	ResourceTypeAmplify                 ResourceType = "AMPLIFY"
+	ResourceTypeAgentcoreGateway        ResourceType = "AGENTCORE_GATEWAY"
 )
 
 // Values returns all known values for ResourceType. Note that this can be
@@ -1209,6 +1388,7 @@ func (ResourceType) Values() []ResourceType {
 		"APP_RUNNER_SERVICE",
 		"VERIFIED_ACCESS_INSTANCE",
 		"AMPLIFY",
+		"AGENTCORE_GATEWAY",
 	}
 }
 
@@ -1292,6 +1472,56 @@ func (SensitivityToAct) Values() []SensitivityToAct {
 	}
 }
 
+type SettlementSortBy string
+
+// Enum values for SettlementSortBy
+const (
+	SettlementSortByTimestamp SettlementSortBy = "TIMESTAMP"
+	SettlementSortByAmount    SettlementSortBy = "AMOUNT"
+	SettlementSortByName      SettlementSortBy = "NAME"
+	SettlementSortByStatus    SettlementSortBy = "STATUS"
+)
+
+// Values returns all known values for SettlementSortBy. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SettlementSortBy) Values() []SettlementSortBy {
+	return []SettlementSortBy{
+		"TIMESTAMP",
+		"AMOUNT",
+		"NAME",
+		"STATUS",
+	}
+}
+
+type SettlementStatus string
+
+// Enum values for SettlementStatus
+const (
+	SettlementStatusSettled            SettlementStatus = "SETTLED"
+	SettlementStatusPending            SettlementStatus = "PENDING"
+	SettlementStatusFailed             SettlementStatus = "FAILED"
+	SettlementStatusServiceError       SettlementStatus = "SERVICE_ERROR"
+	SettlementStatusSkippedOriginError SettlementStatus = "SKIPPED_ORIGIN_ERROR"
+	SettlementStatusDuplicate          SettlementStatus = "DUPLICATE"
+)
+
+// Values returns all known values for SettlementStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SettlementStatus) Values() []SettlementStatus {
+	return []SettlementStatus{
+		"SETTLED",
+		"PENDING",
+		"FAILED",
+		"SERVICE_ERROR",
+		"SKIPPED_ORIGIN_ERROR",
+		"DUPLICATE",
+	}
+}
+
 type SizeInspectionLimit string
 
 // Enum values for SizeInspectionLimit
@@ -1312,6 +1542,25 @@ func (SizeInspectionLimit) Values() []SizeInspectionLimit {
 		"KB_32",
 		"KB_48",
 		"KB_64",
+	}
+}
+
+type SortOrder string
+
+// Enum values for SortOrder
+const (
+	SortOrderAsc  SortOrder = "ASC"
+	SortOrderDesc SortOrder = "DESC"
+)
+
+// Values returns all known values for SortOrder. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SortOrder) Values() []SortOrder {
+	return []SortOrder{
+		"ASC",
+		"DESC",
 	}
 }
 
@@ -1369,6 +1618,25 @@ func (TextTransformationType) Values() []TextTransformationType {
 		"BASE64_DECODE_EXT",
 		"URL_DECODE_UNI",
 		"UTF8_TO_UNICODE",
+	}
+}
+
+type TimeSeriesStatisticType string
+
+// Enum values for TimeSeriesStatisticType
+const (
+	TimeSeriesStatisticTypeDateHistogram  TimeSeriesStatisticType = "DATE_HISTOGRAM"
+	TimeSeriesStatisticTypePaymentTraffic TimeSeriesStatisticType = "PAYMENT_TRAFFIC"
+)
+
+// Values returns all known values for TimeSeriesStatisticType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TimeSeriesStatisticType) Values() []TimeSeriesStatisticType {
+	return []TimeSeriesStatisticType{
+		"DATE_HISTOGRAM",
+		"PAYMENT_TRAFFIC",
 	}
 }
 

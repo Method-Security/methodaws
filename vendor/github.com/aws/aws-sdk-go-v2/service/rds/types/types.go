@@ -104,6 +104,78 @@ type AccountQuota struct {
 	noSmithyDocumentSerde
 }
 
+// Contains details about an additional storage volume for a DB instance. RDS
+// support additional storage volumes for RDS for Oracle and RDS for SQL Server.
+type AdditionalStorageVolume struct {
+
+	// The name of the additional storage volume.
+	//
+	// Valid Values: RDSDBDATA2 | RDSDBDATA3 | RDSDBDATA4
+	//
+	// This member is required.
+	VolumeName *string
+
+	// The amount of storage allocated for the additional storage volume, in gibibytes
+	// (GiB). The minimum is 20 GiB. The maximum is 65,536 GiB (64 TiB).
+	AllocatedStorage *int32
+
+	// The number of I/O operations per second (IOPS) provisioned for the additional
+	// storage volume.
+	IOPS *int32
+
+	// The upper limit in gibibytes (GiB) to which RDS can automatically scale the
+	// storage of the additional storage volume.
+	MaxAllocatedStorage *int32
+
+	// The storage throughput value for the additional storage volume, in mebibytes
+	// per second (MiBps). This setting applies only to the General Purpose SSD ( gp3 )
+	// storage type.
+	StorageThroughput *int32
+
+	// The storage type for the additional storage volume.
+	//
+	// Valid Values: GP3 | IO2
+	StorageType *string
+
+	noSmithyDocumentSerde
+}
+
+// Contains information about an additional storage volume for a DB instance.
+type AdditionalStorageVolumeOutput struct {
+
+	// The amount of storage allocated for the additional storage volume, in gibibytes
+	// (GiB). The minimum is 20 GiB. The maximum is 65,536 GiB (64 TiB).
+	AllocatedStorage *int32
+
+	// The number of I/O operations per second (IOPS) provisioned for the additional
+	// storage volume.
+	IOPS *int32
+
+	// The upper limit in gibibytes (GiB) to which RDS can automatically scale the
+	// storage of the additional storage volume.
+	MaxAllocatedStorage *int32
+
+	// The storage throughput value for the additional storage volume, in mebibytes
+	// per second (MiBps).
+	StorageThroughput *int32
+
+	// The storage type for the additional storage volume.
+	//
+	// Valid Values: GP3 | IO2
+	StorageType *string
+
+	// The status of the additional storage volume.
+	//
+	// Valid Values: ACTIVE | CREATING | DELETING | MODIFYING | NOT-IN-USE |
+	// STORAGE-OPTIMIZATION | VOLUME-FULL
+	StorageVolumeStatus *string
+
+	// The name of the additional storage volume.
+	VolumeName *string
+
+	noSmithyDocumentSerde
+}
+
 // Contains Availability Zone information.
 //
 // This data type is used as an element in the OrderableDBInstanceOption data type.
@@ -111,6 +183,60 @@ type AvailabilityZone struct {
 
 	// The name of the Availability Zone.
 	Name *string
+
+	noSmithyDocumentSerde
+}
+
+// Contains the available options for additional storage volumes for a DB instance
+// class.
+type AvailableAdditionalStorageVolumesOption struct {
+
+	// The maximum number of I/O operations per second (IOPS) that the additional
+	// storage volume supports.
+	MaxIops *int32
+
+	// The maximum ratio of I/O operations per second (IOPS) to gibibytes (GiB) of
+	// storage for the additional storage volume.
+	MaxIopsPerGib *float64
+
+	// The maximum amount of storage that you can allocate for the additional storage
+	// volume, in gibibytes (GiB).
+	MaxStorageSize *int32
+
+	// The maximum storage throughput that the additional storage volume supports, in
+	// mebibytes per second (MiBps).
+	MaxStorageThroughput *int32
+
+	// The minimum number of I/O operations per second (IOPS) that the additional
+	// storage volume supports.
+	MinIops *int32
+
+	// The minimum ratio of I/O operations per second (IOPS) to gibibytes (GiB) of
+	// storage for the additional storage volume.
+	MinIopsPerGib *float64
+
+	// The minimum amount of storage that you can allocate for the additional storage
+	// volume, in gibibytes (GiB).
+	MinStorageSize *int32
+
+	// The minimum storage throughput that the additional storage volume supports, in
+	// mebibytes per second (MiBps).
+	MinStorageThroughput *int32
+
+	// The storage type for the additional storage volume.
+	//
+	// Valid Values: GP3 | IO2
+	StorageType *string
+
+	// Indicates whether the additional storage volume supports provisioned IOPS.
+	SupportsIops *bool
+
+	// Indicates whether the additional storage volume supports storage autoscaling.
+	SupportsStorageAutoscaling *bool
+
+	// Indicates whether the additional storage volume supports configurable storage
+	// throughput.
+	SupportsStorageThroughput *bool
 
 	noSmithyDocumentSerde
 }
@@ -816,6 +942,13 @@ type DBCluster struct {
 	// This setting is only for Aurora DB clusters.
 	IOOptimizedNextAllowedModificationTime *time.Time
 
+	// Indicates whether the DB cluster has internet-based connectivity enabled
+	// through an internet access gateway.
+	//
+	// This setting is applicable only for Aurora PostgreSQL clusters created through
+	// express configuration.
+	InternetAccessGatewayEnabled *bool
+
 	// The Provisioned IOPS (I/O operations per second) value.
 	//
 	// This setting is only for non-Aurora Multi-AZ DB clusters.
@@ -999,6 +1132,18 @@ type DBCluster struct {
 	// Indicates whether the DB cluster is encrypted.
 	StorageEncrypted *bool
 
+	// The type of encryption used to protect data at rest in the DB cluster. Possible
+	// values:
+	//
+	//   - none - The DB cluster is not encrypted.
+	//
+	//   - sse-rds - The DB cluster is encrypted using an Amazon Web Services owned KMS
+	//   key.
+	//
+	//   - sse-kms - The DB cluster is encrypted using a customer managed KMS key or
+	//   Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
+
 	// The storage throughput for the DB cluster. The throughput is automatically set
 	// based on the IOPS that you provision, and is not configurable.
 	//
@@ -1016,6 +1161,21 @@ type DBCluster struct {
 	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
 	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
 	TagList []Tag
+
+	// This data type represents the order in which the clusters are upgraded.
+	//
+	//   - [first] - Typically used for development or testing environments.
+	//
+	//   - [second] - Default order for resources not specifically configured.
+	//
+	//   - [last] - Usually reserved for production environments.
+	UpgradeRolloutOrder UpgradeRolloutOrder
+
+	// Indicates whether the DB cluster uses VPC-based networking.
+	//
+	// This setting is applicable only for Aurora PostgreSQL clusters created through
+	// express configuration.
+	VPCNetworkingEnabled *bool
 
 	// The list of VPC security groups that the DB cluster belongs to.
 	VpcSecurityGroups []VpcSecurityGroupMembership
@@ -1101,6 +1261,10 @@ type DBClusterAutomatedBackup struct {
 	// Valid Values: 1150-65535
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, as determined by the BackupRetentionPeriod .
+	PreferredBackupWindow *string
+
 	// The Amazon Web Services Region associated with the automated backup.
 	Region *string
 
@@ -1115,6 +1279,18 @@ type DBClusterAutomatedBackup struct {
 	// Indicates whether the source DB cluster is encrypted.
 	StorageEncrypted *bool
 
+	// The type of encryption used to protect data at rest in the automated backup.
+	// Possible values:
+	//
+	//   - none - The automated backup is not encrypted.
+	//
+	//   - sse-rds - The automated backup is encrypted using an Amazon Web Services
+	//   owned KMS key.
+	//
+	//   - sse-kms - The automated backup is encrypted using a customer managed KMS key
+	//   or Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
+
 	// The storage throughput for the automated backup. The throughput is
 	// automatically set based on the IOPS that you provision, and is not configurable.
 	//
@@ -1125,6 +1301,15 @@ type DBClusterAutomatedBackup struct {
 	//
 	// This setting is only for non-Aurora Multi-AZ DB clusters.
 	StorageType *string
+
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
+	TagList []Tag
 
 	// The VPC ID associated with the DB cluster.
 	VpcId *string
@@ -1327,6 +1512,9 @@ type DBClusterSnapshot struct {
 	// can be restored.
 	AvailabilityZones []string
 
+	// The number of days for which automatic DB snapshots are retained.
+	BackupRetentionPeriod *int32
+
 	// The time when the DB cluster was created, in Universal Coordinated Time (UTC).
 	ClusterCreateTime *time.Time
 
@@ -1379,6 +1567,10 @@ type DBClusterSnapshot struct {
 	// The port that the DB cluster was listening on at the time of the snapshot.
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, as determined by the BackupRetentionPeriod .
+	PreferredBackupWindow *string
+
 	// The time when the snapshot was taken, in Universal Coordinated Time (UTC).
 	SnapshotCreateTime *time.Time
 
@@ -1401,6 +1593,18 @@ type DBClusterSnapshot struct {
 
 	// Indicates whether the DB cluster snapshot is encrypted.
 	StorageEncrypted *bool
+
+	// The type of encryption used to protect data at rest in the DB cluster snapshot.
+	// Possible values:
+	//
+	//   - none - The DB cluster snapshot is not encrypted.
+	//
+	//   - sse-rds - The DB cluster snapshot is encrypted using an Amazon Web Services
+	//   owned KMS key.
+	//
+	//   - sse-kms - The DB cluster snapshot is encrypted using a customer managed KMS
+	//   key or Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
 
 	// The storage throughput for the DB cluster snapshot. The throughput is
 	// automatically set based on the IOPS that you provision, and is not configurable.
@@ -1508,8 +1712,12 @@ type DBEngineVersion struct {
 	// The description of the database engine.
 	DBEngineDescription *string
 
-	// A value that indicates the source media provider of the AMI based on the usage
-	// operation. Applicable for RDS Custom for SQL Server.
+	// The source of the installation media for this engine version. A value of
+	// Customer Provided indicates that the engine version was created from
+	// customer-supplied installation media using CreateCustomDBEngineVersion .
+	// Applicable to RDS Custom for SQL Server and to RDS for SQL Server engine
+	// versions ( sqlserver-ee and sqlserver-se with the bring-your-own-media license
+	// model, and sqlserver-dev-ee ).
 	DBEngineMediaType *string
 
 	// The ARN of the custom engine version.
@@ -1520,6 +1728,12 @@ type DBEngineVersion struct {
 
 	// The name of the DB parameter group family for the database engine.
 	DBParameterGroupFamily *string
+
+	// The database installation files (ISO and EXE) that were uploaded to Amazon S3
+	// and used to import the database engine version to Amazon RDS. Returned for RDS
+	// for SQL Server engine versions ( sqlserver-ee , sqlserver-se , and
+	// sqlserver-dev-ee ) created from customer-supplied installation media.
+	DatabaseInstallationFiles []string
 
 	// The name of the Amazon S3 bucket that contains your database installation files.
 	DatabaseInstallationFilesS3BucketName *string
@@ -1541,6 +1755,11 @@ type DBEngineVersion struct {
 	// The types of logs that the database engine has available for export to
 	// CloudWatch Logs.
 	ExportableLogTypes []string
+
+	// The reason that the custom engine version creation failed with an
+	// incompatible-installation-media status. Applicable to RDS for SQL Server engine
+	// versions ( sqlserver-ee , sqlserver-se , and sqlserver-dev-ee ).
+	FailureReason *string
 
 	// The EC2 image
 	Image *CustomDBEngineVersionAMI
@@ -1586,7 +1805,8 @@ type DBEngineVersion struct {
 	// To determine the supported features for a specific DB engine and DB engine
 	// version using the CLI, use the following command:
 	//
-	//     aws rds describe-db-engine-versions --engine --engine-version
+	//     aws rds describe-db-engine-versions --engine <engine_name> --engine-version
+	//     <engine_version>
 	//
 	// For example, to determine the supported features for RDS for PostgreSQL version
 	// 13.3 using the CLI, use the following command:
@@ -1687,6 +1907,10 @@ type DBInstance struct {
 
 	// The status of the database activity stream.
 	ActivityStreamStatus ActivityStreamStatus
+
+	// The additional storage volumes associated with the DB instance. RDS supports
+	// additional storage volumes for RDS for Oracle and RDS for SQL Server.
+	AdditionalStorageVolumes []AdditionalStorageVolumeOutput
 
 	// The amount of storage in gibibytes (GiB) allocated for the DB instance.
 	AllocatedStorage *int32
@@ -2064,12 +2288,12 @@ type DBInstance struct {
 	ReadReplicaSourceDBInstanceIdentifier *string
 
 	// The open mode of a Db2 or an Oracle read replica. The default is open-read-only
-	// . For more information, see [Working with read replicas for Amazon RDS for Db2]and [Working with read replicas for Amazon RDS for Oracle] in the Amazon RDS User Guide.
+	// . For more information, see [Working with replicas for Amazon RDS for Db2]and [Working with read replicas for Amazon RDS for Oracle] in the Amazon RDS User Guide.
 	//
 	// This attribute is only supported in RDS for Db2, RDS for Oracle, and RDS Custom
 	// for Oracle.
 	//
-	// [Working with read replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
+	// [Working with replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
 	// [Working with read replicas for Amazon RDS for Oracle]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/oracle-read-replicas.html
 	ReplicaMode ReplicaMode
 
@@ -2089,6 +2313,18 @@ type DBInstance struct {
 	// Indicates whether the DB instance is encrypted.
 	StorageEncrypted *bool
 
+	// The type of encryption used to protect data at rest in the DB instance.
+	// Possible values:
+	//
+	//   - none - The DB instance is not encrypted.
+	//
+	//   - sse-rds - The DB instance is encrypted using an Amazon Web Services owned
+	//   KMS key.
+	//
+	//   - sse-kms - The DB instance is encrypted using a customer managed KMS key or
+	//   Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
+
 	// The storage throughput for the DB instance.
 	//
 	// This setting applies only to the gp3 storage type.
@@ -2096,6 +2332,11 @@ type DBInstance struct {
 
 	// The storage type associated with the DB instance.
 	StorageType *string
+
+	// The detailed status information for storage volumes associated with the DB
+	// instance. This information helps identify which specific volume is causing the
+	// instance to be in a storage-full state.
+	StorageVolumeStatus *string
 
 	// A list of tags.
 	//
@@ -2115,6 +2356,15 @@ type DBInstance struct {
 	// instances that were created with a time zone specified.
 	Timezone *string
 
+	// This data type represents the order in which the instances are upgraded.
+	//
+	//   - [first] - Typically used for development or testing environments.
+	//
+	//   - [second] - Default order for resources not specifically configured.
+	//
+	//   - [last] - Usually reserved for production environments.
+	UpgradeRolloutOrder UpgradeRolloutOrder
+
 	// The list of Amazon EC2 VPC security groups that the DB instance belongs to.
 	VpcSecurityGroups []VpcSecurityGroupMembership
 
@@ -2126,7 +2376,12 @@ type DBInstance struct {
 // you deleted the source instance.
 type DBInstanceAutomatedBackup struct {
 
-	// The allocated storage size for the the automated backup in gibibytes (GiB).
+	// The additional storage volumes associated with the automated backup.
+	//
+	// Valid Values: GP3 | IO2
+	AdditionalStorageVolumes []AdditionalStorageVolume
+
+	// The allocated storage size for the automated backup in gibibytes (GiB).
 	AllocatedStorage *int32
 
 	// The Availability Zone that the automated backup was created in. For information
@@ -2213,6 +2468,10 @@ type DBInstanceAutomatedBackup struct {
 	// Valid Values: 1150-65535
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, as determined by the BackupRetentionPeriod .
+	PreferredBackupWindow *string
+
 	// The Amazon Web Services Region associated with the automated backup.
 	Region *string
 
@@ -2229,11 +2488,32 @@ type DBInstanceAutomatedBackup struct {
 	//   snapshot to be available.
 	Status *string
 
+	// The type of encryption used to protect data at rest in the automated backup.
+	// Possible values:
+	//
+	//   - none - The automated backup is not encrypted.
+	//
+	//   - sse-rds - The automated backup is encrypted using an Amazon Web Services
+	//   owned KMS key.
+	//
+	//   - sse-kms - The automated backup is encrypted using a customer managed KMS key
+	//   or Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
+
 	// The storage throughput for the automated backup.
 	StorageThroughput *int32
 
 	// The storage type associated with the automated backup.
 	StorageType *string
+
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
+	TagList []Tag
 
 	// The ARN from the key store with which the automated backup is associated for
 	// TDE encryption.
@@ -2408,18 +2688,34 @@ type DBProxy struct {
 	// your Amazon Web Services account in the specified Amazon Web Services Region.
 	DBProxyName *string
 
-	// Indicates whether the proxy includes detailed information about SQL statements
-	// in its logs. This information helps you to debug issues involving SQL behavior
-	// or the performance and scalability of the proxy connections. The debug
-	// information includes the text of SQL statements that you submit through the
-	// proxy. Thus, only enable this setting when needed for debugging, and only when
-	// you have security measures in place to safeguard any sensitive information that
-	// appears in the logs.
+	// Specifies whether the proxy logs detailed connection and query information.
+	// When you enable DebugLogging , the proxy captures connection details and
+	// connection pool behavior from your queries. Debug logging increases CloudWatch
+	// costs and can impact proxy performance. Enable this option only when you need to
+	// troubleshoot connection or performance issues.
 	DebugLogging *bool
+
+	// The default authentication scheme that the proxy uses for client connections to
+	// the proxy and connections from the proxy to the underlying database. Valid
+	// values are NONE and IAM_AUTH . When set to IAM_AUTH , the proxy uses end-to-end
+	// IAM authentication to connect to the database.
+	DefaultAuthScheme *string
 
 	// The endpoint that you can use to connect to the DB proxy. You include the
 	// endpoint value in the connection string for a database client application.
 	Endpoint *string
+
+	// The network type of the DB proxy endpoint. The network type determines the IP
+	// version that the proxy endpoint supports.
+	//
+	// Valid values:
+	//
+	//   - IPV4 - The proxy endpoint supports IPv4 only.
+	//
+	//   - IPV6 - The proxy endpoint supports IPv6 only.
+	//
+	//   - DUAL - The proxy endpoint supports both IPv4 and IPv6.
+	EndpointNetworkType EndpointNetworkType
 
 	// The kinds of databases that the proxy can connect to. This value determines
 	// which database network protocol the proxy recognizes when it interprets network
@@ -2450,6 +2746,17 @@ type DBProxy struct {
 	// ready to handle requests. Other values indicate that you must wait for the proxy
 	// to be ready, or take some action to resolve an issue.
 	Status DBProxyStatus
+
+	// The network type that the proxy uses to connect to the target database. The
+	// network type determines the IP version that the proxy uses for connections to
+	// the database.
+	//
+	// Valid values:
+	//
+	//   - IPV4 - The proxy connects to the database using IPv4 only.
+	//
+	//   - IPV6 - The proxy connects to the database using IPv6 only.
+	TargetConnectionNetworkType TargetConnectionNetworkType
 
 	// The date and time when the proxy was last updated.
 	UpdatedDate *time.Time
@@ -2493,6 +2800,18 @@ type DBProxyEndpoint struct {
 	// The endpoint that you can use to connect to the DB proxy. You include the
 	// endpoint value in the connection string for a database client application.
 	Endpoint *string
+
+	// The network type of the DB proxy endpoint. The network type determines the IP
+	// version that the proxy endpoint supports.
+	//
+	// Valid values:
+	//
+	//   - IPV4 - The proxy endpoint supports IPv4 only.
+	//
+	//   - IPV6 - The proxy endpoint supports IPv6 only.
+	//
+	//   - DUAL - The proxy endpoint supports both IPv4 and IPv6.
+	EndpointNetworkType EndpointNetworkType
 
 	// Indicates whether this endpoint is the default endpoint for the associated DB
 	// proxy. Default DB proxy endpoints always have read/write capability. Other
@@ -2842,12 +3161,19 @@ type DBShardGroup struct {
 // This data type is used as a response element in the DescribeDBSnapshots action.
 type DBSnapshot struct {
 
+	// The additional storage volumes associated with the DB snapshot. RDS supports
+	// additional storage volumes for RDS for Oracle and RDS for SQL Server.
+	AdditionalStorageVolumes []AdditionalStorageVolume
+
 	// Specifies the allocated storage size in gibibytes (GiB).
 	AllocatedStorage *int32
 
 	// Specifies the name of the Availability Zone the DB instance was located in at
 	// the time of the DB snapshot.
 	AvailabilityZone *string
+
+	// The number of days for which automatic DB snapshots are retained.
+	BackupRetentionPeriod *int32
 
 	// Specifies the DB instance identifier of the DB instance this DB snapshot was
 	// created from.
@@ -2923,6 +3249,10 @@ type DBSnapshot struct {
 	// snapshot.
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, as determined by the BackupRetentionPeriod .
+	PreferredBackupWindow *string
+
 	// The number of CPU cores and the number of threads per core for the DB instance
 	// class of the DB instance when the DB snapshot was created.
 	ProcessorFeatures []ProcessorFeature
@@ -2965,6 +3295,18 @@ type DBSnapshot struct {
 
 	// Specifies the status of this DB snapshot.
 	Status *string
+
+	// The type of encryption used to protect data at rest in the DB snapshot.
+	// Possible values:
+	//
+	//   - none - The DB snapshot is not encrypted.
+	//
+	//   - sse-rds - The DB snapshot is encrypted using an Amazon Web Services owned
+	//   KMS key.
+	//
+	//   - sse-kms - The DB snapshot is encrypted using a customer managed KMS key or
+	//   Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
 
 	// Specifies the storage throughput for the DB snapshot.
 	StorageThroughput *int32
@@ -3470,18 +3812,18 @@ type FailoverState struct {
 
 	// The current status of the global cluster. Possible values are as follows:
 	//
-	//   - pending  The service received a request to switch over or fail over the
+	//   - pending – The service received a request to switch over or fail over the
 	//   global cluster. The global cluster's primary DB cluster and the specified
 	//   secondary DB cluster are being verified before the operation starts.
 	//
-	//   - failing-over  Aurora is promoting the chosen secondary Aurora DB cluster
+	//   - failing-over – Aurora is promoting the chosen secondary Aurora DB cluster
 	//   to become the new primary DB cluster to fail over the global cluster.
 	//
-	//   - cancelling  The request to switch over or fail over the global cluster was
+	//   - cancelling – The request to switch over or fail over the global cluster was
 	//   cancelled and the primary Aurora DB cluster and the selected secondary Aurora DB
 	//   cluster are returning to their previous states.
 	//
-	//   - switching-over  This status covers the range of Aurora internal operations
+	//   - switching-over – This status covers the range of Aurora internal operations
 	//   that take place during the switchover process, such as demoting the primary
 	//   Aurora DB cluster, promoting the secondary Aurora DB cluster, and synchronizing
 	//   replicas.
@@ -3571,9 +3913,11 @@ type GlobalCluster struct {
 	// The list of primary and secondary clusters within the global database cluster.
 	GlobalClusterMembers []GlobalClusterMember
 
-	// The Amazon Web Services Region-unique, immutable identifier for the global
-	// database cluster. This identifier is found in Amazon Web Services CloudTrail log
-	// entries whenever the Amazon Web Services KMS key for the DB cluster is accessed.
+	// The Amazon Web Services [partition]-unique, immutable identifier for the global database
+	// cluster. This identifier is found in Amazon Web Services CloudTrail log entries
+	// whenever the Amazon Web Services KMS key for the DB cluster is accessed.
+	//
+	// [partition]: https://docs.aws.amazon.com/glossary/latest/reference/glos-chap.html?id=docs_gateway#partition
 	GlobalClusterResourceId *string
 
 	// Specifies the current state of this global database cluster.
@@ -3581,6 +3925,18 @@ type GlobalCluster struct {
 
 	// The storage encryption setting for the global database cluster.
 	StorageEncrypted *bool
+
+	// The type of encryption used to protect data at rest in the global database
+	// cluster. Possible values:
+	//
+	//   - none - The global database cluster is not encrypted.
+	//
+	//   - sse-rds - The global database cluster is encrypted using an Amazon Web
+	//   Services owned KMS key.
+	//
+	//   - sse-kms - The global database cluster is encrypted using a customer managed
+	//   KMS key or Amazon Web Services managed KMS key.
+	StorageEncryptionType StorageEncryptionType
 
 	// A list of tags.
 	//
@@ -3813,6 +4169,48 @@ type MinimumEngineVersionPerAllowedValue struct {
 
 	// The minimum DB engine version required for the allowed value.
 	MinimumEngineVersion *string
+
+	noSmithyDocumentSerde
+}
+
+// Contains details about the modification of an additional storage volume.
+type ModifyAdditionalStorageVolume struct {
+
+	// The name of the additional storage volume that you want to modify.
+	//
+	// Valid Values: RDSDBDATA2 | RDSDBDATA3 | RDSDBDATA4
+	//
+	// This member is required.
+	VolumeName *string
+
+	// The amount of storage allocated for the additional storage volume, in gibibytes
+	// (GiB). The minimum is 20 GiB. The maximum is 65,536 GiB (64 TiB).
+	AllocatedStorage *int32
+
+	// The number of I/O operations per second (IOPS) provisioned for the additional
+	// storage volume. This setting is only supported for Provisioned IOPS SSD ( io1
+	// and io2 ) storage types.
+	IOPS *int32
+
+	// The upper limit in gibibytes (GiB) to which RDS can automatically scale the
+	// storage of the additional storage volume. You must provide a value greater than
+	// or equal to AllocatedStorage .
+	MaxAllocatedStorage *int32
+
+	// Indicates whether to delete the additional storage volume. The value true
+	// schedules the volume for deletion. You can delete an additional storage volume
+	// only when it doesn't contain database files or other data.
+	SetForDelete *bool
+
+	// The storage throughput value for the additional storage volume, in mebibytes
+	// per second (MiBps). This setting applies only to the General Purpose SSD ( gp3 )
+	// storage type.
+	StorageThroughput *int32
+
+	// The new storage type for the additional storage volume.
+	//
+	// Valid Values: GP3 | IO2
+	StorageType *string
 
 	noSmithyDocumentSerde
 }
@@ -4098,6 +4496,9 @@ type OrderableDBInstanceOption struct {
 	// A list of Availability Zones for a DB instance.
 	AvailabilityZones []AvailabilityZone
 
+	// The available options for additional storage volumes for the DB instance class.
+	AvailableAdditionalStorageVolumesOptions []AvailableAdditionalStorageVolumesOption
+
 	// A list of the available processor features for the DB instance class of a DB
 	// instance.
 	AvailableProcessorFeatures []AvailableProcessorFeature
@@ -4179,6 +4580,9 @@ type OrderableDBInstanceOption struct {
 	// [Working with a DB instance in a VPC]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html
 	SupportedNetworkTypes []string
 
+	// Indicates whether the DB instance class supports additional storage volumes.
+	SupportsAdditionalStorageVolumes *bool
+
 	// Indicates whether DB instances can be configured as a Multi-AZ DB cluster.
 	//
 	// For more information on Multi-AZ DB clusters, see [Multi-AZ deployments with two readable standby DB instances] in the Amazon RDS User
@@ -4197,6 +4601,9 @@ type OrderableDBInstanceOption struct {
 	// Indicates whether you can use Aurora global databases with a specific
 	// combination of other DB engine attributes.
 	SupportsGlobalDatabases *bool
+
+	// Indicates whether a DB instance supports HTTP endpoints.
+	SupportsHttpEndpoint *bool
 
 	// Indicates whether a DB instance supports IAM database authentication.
 	SupportsIAMDatabaseAuthentication *bool
@@ -4316,6 +4723,8 @@ type PendingMaintenanceAction struct {
 	//
 	//   - os-upgrade
 	//
+	//   - serverless-platform-version-update
+	//
 	//   - system-update
 	//
 	// For more information about these actions, see [Maintenance actions for Amazon Aurora] or [Maintenance actions for Amazon RDS].
@@ -4357,6 +4766,10 @@ type PendingMaintenanceAction struct {
 // This data type is used as a response element in the ModifyDBInstance operation
 // and contains changes that will be applied during the next maintenance window.
 type PendingModifiedValues struct {
+
+	// The additional storage volume modifications that are pending for the DB
+	// instance.
+	AdditionalStorageVolumes []AdditionalStorageVolume
 
 	// The allocated storage size for the DB instance specified in gibibytes (GiB).
 	AllocatedStorage *int32
@@ -4407,6 +4820,7 @@ type PendingModifiedValues struct {
 	// The license model for the DB instance.
 	//
 	// Valid values: license-included | bring-your-own-license | general-public-license
+	// | bring-your-own-media
 	LicenseModel *string
 
 	// The master credentials for the DB instance.
@@ -4574,15 +4988,17 @@ type PerformanceIssueDetails struct {
 // If you call DescribeDBInstances , ProcessorFeature returns non-null values only
 // if the following conditions are met:
 //
-//   - You are accessing an Oracle DB instance.
+//   - You are accessing an Oracle or SQL Server DB instance.
 //
-//   - Your Oracle DB instance class supports configuring the number of CPU cores
-//     and threads per core.
+//   - Your Oracle or SQL Server DB instance class supports configuring the number
+//     of CPU cores and threads per core.
 //
 //   - The current number CPU cores and threads is set to a non-default value.
 //
-// For more information, see [Configuring the processor for a DB instance class in RDS for Oracle] in the Amazon RDS User Guide.
+// For more information, see [Configuring the processor for a DB instance class in RDS for Oracle], [Optimizing your RDS for SQL Server CPU], and [DB instance classes] in the Amazon RDS User Guide.
 //
+// [Optimizing your RDS for SQL Server CPU]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/SQLServer.Concepts.General.OptimizeCPU.html
+// [DB instance classes]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html
 // [Configuring the processor for a DB instance class in RDS for Oracle]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html#USER_ConfigureProcessor
 type ProcessorFeature struct {
 
@@ -4997,6 +5413,39 @@ type ServerlessV2FeaturesSupport struct {
 	noSmithyDocumentSerde
 }
 
+// This data type is used as a response element in the action
+// DescribeServerlessV2PlatformVersions .
+type ServerlessV2PlatformVersionInfo struct {
+
+	// The name of the database engine.
+	Engine *string
+
+	// Indicates whether this platform version is the default version for the engine.
+	// The default platform version is the version used for new DB clusters.
+	IsDefault *bool
+
+	// Specifies any Aurora Serverless v2 properties or limits that differ between
+	// Aurora Serverless v2 platform versions. You can retrieve the platform version of
+	// an existing DB cluster and check whether that version supports certain Aurora
+	// Serverless v2 features before you attempt to use those features.
+	ServerlessV2FeaturesSupport *ServerlessV2FeaturesSupport
+
+	// The version number of the serverless platform.
+	ServerlessV2PlatformVersion *string
+
+	// The description of the serverless platform.
+	ServerlessV2PlatformVersionDescription *string
+
+	// The status of the serverless platform. Valid statuses are the following:
+	//
+	//   - enabled - The platform version is in use.
+	//
+	//   - disabled - The platform version is not in use.
+	Status *string
+
+	noSmithyDocumentSerde
+}
+
 // Contains the scaling configuration of an Aurora Serverless v2 DB cluster.
 //
 // For more information, see [Using Amazon Aurora Serverless v2] in the Amazon Aurora User Guide.
@@ -5218,6 +5667,32 @@ type Tag struct {
 	// '_', '.', ':', '/', '=', '+', '-', '@' (Java regex:
 	// "^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$").
 	Value *string
+
+	noSmithyDocumentSerde
+}
+
+// The tags to apply to resources when creating or modifying a DB instance or DB
+// cluster. When you specify a tag, you must specify the resource type to tag,
+// otherwise the request will fail.
+type TagSpecification struct {
+
+	// The type of resource to tag on creation.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	//
+	//   - cluster-auto-backup - The DB cluster's automated backup.
+	ResourceType *string
+
+	// A list of tags.
+	//
+	// For more information, see [Tagging Amazon RDS resources] in the Amazon RDS User Guide or [Tagging Amazon Aurora and Amazon RDS resources] in the Amazon
+	// Aurora User Guide.
+	//
+	// [Tagging Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Tagging.html
+	// [Tagging Amazon Aurora and Amazon RDS resources]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_Tagging.html
+	Tags []Tag
 
 	noSmithyDocumentSerde
 }
@@ -5451,11 +5926,26 @@ type UserAuthConfigInfo struct {
 	noSmithyDocumentSerde
 }
 
+// Contains the valid options for additional storage volumes for a DB instance.
+type ValidAdditionalStorageOptions struct {
+
+	// Indicates whether the DB instance supports additional storage volumes.
+	SupportsAdditionalStorageVolumes *bool
+
+	// The valid additional storage volume options for the DB instance.
+	Volumes []ValidVolumeOptions
+
+	noSmithyDocumentSerde
+}
+
 // Information about valid modifications that you can make to your DB instance.
 // Contains the result of a successful call to the
 // DescribeValidDBInstanceModifications action. You can use this information when
 // you call ModifyDBInstance .
 type ValidDBInstanceModificationsMessage struct {
+
+	// The valid additional storage options for the DB instance.
+	AdditionalStorage *ValidAdditionalStorageOptions
 
 	// Valid storage options for your DB instance.
 	Storage []ValidStorageOptions
@@ -5499,6 +5989,18 @@ type ValidStorageOptions struct {
 	// Indicates whether or not Amazon RDS can automatically scale storage for DB
 	// instances that use the new instance class.
 	SupportsStorageAutoscaling *bool
+
+	noSmithyDocumentSerde
+}
+
+// Contains the valid options for an additional storage volume.
+type ValidVolumeOptions struct {
+
+	// The valid storage options for the additional storage volume.
+	Storage []ValidStorageOptions
+
+	// The name of the additional storage volume.
+	VolumeName *string
 
 	noSmithyDocumentSerde
 }

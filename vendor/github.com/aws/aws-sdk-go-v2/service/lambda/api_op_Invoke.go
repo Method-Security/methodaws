@@ -4,8 +4,6 @@ package lambda
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -16,6 +14,9 @@ import (
 // synchronously (i.e. the InvocationType is RequestResponse ). To invoke a
 // function asynchronously, set InvocationType to Event . Lambda passes the
 // ClientContext object to your function for synchronous invocations only.
+//
+// For synchronous invocations, the maximum payload size is 6 MB. For asynchronous
+// invocations, the maximum payload size is 1 MB.
 //
 // For [synchronous invocation], details about the function response, including errors, are included in
 // the response body and headers. For either invocation type, you can find more
@@ -96,6 +97,17 @@ type InvokeInput struct {
 	// your function for synchronous invocations only.
 	ClientContext *string
 
+	// A unique name for the durable execution. If you invoke a durable function using
+	// a name that already exists with the same payload, Lambda returns the existing
+	// execution instead of creating a duplicate. If the payload differs, Lambda
+	// returns a DurableExecutionAlreadyStartedException error.
+	//
+	// If not specified, Lambda generates a unique identifier automatically. For more
+	// information, see [Execution names].
+	//
+	// [Execution names]: https://docs.aws.amazon.com/lambda/latest/dg/durable-execution-idempotency.html#durable-idempotency-execution-names
+	DurableExecutionName *string
+
 	// Choose from the following options.
 	//
 	//   - RequestResponse (default) – Invoke the function synchronously. Keep the
@@ -114,7 +126,9 @@ type InvokeInput struct {
 	// synchronously invoked functions only.
 	LogType types.LogType
 
-	// The JSON that you want to provide to your Lambda function as input.
+	// The JSON that you want to provide to your Lambda function as input. The maximum
+	// payload size is 6 MB for synchronous invocations and 1 MB for asynchronous
+	// invocations.
 	//
 	// You can enter the JSON directly. For example, --payload '{ "key": "value" }' .
 	// You can also specify a file path. For example, --payload file://payload.json .
@@ -123,10 +137,18 @@ type InvokeInput struct {
 	// Specify a version or alias to invoke a published version of the function.
 	Qualifier *string
 
+	// The identifier of the tenant in a multi-tenant Lambda function.
+	TenantId *string
+
 	noSmithyDocumentSerde
 }
 
 type InvokeOutput struct {
+
+	// The ARN of the durable execution that was started. This is returned when
+	// invoking a durable function and provides a unique identifier for tracking the
+	// execution.
+	DurableExecutionArn *string
 
 	// The version of the function that executed. When you invoke a function with an
 	// alias, this indicates which version the alias resolved to.
@@ -155,9 +177,6 @@ type InvokeOutput struct {
 }
 
 func (c *Client) addOperationInvokeMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsRestjson1_serializeOpInvoke{}, middleware.After)
 	if err != nil {
 		return err
@@ -166,17 +185,8 @@ func (c *Client) addOperationInvokeMiddlewares(stack *middleware.Stack, options 
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "Invoke"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -188,19 +198,7 @@ func (c *Client) addOperationInvokeMiddlewares(stack *middleware.Stack, options 
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -209,25 +207,13 @@ func (c *Client) addOperationInvokeMiddlewares(stack *middleware.Stack, options 
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpInvokeValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opInvoke(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "Invoke"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -242,55 +228,8 @@ func (c *Client) addOperationInvokeMiddlewares(stack *middleware.Stack, options 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opInvoke(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "Invoke",
-	}
 }

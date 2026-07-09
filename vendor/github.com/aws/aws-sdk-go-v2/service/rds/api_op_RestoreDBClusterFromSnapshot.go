@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -16,6 +14,16 @@ import (
 // The target DB cluster is created from the source snapshot with a default
 // configuration. If you don't specify a security group, the new DB cluster is
 // associated with the default security group.
+//
+// You can use the EnableVPCNetworking and EnableInternetAccessGateway parameters
+// together to restore an Aurora PostgreSQL cluster without VPC networking and with
+// internet-based connectivity. These two parameters must always be specified
+// together. Set EnableVPCNetworking to false to disable the VPC network interface
+// (ENI) for the cluster. EnableInternetAccessGateway enables internet-based
+// connectivity through an internet access gateway. IAM database authentication is
+// required and must be enabled using EnableIAMDatabaseAuthentication . Once the
+// cluster is restored, you need to modify the DB cluster to update
+// MasterUserAuthenticationType to iam-db-auth .
 //
 // This operation only restores the DB cluster, not the DB instances for that DB
 // cluster. You must invoke the CreateDBInstance operation to create DB instances
@@ -112,6 +120,18 @@ type RestoreDBClusterFromSnapshotInput struct {
 	//
 	// Valid for: Aurora DB clusters only
 	BacktrackWindow *int64
+
+	// The number of days for which automated backups are retained. Specify a minimum
+	// value of 1 .
+	//
+	// Valid for Cluster Type: Aurora DB clusters and Multi-AZ DB clusters
+	//
+	// Default: Uses existing setting
+	//
+	// Constraints:
+	//
+	//   - Must be a value from 1 to 35.
+	BackupRetentionPeriod *int32
 
 	// Specifies whether to copy all tags from the restored DB cluster to snapshots of
 	// the restored DB cluster. The default is not to copy them.
@@ -232,8 +252,30 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// [IAM database authentication for MariaDB, MySQL, and PostgreSQL]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html
 	EnableIAMDatabaseAuthentication *bool
 
+	// Specifies that the restored DB cluster should use internet-based connectivity
+	// through an internet access gateway. This allows clients to connect to the
+	// cluster over the internet without requiring a VPC.
+	//
+	// This parameter must be used together with EnableVPCNetworking set to false .
+	// When both parameters are specified, IAM database authentication is required. You
+	// must also specify EnableIAMDatabaseAuthentication .
+	//
+	// Valid for Cluster Type: Aurora PostgreSQL clusters
+	EnableInternetAccessGateway *bool
+
 	// Specifies whether to turn on Performance Insights for the DB cluster.
 	EnablePerformanceInsights *bool
+
+	// Specifies whether to enable VPC networking for the restored DB cluster. Set
+	// this parameter to false to create a cluster without the VPC network interface
+	// (ENI).
+	//
+	// This parameter must be used together with EnableInternetAccessGateway . When
+	// both parameters are specified, IAM database authentication is required. You must
+	// also specify EnableIAMDatabaseAuthentication .
+	//
+	// Valid for Cluster Type: Aurora PostgreSQL clusters
+	EnableVPCNetworking *bool
 
 	// The life cycle type for this DB cluster.
 	//
@@ -440,6 +482,28 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	Port *int32
 
+	// The daily time range during which automated backups are created if automated
+	// backups are enabled, using the BackupRetentionPeriod parameter.
+	//
+	// The default is a 30-minute window selected at random from an 8-hour block of
+	// time for each Amazon Web Services Region. To view the time blocks available, see
+	// [Backup window]in the Amazon Aurora User Guide.
+	//
+	// Valid for Cluster Type: Aurora DB clusters and Multi-AZ DB clusters
+	//
+	// Constraints:
+	//
+	//   - Must be in the format hh24:mi-hh24:mi .
+	//
+	//   - Must be in Universal Coordinated Time (UTC).
+	//
+	//   - Must not conflict with the preferred maintenance window.
+	//
+	//   - Must be at least 30 minutes.
+	//
+	// [Backup window]: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Managing.Backups.html#Aurora.Managing.Backups.BackupWindow
+	PreferredBackupWindow *string
+
 	// Specifies whether the DB cluster is publicly accessible.
 	//
 	// When the DB cluster is publicly accessible, its Domain Name System (DNS)
@@ -505,6 +569,13 @@ type RestoreDBClusterFromSnapshotInput struct {
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
 	StorageType *string
 
+	// Tags to assign to resources associated with the DB cluster.
+	//
+	// Valid Values:
+	//
+	//   - cluster-auto-backup - The DB cluster's automated backup.
+	TagSpecifications []types.TagSpecification
+
 	// The tags to be assigned to the restored DB cluster.
 	//
 	// Valid for: Aurora DB clusters and Multi-AZ DB clusters
@@ -550,9 +621,6 @@ type RestoreDBClusterFromSnapshotOutput struct {
 }
 
 func (c *Client) addOperationRestoreDBClusterFromSnapshotMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpRestoreDBClusterFromSnapshot{}, middleware.After)
 	if err != nil {
 		return err
@@ -561,17 +629,8 @@ func (c *Client) addOperationRestoreDBClusterFromSnapshotMiddlewares(stack *midd
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "RestoreDBClusterFromSnapshot"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -583,19 +642,7 @@ func (c *Client) addOperationRestoreDBClusterFromSnapshotMiddlewares(stack *midd
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -604,25 +651,13 @@ func (c *Client) addOperationRestoreDBClusterFromSnapshotMiddlewares(stack *midd
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreDBClusterFromSnapshotValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRestoreDBClusterFromSnapshot(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "RestoreDBClusterFromSnapshot"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -637,55 +672,8 @@ func (c *Client) addOperationRestoreDBClusterFromSnapshotMiddlewares(stack *midd
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opRestoreDBClusterFromSnapshot(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "RestoreDBClusterFromSnapshot",
-	}
 }

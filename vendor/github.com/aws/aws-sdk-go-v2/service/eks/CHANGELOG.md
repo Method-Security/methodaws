@@ -1,3 +1,221 @@
+# v1.89.0 (2026-07-06)
+
+* **Feature**: Add request serialization snapshot tests.
+
+# v1.88.1 (2026-07-01)
+
+* **Bug Fix**: Bump smithy-go to 1.27.3, fix JSON encorder for document.Number, endpoint host label format validation and CBOR union serialization on new serde
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.88.0 (2026-06-30)
+
+* **Feature**: Adds Kubernetes version rollback support, including the CancelUpdate operation to cancel an in-progress VersionRollback update, the RollbackConfig structure with a timeoutMinutes field, and the Cancellation structure surfaced via the new cancellation field on the Update object.
+
+# v1.87.1 (2026-06-29)
+
+* No change notes available for this release.
+
+# v1.87.0 (2026-06-18)
+
+* **Feature**: Adds support for configurable control plane egress routing in Amazon EKS, allowing you to route control plane egress traffic through your VPC and control how the control plane reaches resources in your network such as webhook servers and OIDC providers.
+
+# v1.86.0 (2026-06-12)
+
+* **Feature**: Patches missing enum values for EKS updates
+
+# v1.85.0 (2026-06-11)
+
+* **Feature**: Introduce new CreateCluster parameters for Amazon EKS local clusters on AWS Outposts. Added etcdInstanceType for configuring the EC2 instance type for dedicated etcd instances, and spreadLevel for configuring the placement group spread level for Kubernetes control plane and etcd instances.
+
+# v1.84.6 (2026-06-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.5 (2026-06-04)
+
+* **Dependency Update**: Update to smithy-go v1.27.1 to fix several union-related deserialization bugs in schema-serde-enabled services.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.4 (2026-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.3 (2026-06-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.2 (2026-05-29)
+
+* **Dependency Update**: Update to smithy-go v1.26.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.1 (2026-05-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.84.0 (2026-05-21)
+
+* **Feature**: Adding new BDD representation of endpoint ruleset
+
+# v1.83.0 (2026-04-30)
+
+* **Feature**: Vended logs update param for capability vended logs feature
+
+# v1.82.2 (2026-04-29)
+
+* **Dependency Update**: Update to smithy-go v1.25.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.82.1 (2026-04-17)
+
+* **Dependency Update**: Bump smithy-go to 1.25.0 to support endpointBdd trait
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.82.0 (2026-04-07)
+
+* **Feature**: EKS MNG WarmPool feature to support ASG WarmPool feature.
+
+# v1.81.2 (2026-03-26)
+
+* **Bug Fix**: Fix a bug where a recorded clock skew could persist on the client even if the client and server clock ended up realigning.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.81.1 (2026-03-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.81.0 (2026-03-11)
+
+* **Feature**: Adds support for a new tier in controlPlaneScalingConfig on EKS Clusters.
+
+# v1.80.2 (2026-03-03)
+
+* **Dependency Update**: Bump minimum Go version to 1.24
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.80.1 (2026-02-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.80.0 (2026-02-11)
+
+* **Feature**: This release adds support for Windows Server 2025 in Amazon EKS Managed Node Groups.
+
+# v1.79.0 (2026-02-10.2)
+
+* **Feature**: Introducing an optional policy field, an IAM policy applied to pod identity associations in addition to IAM role policies. When specified, pod permissions are the intersection of IAM role policies and the policy field, ensuring the principle of least privilege.
+
+# v1.78.0 (2026-02-10)
+
+* **Feature**: Amazon EKS adds a new DescribeUpdate update type, VendedLogsUpdate, to support an integration between EKS Auto Mode and Amazon CloudWatch Vended Logs.
+
+# v1.77.1 (2026-02-04)
+
+* **Documentation**: Update delete cluster description
+
+# v1.77.0 (2026-01-14)
+
+* **Feature**: Added support for BOTTLEROCKET NVIDIA FIPS AMIs to AMI types in US regions.
+
+# v1.76.4 (2026-01-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.76.3 (2025-12-09)
+
+* No change notes available for this release.
+
+# v1.76.2 (2025-12-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.76.1 (2025-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.24.0. Notably this version of the library reduces the allocation footprint of the middleware system. We observe a ~10% reduction in allocations per SDK call with this change.
+
+# v1.76.0 (2025-12-01)
+
+* **Feature**: This release adds support for EKS Capabilities
+
+# v1.75.1 (2025-11-25)
+
+* **Bug Fix**: Add error check for endpoint param binding during auth scheme resolution to fix panic reported in #3234
+
+# v1.75.0 (2025-11-21)
+
+* **Feature**: Adds support for controlPlaneScalingConfig on EKS Clusters.
+
+# v1.74.10 (2025-11-19.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.9 (2025-11-12)
+
+* **Bug Fix**: Further reduce allocation overhead when the metrics system isn't in-use.
+* **Bug Fix**: Reduce allocation overhead when the client doesn't have any HTTP interceptors configured.
+* **Bug Fix**: Remove blank trace spans towards the beginning of the request that added no additional information. This conveys a slight reduction in overall allocations.
+
+# v1.74.8 (2025-11-11)
+
+* **Bug Fix**: Return validation error if input region is not a valid host label.
+
+# v1.74.7 (2025-11-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.23.2 which should convey some passive reduction of overall allocations, especially when not using the metrics system.
+
+# v1.74.6 (2025-10-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.5 (2025-10-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.4 (2025-10-22)
+
+* No change notes available for this release.
+
+# v1.74.3 (2025-10-16)
+
+* **Dependency Update**: Bump minimum Go version to 1.23.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.2 (2025-09-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.1 (2025-09-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.0 (2025-09-22)
+
+* **Feature**: Adds support for RepairConfig overrides and configurations in EKS Managed Node Groups.
+
+# v1.73.3 (2025-09-10)
+
+* No change notes available for this release.
+
+# v1.73.2 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.73.1 (2025-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.73.0 (2025-08-27)
+
+* **Feature**: Add support for on-demand refresh of EKS cluster insights
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.72.0 (2025-08-25)
+
+* **Feature**: Remove incorrect endpoint tests
+
 # v1.71.1 (2025-08-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions

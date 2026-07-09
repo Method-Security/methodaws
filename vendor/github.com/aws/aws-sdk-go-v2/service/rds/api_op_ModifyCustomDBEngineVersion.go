@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -42,7 +40,9 @@ func (c *Client) ModifyCustomDBEngineVersion(ctx context.Context, params *Modify
 
 type ModifyCustomDBEngineVersionInput struct {
 
-	// The database engine. RDS Custom for Oracle supports the following values:
+	// The database engine.
+	//
+	// RDS Custom for Oracle supports the following values:
 	//
 	//   - custom-oracle-ee
 	//
@@ -51,6 +51,24 @@ type ModifyCustomDBEngineVersionInput struct {
 	//   - custom-oracle-se2
 	//
 	//   - custom-oracle-se2-cdb
+	//
+	// RDS Custom for SQL Server supports the following values:
+	//
+	//   - custom-sqlserver-ee
+	//
+	//   - custom-sqlserver-se
+	//
+	//   - custom-sqlserver-web
+	//
+	//   - custom-sqlserver-dev
+	//
+	// RDS for SQL Server supports the following values:
+	//
+	//   - sqlserver-ee (Bring Your Own Media)
+	//
+	//   - sqlserver-se (Bring Your Own Media)
+	//
+	//   - sqlserver-dev-ee
 	//
 	// This member is required.
 	Engine *string
@@ -103,8 +121,12 @@ type ModifyCustomDBEngineVersionOutput struct {
 	// The description of the database engine.
 	DBEngineDescription *string
 
-	// A value that indicates the source media provider of the AMI based on the usage
-	// operation. Applicable for RDS Custom for SQL Server.
+	// The source of the installation media for this engine version. A value of
+	// Customer Provided indicates that the engine version was created from
+	// customer-supplied installation media using CreateCustomDBEngineVersion .
+	// Applicable to RDS Custom for SQL Server and to RDS for SQL Server engine
+	// versions ( sqlserver-ee and sqlserver-se with the bring-your-own-media license
+	// model, and sqlserver-dev-ee ).
 	DBEngineMediaType *string
 
 	// The ARN of the custom engine version.
@@ -115,6 +137,12 @@ type ModifyCustomDBEngineVersionOutput struct {
 
 	// The name of the DB parameter group family for the database engine.
 	DBParameterGroupFamily *string
+
+	// The database installation files (ISO and EXE) that were uploaded to Amazon S3
+	// and used to import the database engine version to Amazon RDS. Returned for RDS
+	// for SQL Server engine versions ( sqlserver-ee , sqlserver-se , and
+	// sqlserver-dev-ee ) created from customer-supplied installation media.
+	DatabaseInstallationFiles []string
 
 	// The name of the Amazon S3 bucket that contains your database installation files.
 	DatabaseInstallationFilesS3BucketName *string
@@ -136,6 +164,11 @@ type ModifyCustomDBEngineVersionOutput struct {
 	// The types of logs that the database engine has available for export to
 	// CloudWatch Logs.
 	ExportableLogTypes []string
+
+	// The reason that the custom engine version creation failed with an
+	// incompatible-installation-media status. Applicable to RDS for SQL Server engine
+	// versions ( sqlserver-ee , sqlserver-se , and sqlserver-dev-ee ).
+	FailureReason *string
 
 	// The EC2 image
 	Image *types.CustomDBEngineVersionAMI
@@ -181,7 +214,8 @@ type ModifyCustomDBEngineVersionOutput struct {
 	// To determine the supported features for a specific DB engine and DB engine
 	// version using the CLI, use the following command:
 	//
-	//     aws rds describe-db-engine-versions --engine --engine-version
+	//     aws rds describe-db-engine-versions --engine <engine_name> --engine-version
+	//     <engine_version>
 	//
 	// For example, to determine the supported features for RDS for PostgreSQL version
 	// 13.3 using the CLI, use the following command:
@@ -254,9 +288,6 @@ type ModifyCustomDBEngineVersionOutput struct {
 }
 
 func (c *Client) addOperationModifyCustomDBEngineVersionMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpModifyCustomDBEngineVersion{}, middleware.After)
 	if err != nil {
 		return err
@@ -265,17 +296,8 @@ func (c *Client) addOperationModifyCustomDBEngineVersionMiddlewares(stack *middl
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ModifyCustomDBEngineVersion"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -287,19 +309,7 @@ func (c *Client) addOperationModifyCustomDBEngineVersionMiddlewares(stack *middl
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -308,25 +318,13 @@ func (c *Client) addOperationModifyCustomDBEngineVersionMiddlewares(stack *middl
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyCustomDBEngineVersionValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyCustomDBEngineVersion(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "ModifyCustomDBEngineVersion"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -341,55 +339,8 @@ func (c *Client) addOperationModifyCustomDBEngineVersionMiddlewares(stack *middl
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opModifyCustomDBEngineVersion(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ModifyCustomDBEngineVersion",
-	}
 }
