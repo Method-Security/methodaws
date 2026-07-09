@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
@@ -114,9 +113,6 @@ type DescribeDBClustersOutput struct {
 }
 
 func (c *Client) addOperationDescribeDBClustersMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpDescribeDBClusters{}, middleware.After)
 	if err != nil {
 		return err
@@ -125,17 +121,8 @@ func (c *Client) addOperationDescribeDBClustersMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DescribeDBClusters"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -147,19 +134,7 @@ func (c *Client) addOperationDescribeDBClustersMiddlewares(stack *middleware.Sta
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -168,25 +143,13 @@ func (c *Client) addOperationDescribeDBClustersMiddlewares(stack *middleware.Sta
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeDBClustersValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeDBClusters(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "DescribeDBClusters"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -201,46 +164,7 @@ func (c *Client) addOperationDescribeDBClustersMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -269,8 +193,9 @@ type DBClusterAvailableWaiterOptions struct {
 	MinDelay time.Duration
 
 	// MaxDelay is the maximum amount of time to delay between retries. If unset or
-	// set to zero, DBClusterAvailableWaiter will use default max delay of 120 seconds.
-	// Note that MaxDelay must resolve to value greater than or equal to the MinDelay.
+	// set to zero, DBClusterAvailableWaiter will use default max delay of 1800
+	// seconds. Note that MaxDelay must resolve to value greater than or equal to the
+	// MinDelay.
 	MaxDelay time.Duration
 
 	// LogWaitAttempts is used to enable logging for waiter retry attempts
@@ -299,7 +224,7 @@ type DBClusterAvailableWaiter struct {
 func NewDBClusterAvailableWaiter(client DescribeDBClustersAPIClient, optFns ...func(*DBClusterAvailableWaiterOptions)) *DBClusterAvailableWaiter {
 	options := DBClusterAvailableWaiterOptions{}
 	options.MinDelay = 30 * time.Second
-	options.MaxDelay = 120 * time.Second
+	options.MaxDelay = 1800 * time.Second
 	options.Retryable = dBClusterAvailableStateRetryable
 
 	for _, fn := range optFns {
@@ -334,7 +259,7 @@ func (w *DBClusterAvailableWaiter) WaitForOutput(ctx context.Context, params *De
 	}
 
 	if options.MaxDelay <= 0 {
-		options.MaxDelay = 120 * time.Second
+		options.MaxDelay = 1800 * time.Second
 	}
 
 	if options.MinDelay > options.MaxDelay {
@@ -572,7 +497,7 @@ type DBClusterDeletedWaiterOptions struct {
 	MinDelay time.Duration
 
 	// MaxDelay is the maximum amount of time to delay between retries. If unset or
-	// set to zero, DBClusterDeletedWaiter will use default max delay of 120 seconds.
+	// set to zero, DBClusterDeletedWaiter will use default max delay of 1800 seconds.
 	// Note that MaxDelay must resolve to value greater than or equal to the MinDelay.
 	MaxDelay time.Duration
 
@@ -602,7 +527,7 @@ type DBClusterDeletedWaiter struct {
 func NewDBClusterDeletedWaiter(client DescribeDBClustersAPIClient, optFns ...func(*DBClusterDeletedWaiterOptions)) *DBClusterDeletedWaiter {
 	options := DBClusterDeletedWaiterOptions{}
 	options.MinDelay = 30 * time.Second
-	options.MaxDelay = 120 * time.Second
+	options.MaxDelay = 1800 * time.Second
 	options.Retryable = dBClusterDeletedStateRetryable
 
 	for _, fn := range optFns {
@@ -637,7 +562,7 @@ func (w *DBClusterDeletedWaiter) WaitForOutput(ctx context.Context, params *Desc
 	}
 
 	if options.MaxDelay <= 0 {
-		options.MaxDelay = 120 * time.Second
+		options.MaxDelay = 1800 * time.Second
 	}
 
 	if options.MinDelay > options.MaxDelay {
@@ -927,11 +852,3 @@ type DescribeDBClustersAPIClient interface {
 }
 
 var _ DescribeDBClustersAPIClient = (*Client)(nil)
-
-func newServiceMetadataMiddleware_opDescribeDBClusters(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DescribeDBClusters",
-	}
-}

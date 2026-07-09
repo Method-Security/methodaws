@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -41,6 +39,11 @@ type ModifyDBInstanceInput struct {
 	//
 	// This member is required.
 	DBInstanceIdentifier *string
+
+	// A list of additional storage volumes to modify or delete for the DB instance.
+	// You can create up to 3 additional storage volumes. Additional storage volumes
+	// are supported for RDS for Oracle and RDS for SQL Server DB instances only.
+	AdditionalStorageVolumes []types.ModifyAdditionalStorageVolume
 
 	// The new amount of storage in gibibytes (GiB) to allocate for the DB instance.
 	//
@@ -310,11 +313,9 @@ type ModifyDBInstanceInput struct {
 	DBSecurityGroups []string
 
 	// The new DB subnet group for the DB instance. You can use this parameter to move
-	// your DB instance to a different VPC.
-	//
-	// If your DB instance isn't in a VPC, you can also use this parameter to move
-	// your DB instance into a VPC. For more information, see [Working with a DB instance in a VPC]in the Amazon RDS User
-	// Guide.
+	// your DB instance to a different VPC. If your DB instance isn't in a VPC, you can
+	// also use this parameter to move your DB instance into a VPC. For more
+	// information, see [Working with a DB instance in a VPC]in the Amazon RDS User Guide.
 	//
 	// Changing the subnet group causes an outage during the change. The change is
 	// applied during the next maintenance window, unless you enable ApplyImmediately .
@@ -404,8 +405,6 @@ type ModifyDBInstanceInput struct {
 	// Constraints:
 	//
 	//   - Must be in the distinguished name format.
-	//
-	//   - Can't be longer than 64 characters.
 	//
 	// Example: OU=mymanagedADtestOU,DC=mymanagedADtest,DC=mymanagedAD,DC=mydomain
 	DomainOu *string
@@ -554,7 +553,7 @@ type ModifyDBInstanceInput struct {
 	//
 	//   - RDS for MariaDB - general-public-license
 	//
-	//   - RDS for Microsoft SQL Server - license-included
+	//   - RDS for Microsoft SQL Server - license-included | bring-your-own-media
 	//
 	//   - RDS for MySQL - general-public-license
 	//
@@ -591,6 +590,19 @@ type ModifyDBInstanceInput struct {
 	//
 	// [Password management with Amazon Web Services Secrets Manager]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-secrets-manager.html
 	ManageMasterUserPassword *bool
+
+	// Specifies the authentication type for the master user. With IAM master user
+	// authentication, you can change the master DB user to use IAM database
+	// authentication.
+	//
+	// You can specify one of the following values:
+	//
+	//   - password - Use standard database authentication with a password.
+	//
+	//   - iam-db-auth - Use IAM database authentication for the master user.
+	//
+	// This option is only valid for RDS for PostgreSQL and Aurora PostgreSQL engines.
+	MasterUserAuthenticationType types.MasterUserAuthenticationType
 
 	// The new password for the master user.
 	//
@@ -909,13 +921,13 @@ type ModifyDBInstanceInput struct {
 	//
 	// This parameter is only supported for Db2 DB instances and Oracle DB instances.
 	//
-	// Db2 Standby DB replicas are included in Db2 Advanced Edition (AE) and Db2
-	// Standard Edition (SE). The main use case for standby replicas is cross-Region
-	// disaster recovery. Because it doesn't accept user connections, a standby replica
-	// can't serve a read-only workload.
+	// Db2 Standby DB replicas are included in Db2 Advanced Edition (AE), Db2
+	// Community Edition (CE), and Db2 Standard Edition (SE). The main use case for
+	// standby replicas is cross-Region disaster recovery. Because it doesn't accept
+	// user connections, a standby replica can't serve a read-only workload.
 	//
 	// You can create a combination of standby and read-only DB replicas for the same
-	// primary DB instance. For more information, see [Working with read replicas for Amazon RDS for Db2]in the Amazon RDS User Guide.
+	// primary DB instance. For more information, see [Working with replicas for Amazon RDS for Db2]in the Amazon RDS User Guide.
 	//
 	// To create standby DB replicas for RDS for Db2, set this parameter to mounted .
 	//
@@ -932,7 +944,7 @@ type ModifyDBInstanceInput struct {
 	// value won't be set by default. After replica creation, you can manage the open
 	// mode manually.
 	//
-	// [Working with read replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
+	// [Working with replicas for Amazon RDS for Db2]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/db2-replication.html
 	// [Working with read replicas for Amazon RDS for Oracle]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/oracle-read-replicas.html
 	ReplicaMode types.ReplicaMode
 
@@ -996,6 +1008,13 @@ type ModifyDBInstanceInput struct {
 	// Default: io1 , if the Iops parameter is specified. Otherwise, gp2 .
 	StorageType *string
 
+	// Tags to assign to resources associated with the DB instance.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	TagSpecifications []types.TagSpecification
+
 	// The ARN from the key store with which to associate the instance for TDE
 	// encryption.
 	//
@@ -1049,9 +1068,6 @@ type ModifyDBInstanceOutput struct {
 }
 
 func (c *Client) addOperationModifyDBInstanceMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpModifyDBInstance{}, middleware.After)
 	if err != nil {
 		return err
@@ -1060,17 +1076,8 @@ func (c *Client) addOperationModifyDBInstanceMiddlewares(stack *middleware.Stack
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "ModifyDBInstance"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -1082,19 +1089,7 @@ func (c *Client) addOperationModifyDBInstanceMiddlewares(stack *middleware.Stack
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -1103,25 +1098,13 @@ func (c *Client) addOperationModifyDBInstanceMiddlewares(stack *middleware.Stack
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyDBInstanceValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyDBInstance(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "ModifyDBInstance"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -1136,55 +1119,8 @@ func (c *Client) addOperationModifyDBInstanceMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opModifyDBInstance(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "ModifyDBInstance",
-	}
 }

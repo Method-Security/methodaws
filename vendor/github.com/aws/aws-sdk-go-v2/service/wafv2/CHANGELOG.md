@@ -1,3 +1,181 @@
+# v1.75.0 (2026-07-06)
+
+* **Feature**: Add request serialization snapshot tests.
+
+# v1.74.1 (2026-07-01)
+
+* **Bug Fix**: Bump smithy-go to 1.27.3, fix JSON encorder for document.Number, endpoint host label format validation and CBOR union serialization on new serde
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.74.0 (2026-06-29)
+
+* **Feature**: AWS WAF added support for associating AWS WAF web ACLs with Amazon Bedrock AgentCore Gateway resources. You can now use AssociateWebACL, DisassociateWebACL, GetWebACLForResource, and ListResourcesForWebACL to protect your AgentCore Gateways with AWS WAF.
+
+# v1.73.0 (2026-06-15)
+
+* **Feature**: AWS WAF now supports AI traffic monetization for CloudFront. Configure payment networks and pricing on your web ACL, use the new Monetize rule action to charge AI agents via x402, and monitor revenue with new GetRevenueStatisticsSummary, GetRevenueStatistics, and ListSettlementRecords APIs.
+
+# v1.72.4 (2026-06-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.72.3 (2026-06-04)
+
+* **Dependency Update**: Update to smithy-go v1.27.1 to fix several union-related deserialization bugs in schema-serde-enabled services.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.72.2 (2026-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.72.1 (2026-06-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.72.0 (2026-05-29)
+
+* **Feature**: Adding new BDD representation of endpoint ruleset
+* **Dependency Update**: Update to smithy-go v1.26.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.6 (2026-05-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.5 (2026-04-29)
+
+* **Dependency Update**: Update to smithy-go v1.25.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.4 (2026-04-17)
+
+* **Dependency Update**: Bump smithy-go to 1.25.0 to support endpointBdd trait
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.3 (2026-03-26)
+
+* **Bug Fix**: Fix a bug where a recorded clock skew could persist on the client even if the client and server clock ended up realigning.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.2 (2026-03-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.1 (2026-03-03)
+
+* **Dependency Update**: Bump minimum Go version to 1.24
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.71.0 (2026-02-25)
+
+* **Feature**: AWS WAF now supports GetTopPathStatisticsByTraffic that provides aggregated statistics on the top URI paths accessed by bot traffic. Use this operation to see which paths receive the most bot traffic, identify the specific bots accessing them, and filter by category, organization, or bot name.
+
+# v1.70.8 (2026-02-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.70.7 (2026-01-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.70.6 (2025-12-30)
+
+* No change notes available for this release.
+
+# v1.70.5 (2025-12-16)
+
+* No change notes available for this release.
+
+# v1.70.4 (2025-12-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.70.3 (2025-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.24.0. Notably this version of the library reduces the allocation footprint of the middleware system. We observe a ~10% reduction in allocations per SDK call with this change.
+
+# v1.70.2 (2025-11-25)
+
+* **Bug Fix**: Add error check for endpoint param binding during auth scheme resolution to fix panic reported in #3234
+
+# v1.70.1 (2025-11-19.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.70.0 (2025-11-18)
+
+* **Feature**: AssociateWebACL, UpdateWebACL and PutLoggingConfiguration will now throw WAFFeatureNotIncludedInPricingPlanException when the request contains a feature that is not included in the CloudFront pricing plan of the WebACL.
+
+# v1.69.2 (2025-11-12)
+
+* **Bug Fix**: Further reduce allocation overhead when the metrics system isn't in-use.
+* **Bug Fix**: Reduce allocation overhead when the client doesn't have any HTTP interceptors configured.
+* **Bug Fix**: Remove blank trace spans towards the beginning of the request that added no additional information. This conveys a slight reduction in overall allocations.
+
+# v1.69.1 (2025-11-11)
+
+* **Bug Fix**: Return validation error if input region is not a valid host label.
+
+# v1.69.0 (2025-11-10)
+
+* **Feature**: AWS WAF now supports CLOUDWATCH_TELEMETRY_RULE_MANAGED as a LogScope option, enabling automated logging configuration through Amazon CloudWatch Logs for telemetry data collection and analysis.
+
+# v1.68.4 (2025-11-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.23.2 which should convey some passive reduction of overall allocations, especially when not using the metrics system.
+
+# v1.68.3 (2025-10-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.68.2 (2025-10-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.68.1 (2025-10-16)
+
+* **Dependency Update**: Bump minimum Go version to 1.23.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.68.0 (2025-10-09)
+
+* **Feature**: This release adds the ability to throw WafLimitsExceededException when the maximum number of Application Load Balancer (ALB) associations per AWS WAF v2 WebACL is exceeded.
+
+# v1.67.7 (2025-09-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.67.6 (2025-09-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.67.5 (2025-09-10)
+
+* No change notes available for this release.
+
+# v1.67.4 (2025-09-09)
+
+* No change notes available for this release.
+
+# v1.67.3 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.67.2 (2025-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.67.1 (2025-08-27)
+
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.67.0 (2025-08-22)
+
+* **Feature**: test and verified, safe to release
+
 # v1.66.2 (2025-08-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions

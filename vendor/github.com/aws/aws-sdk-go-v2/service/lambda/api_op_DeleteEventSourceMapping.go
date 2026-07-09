@@ -4,8 +4,6 @@ package lambda
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -63,13 +61,14 @@ type DeleteEventSourceMappingOutput struct {
 	// set MaximumBatchingWindowInSeconds to at least 1.
 	BatchSize *int32
 
-	// (Kinesis and DynamoDB Streams only) If the function returns an error, split the
-	// batch in two and retry. The default value is false.
+	// (Kinesis, DynamoDB Streams, Amazon MSK, and self-managed Apache Kafka) If the
+	// function returns an error, split the batch in two and retry. The default value
+	// is false.
 	BisectBatchOnFunctionError *bool
 
-	// (Kinesis, DynamoDB Streams, Amazon MSK, and self-managed Apache Kafka event
-	// sources only) A configuration object that specifies the destination of an event
-	// after Lambda processes it.
+	// (Kinesis, DynamoDB Streams, Amazon MSK, and self-managed Apache Kafka) A
+	// configuration object that specifies the destination of an event after Lambda
+	// processes it.
 	DestinationConfig *types.DestinationConfig
 
 	// Specific configuration settings for a DocumentDB event source.
@@ -99,8 +98,8 @@ type DeleteEventSourceMappingOutput struct {
 	// The ARN of the Lambda function.
 	FunctionArn *string
 
-	// (Kinesis, DynamoDB Streams, and Amazon SQS) A list of current response type
-	// enums applied to the event source mapping.
+	// (Kinesis, DynamoDB Streams, Amazon MSK, self-managed Apache Kafka, and Amazon
+	// SQS) A list of current response type enums applied to the event source mapping.
 	FunctionResponseTypes []types.FunctionResponseType
 
 	//  The ARN of the Key Management Service (KMS) customer managed key that Lambda
@@ -115,6 +114,12 @@ type DeleteEventSourceMappingOutput struct {
 
 	// The result of the event source mapping's last processing attempt.
 	LastProcessingResult *string
+
+	// (Amazon MSK, and self-managed Apache Kafka only) The logging configuration for
+	// your event source. For more information, see [Event source mapping logging].
+	//
+	// [Event source mapping logging]: https://docs.aws.amazon.com/lambda/latest/dg/esm-logging.html
+	LoggingConfig *types.EventSourceMappingLoggingConfig
 
 	// The maximum amount of time, in seconds, that Lambda spends gathering records
 	// before invoking the function. You can configure MaximumBatchingWindowInSeconds
@@ -132,19 +137,21 @@ type DeleteEventSourceMappingOutput struct {
 	// MaximumBatchingWindowInSeconds to at least 1.
 	MaximumBatchingWindowInSeconds *int32
 
-	// (Kinesis and DynamoDB Streams only) Discard records older than the specified
-	// age. The default value is -1, which sets the maximum age to infinite. When the
-	// value is set to infinite, Lambda never discards old records.
+	// (Kinesis, DynamoDB Streams, Amazon MSK, and self-managed Apache Kafka) Discard
+	// records older than the specified age. The default value is -1, which sets the
+	// maximum age to infinite. When the value is set to infinite, Lambda never
+	// discards old records.
 	//
 	// The minimum valid value for maximum record age is 60s. Although values less
 	// than 60 and greater than -1 fall within the parameter's absolute range, they are
 	// not allowed
 	MaximumRecordAgeInSeconds *int32
 
-	// (Kinesis and DynamoDB Streams only) Discard records after the specified number
-	// of retries. The default value is -1, which sets the maximum number of retries to
-	// infinite. When MaximumRetryAttempts is infinite, Lambda retries failed records
-	// until the record expires in the event source.
+	// (Kinesis, DynamoDB Streams, Amazon MSK, and self-managed Apache Kafka) Discard
+	// records after the specified number of retries. The default value is -1, which
+	// sets the maximum number of retries to infinite. When MaximumRetryAttempts is
+	// infinite, Lambda retries failed records until the record expires in the event
+	// source.
 	MaximumRetryAttempts *int32
 
 	// The metrics configuration for your event source. For more information, see [Event source mapping metrics].
@@ -156,8 +163,8 @@ type DeleteEventSourceMappingOutput struct {
 	// concurrently from each shard. The default value is 1.
 	ParallelizationFactor *int32
 
-	// (Amazon MSK and self-managed Apache Kafka only) The provisioned mode
-	// configuration for the event source. For more information, see [provisioned mode].
+	// (Amazon SQS, Amazon MSK, and self-managed Apache Kafka only) The provisioned
+	// mode configuration for the event source. For more information, see [provisioned mode].
 	//
 	// [provisioned mode]: https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html#invocation-eventsourcemapping-provisioned-mode
 	ProvisionedPollerConfig *types.ProvisionedPollerConfig
@@ -217,9 +224,6 @@ type DeleteEventSourceMappingOutput struct {
 }
 
 func (c *Client) addOperationDeleteEventSourceMappingMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsRestjson1_serializeOpDeleteEventSourceMapping{}, middleware.After)
 	if err != nil {
 		return err
@@ -228,17 +232,8 @@ func (c *Client) addOperationDeleteEventSourceMappingMiddlewares(stack *middlewa
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "DeleteEventSourceMapping"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -250,19 +245,7 @@ func (c *Client) addOperationDeleteEventSourceMappingMiddlewares(stack *middlewa
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -271,25 +254,13 @@ func (c *Client) addOperationDeleteEventSourceMappingMiddlewares(stack *middlewa
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteEventSourceMappingValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteEventSourceMapping(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "DeleteEventSourceMapping"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -304,55 +275,8 @@ func (c *Client) addOperationDeleteEventSourceMappingMiddlewares(stack *middlewa
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opDeleteEventSourceMapping(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "DeleteEventSourceMapping",
-	}
 }

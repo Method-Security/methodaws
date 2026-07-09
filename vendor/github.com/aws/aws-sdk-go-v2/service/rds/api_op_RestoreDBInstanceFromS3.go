@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -15,11 +13,11 @@ import (
 // databases by using backup files. You can create a backup of your on-premises
 // database, store it on Amazon Simple Storage Service (Amazon S3), and then
 // restore the backup file onto a new Amazon RDS DB instance running MySQL. For
-// more information, see [Importing Data into an Amazon RDS MySQL DB Instance]in the Amazon RDS User Guide.
+// more information, see [Restoring a backup into an Amazon RDS for MySQL DB instance]in the Amazon RDS User Guide.
 //
 // This operation doesn't apply to RDS Custom.
 //
-// [Importing Data into an Amazon RDS MySQL DB Instance]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Procedural.Importing.html
+// [Restoring a backup into an Amazon RDS for MySQL DB instance]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Procedural.Importing.html
 func (c *Client) RestoreDBInstanceFromS3(ctx context.Context, params *RestoreDBInstanceFromS3Input, optFns ...func(*Options)) (*RestoreDBInstanceFromS3Output, error) {
 	if params == nil {
 		params = &RestoreDBInstanceFromS3Input{}
@@ -100,6 +98,12 @@ type RestoreDBInstanceFromS3Input struct {
 	//
 	// This member is required.
 	SourceEngineVersion *string
+
+	// A list of additional storage volumes to modify or delete for the DB instance.
+	// You can modify or delete up to three additional storage volumes using the names
+	// rdsdbdata2 , rdsdbdata3 , and rdsdbdata4 . Additional storage volumes are
+	// supported for RDS for Oracle and RDS for SQL Server DB instances only.
+	AdditionalStorageVolumes []types.AdditionalStorageVolume
 
 	// The amount of storage (in gibibytes) to allocate initially for the DB instance.
 	// Follow the allocation rules specified in CreateDBInstance .
@@ -516,6 +520,13 @@ type RestoreDBInstanceFromS3Input struct {
 	// Default: io1 if the Iops parameter is specified; otherwise gp2
 	StorageType *string
 
+	// Tags to assign to resources associated with the DB instance.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	TagSpecifications []types.TagSpecification
+
 	// A list of tags to associate with this DB instance. For more information, see [Tagging Amazon RDS Resources]
 	// in the Amazon RDS User Guide.
 	//
@@ -550,9 +561,6 @@ type RestoreDBInstanceFromS3Output struct {
 }
 
 func (c *Client) addOperationRestoreDBInstanceFromS3Middlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpRestoreDBInstanceFromS3{}, middleware.After)
 	if err != nil {
 		return err
@@ -561,17 +569,8 @@ func (c *Client) addOperationRestoreDBInstanceFromS3Middlewares(stack *middlewar
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "RestoreDBInstanceFromS3"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -583,19 +582,7 @@ func (c *Client) addOperationRestoreDBInstanceFromS3Middlewares(stack *middlewar
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -604,25 +591,13 @@ func (c *Client) addOperationRestoreDBInstanceFromS3Middlewares(stack *middlewar
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreDBInstanceFromS3ValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRestoreDBInstanceFromS3(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "RestoreDBInstanceFromS3"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -637,55 +612,8 @@ func (c *Client) addOperationRestoreDBInstanceFromS3Middlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opRestoreDBInstanceFromS3(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "RestoreDBInstanceFromS3",
-	}
 }

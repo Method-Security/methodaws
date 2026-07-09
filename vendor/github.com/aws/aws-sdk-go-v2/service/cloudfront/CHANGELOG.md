@@ -1,3 +1,186 @@
+# v1.66.0 (2026-07-06)
+
+* **Feature**: Add request serialization snapshot tests.
+
+# v1.65.4 (2026-07-01)
+
+* **Bug Fix**: Bump smithy-go to 1.27.3, fix JSON encorder for document.Number, endpoint host label format validation and CBOR union serialization on new serde
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.65.3 (2026-06-29)
+
+* No change notes available for this release.
+
+# v1.65.2 (2026-06-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.65.1 (2026-06-04)
+
+* **Dependency Update**: Update to smithy-go v1.27.1 to fix several union-related deserialization bugs in schema-serde-enabled services.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.65.0 (2026-06-03.2)
+
+* **Feature**: Adding new BDD representation of endpoint ruleset
+
+# v1.64.4 (2026-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.3 (2026-06-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.2 (2026-05-29)
+
+* **Dependency Update**: Update to smithy-go v1.26.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.1 (2026-05-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.64.0 (2026-05-14)
+
+* **Feature**: Adding a new boolean for OCSP Revocations in Viewer mTLS Create and Update APIs, and adding a new 'Passthrough' option for TrustStore modes
+
+# v1.63.0 (2026-05-05)
+
+* **Feature**: Adds support for tagging CloudFront Functions and KeyValueStores resources.
+
+# v1.62.0 (2026-04-29)
+
+* **Feature**: Amazon CloudFront now supports cache tag. Tag objects via response headers and invalidate all matching objects in a single request, replacing manual URL tracking and broad wildcards.
+* **Dependency Update**: Update to smithy-go v1.25.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.61.1 (2026-04-17)
+
+* **Dependency Update**: Bump smithy-go to 1.25.0 to support endpointBdd trait
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.61.0 (2026-03-31)
+
+* **Feature**: This release adds bring your own IP (BYOIP) IPv6 support to CloudFront's CreateAnycastIpList and UpdateAnycastIpList API through the IpamCidrConfigs field.
+
+# v1.60.4 (2026-03-26)
+
+* **Bug Fix**: Fix a bug where a recorded clock skew could persist on the client even if the client and server clock ended up realigning.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.60.3 (2026-03-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.60.2 (2026-03-03)
+
+* **Dependency Update**: Bump minimum Go version to 1.24
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.60.1 (2026-02-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.60.0 (2026-02-02)
+
+* **Feature**: Add OriginMTLS support to CloudFront Distribution APIs
+
+# v1.59.0 (2026-01-09)
+
+* **Feature**: Added EntityLimitExceeded exception handling to the following API operations AssociateDistributionWebACL, AssociateDistributionTenantWebACL, UpdateDistributionWithStagingConfig
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.58.3 (2025-12-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.58.2 (2025-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.24.0. Notably this version of the library reduces the allocation footprint of the middleware system. We observe a ~10% reduction in allocations per SDK call with this change.
+
+# v1.58.1 (2025-11-25)
+
+* **Bug Fix**: Add error check for endpoint param binding during auth scheme resolution to fix panic reported in #3234
+
+# v1.58.0 (2025-11-24)
+
+* **Feature**: Add TrustStore, ConnectionFunction APIs to CloudFront SDK
+
+# v1.57.0 (2025-11-20)
+
+* **Feature**: This release adds support for bring your own IP (BYOIP) to CloudFront's CreateAnycastIpList API through an optional IpamCidrConfigs field.
+
+# v1.56.3 (2025-11-19.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.56.2 (2025-11-12)
+
+* **Bug Fix**: Further reduce allocation overhead when the metrics system isn't in-use.
+* **Bug Fix**: Reduce allocation overhead when the client doesn't have any HTTP interceptors configured.
+* **Bug Fix**: Remove blank trace spans towards the beginning of the request that added no additional information. This conveys a slight reduction in overall allocations.
+
+# v1.56.1 (2025-11-11)
+
+* **Bug Fix**: Return validation error if input region is not a valid host label.
+
+# v1.56.0 (2025-11-05)
+
+* **Feature**: This release adds new and updated API operations. You can now use the IpAddressType field to specify either ipv4 or dualstack for your Anycast static IP list. You can also enable cross-account resource sharing to share your VPC origins with other AWS accounts
+
+# v1.55.4 (2025-11-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.23.2 which should convey some passive reduction of overall allocations, especially when not using the metrics system.
+
+# v1.55.3 (2025-10-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.2 (2025-10-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.1 (2025-10-16)
+
+* **Dependency Update**: Bump minimum Go version to 1.23.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.55.0 (2025-10-10)
+
+* **Feature**: Added new viewer security policy, TLSv1.2_2025, for CloudFront.
+
+# v1.54.4 (2025-09-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.54.3 (2025-09-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.54.2 (2025-09-10)
+
+* No change notes available for this release.
+
+# v1.54.1 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.54.0 (2025-09-03)
+
+* **Feature**: Adding an optional field IpAddressType in CustomOriginConfig
+
+# v1.53.2 (2025-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.53.1 (2025-08-27)
+
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.53.0 (2025-08-21)
 
 * **Feature**: Remove incorrect endpoint tests

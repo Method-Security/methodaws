@@ -318,6 +318,157 @@ type AddonVersionInfo struct {
 	noSmithyDocumentSerde
 }
 
+// Configuration for integrating Argo CD with IAM Identity CenterIAM; Identity
+// Center. This allows you to use your organization's identity provider for
+// authentication to Argo CD.
+type ArgoCdAwsIdcConfigRequest struct {
+
+	// The Amazon Resource Name (ARN) of the IAM Identity CenterIAM; Identity Center
+	// instance to use for authentication.
+	//
+	// This member is required.
+	IdcInstanceArn *string
+
+	// The Region where your IAM Identity CenterIAM; Identity Center instance is
+	// located.
+	IdcRegion *string
+
+	noSmithyDocumentSerde
+}
+
+// The response object containing IAM Identity CenterIAM; Identity Center
+// configuration details for an Argo CD capability.
+type ArgoCdAwsIdcConfigResponse struct {
+
+	// The Amazon Resource Name (ARN) of the IAM Identity CenterIAM; Identity Center
+	// instance used for authentication.
+	IdcInstanceArn *string
+
+	// The Amazon Resource Name (ARN) of the managed application created in IAM
+	// Identity CenterIAM; Identity Center for this Argo CD capability. This
+	// application is automatically created and managed by Amazon EKS.
+	IdcManagedApplicationArn *string
+
+	// The Region where the IAM Identity CenterIAM; Identity Center instance is
+	// located.
+	IdcRegion *string
+
+	noSmithyDocumentSerde
+}
+
+// Configuration settings for an Argo CD capability. This includes the Kubernetes
+// namespace, IAM Identity CenterIAM; Identity Center integration, RBAC role
+// mappings, and network access configuration.
+type ArgoCdConfigRequest struct {
+
+	// Configuration for IAM Identity CenterIAM; Identity Center integration. When
+	// configured, users can authenticate to Argo CD using their IAM Identity
+	// CenterIAM; Identity Center credentials.
+	//
+	// This member is required.
+	AwsIdc *ArgoCdAwsIdcConfigRequest
+
+	// The Kubernetes namespace where Argo CD resources will be created. If not
+	// specified, the default namespace is used.
+	Namespace *string
+
+	// Configuration for network access to the Argo CD capability's managed API server
+	// endpoint. By default, the Argo CD server is accessible via a public endpoint.
+	// You can optionally specify one or more VPC endpoint IDs to enable private
+	// connectivity from your VPCs. When VPC endpoints are configured, public access is
+	// blocked and the Argo CD server is only accessible through the specified VPC
+	// endpoints.
+	NetworkAccess *ArgoCdNetworkAccessConfigRequest
+
+	// A list of role mappings that define which IAM Identity CenterIAM; Identity
+	// Center users or groups have which Argo CD roles. Each mapping associates an Argo
+	// CD role ( ADMIN , EDITOR , or VIEWER ) with one or more IAM Identity CenterIAM;
+	// Identity Center identities.
+	RbacRoleMappings []ArgoCdRoleMapping
+
+	noSmithyDocumentSerde
+}
+
+// The response object containing Argo CD configuration details, including the
+// server URL that you use to access the Argo CD web interface and API.
+type ArgoCdConfigResponse struct {
+
+	// The IAM Identity CenterIAM; Identity Center integration configuration.
+	AwsIdc *ArgoCdAwsIdcConfigResponse
+
+	// The Kubernetes namespace where Argo CD resources are monitored by your Argo CD
+	// Capability.
+	Namespace *string
+
+	// The network access configuration for the Argo CD capability's managed API
+	// server endpoint. If VPC endpoint IDs are specified, public access is blocked and
+	// the Argo CD server is only accessible through the specified VPC endpoints.
+	NetworkAccess *ArgoCdNetworkAccessConfigResponse
+
+	// The list of role mappings that define which IAM Identity CenterIAM; Identity
+	// Center users or groups have which Argo CD roles.
+	RbacRoleMappings []ArgoCdRoleMapping
+
+	// The URL of the Argo CD server. Use this URL to access the Argo CD web interface
+	// and API.
+	ServerUrl *string
+
+	noSmithyDocumentSerde
+}
+
+// Configuration for network access to the Argo CD capability's managed API server
+// endpoint. When VPC endpoint IDs are specified, public access is blocked and the
+// Argo CD server is only accessible through the specified VPC endpoints.
+type ArgoCdNetworkAccessConfigRequest struct {
+
+	// A list of VPC endpoint IDs to associate with the managed Argo CD API server
+	// endpoint. Each VPC endpoint provides private connectivity from a specific VPC to
+	// the Argo CD server. You can specify multiple VPC endpoint IDs to enable access
+	// from multiple VPCs.
+	VpceIds []string
+
+	noSmithyDocumentSerde
+}
+
+// The response object containing network access configuration for the Argo CD
+// capability's managed API server endpoint. If VPC endpoint IDs are present,
+// public access is blocked and the Argo CD server is only accessible through the
+// specified VPC endpoints.
+type ArgoCdNetworkAccessConfigResponse struct {
+
+	// The list of VPC endpoint IDs associated with the managed Argo CD API server
+	// endpoint. Each VPC endpoint provides private connectivity from a specific VPC to
+	// the Argo CD server.
+	VpceIds []string
+
+	noSmithyDocumentSerde
+}
+
+// A mapping between an Argo CD role and IAM Identity CenterIAM; Identity Center
+// identities. This defines which users or groups have specific permissions in Argo
+// CD.
+type ArgoCdRoleMapping struct {
+
+	// A list of IAM Identity CenterIAM; Identity Center identities (users or groups)
+	// that should be assigned this Argo CD role.
+	//
+	// This member is required.
+	Identities []SsoIdentity
+
+	// The Argo CD role to assign. Valid values are:
+	//
+	//   - ADMIN – Full administrative access to Argo CD.
+	//
+	//   - EDITOR – Edit access to Argo CD resources.
+	//
+	//   - VIEWER – Read-only access to Argo CD resources.
+	//
+	// This member is required.
+	Role ArgoCdRole
+
+	noSmithyDocumentSerde
+}
+
 // An access policy association.
 type AssociatedAccessPolicy struct {
 
@@ -357,6 +508,183 @@ type BlockStorage struct {
 	// cluster. If the block storage capability is enabled, EKS Auto Mode will create
 	// and delete EBS volumes in your Amazon Web Services account.
 	Enabled *bool
+
+	noSmithyDocumentSerde
+}
+
+// Contains information about the latest cancellation of an update to an Amazon
+// EKS cluster.
+type Cancellation struct {
+
+	// A message providing additional details about the cancellation, such as the
+	// reason for the cancellation or failure details.
+	Reason *string
+
+	// The current status of the cancellation. Valid values are InProgress , Failed ,
+	// and Successful .
+	Status CancellationStatus
+
+	noSmithyDocumentSerde
+}
+
+// An object representing a managed capability in an Amazon EKS cluster. This
+// includes all configuration, status, and health information for the capability.
+type Capability struct {
+
+	// The Amazon Resource Name (ARN) of the capability.
+	Arn *string
+
+	// The unique name of the capability within the cluster.
+	CapabilityName *string
+
+	// The name of the Amazon EKS cluster that contains this capability.
+	ClusterName *string
+
+	// The configuration settings for the capability. The structure varies depending
+	// on the capability type.
+	Configuration *CapabilityConfigurationResponse
+
+	// The Unix epoch timestamp in seconds for when the capability was created.
+	CreatedAt *time.Time
+
+	// The delete propagation policy for the capability. Currently, the only supported
+	// value is RETAIN , which keeps all resources managed by the capability when the
+	// capability is deleted.
+	DeletePropagationPolicy CapabilityDeletePropagationPolicy
+
+	// Health information for the capability, including any issues that may be
+	// affecting its operation.
+	Health *CapabilityHealth
+
+	// The Unix epoch timestamp in seconds for when the capability was last modified.
+	ModifiedAt *time.Time
+
+	// The Amazon Resource Name (ARN) of the IAM role that the capability uses to
+	// interact with Amazon Web Services services.
+	RoleArn *string
+
+	// The current status of the capability. Valid values include:
+	//
+	//   - CREATING – The capability is being created.
+	//
+	//   - ACTIVE – The capability is running and available.
+	//
+	//   - UPDATING – The capability is being updated.
+	//
+	//   - DELETING – The capability is being deleted.
+	//
+	//   - CREATE_FAILED – The capability creation failed.
+	//
+	//   - UPDATE_FAILED – The capability update failed.
+	//
+	//   - DELETE_FAILED – The capability deletion failed.
+	Status CapabilityStatus
+
+	// The metadata that you apply to a resource to help you categorize and organize
+	// them. Each tag consists of a key and an optional value. You define them.
+	//
+	// The following basic restrictions apply to tags:
+	//
+	//   - Maximum number of tags per resource – 50
+	//
+	//   - For each resource, each tag key must be unique, and each tag key can have
+	//   only one value.
+	//
+	//   - Maximum key length – 128 Unicode characters in UTF-8
+	//
+	//   - Maximum value length – 256 Unicode characters in UTF-8
+	//
+	//   - If your tagging schema is used across multiple services and resources,
+	//   remember that other services may have restrictions on allowed characters.
+	//   Generally allowed characters are: letters, numbers, and spaces representable in
+	//   UTF-8, and the following characters: + - = . _ : / @.
+	//
+	//   - Tag keys and values are case-sensitive.
+	//
+	//   - Do not use aws: , AWS: , or any upper or lowercase combination of such as a
+	//   prefix for either keys or values as it is reserved for Amazon Web Services use.
+	//   You cannot edit or delete tag keys or values with this prefix. Tags with this
+	//   prefix do not count against your tags per resource limit.
+	Tags map[string]string
+
+	// The type of capability. Valid values are ACK , ARGOCD , or KRO .
+	Type CapabilityType
+
+	// The version of the capability software that is currently running.
+	Version *string
+
+	noSmithyDocumentSerde
+}
+
+// Configuration settings for a capability. The structure of this object varies
+// depending on the capability type.
+type CapabilityConfigurationRequest struct {
+
+	// Configuration settings specific to Argo CD capabilities. This field is only
+	// used when creating or updating an Argo CD capability.
+	ArgoCd *ArgoCdConfigRequest
+
+	noSmithyDocumentSerde
+}
+
+// The response object containing capability configuration details.
+type CapabilityConfigurationResponse struct {
+
+	// Configuration settings for an Argo CD capability, including the server URL and
+	// other Argo CD-specific settings.
+	ArgoCd *ArgoCdConfigResponse
+
+	noSmithyDocumentSerde
+}
+
+// Health information for a capability, including any issues that may be affecting
+// its operation.
+type CapabilityHealth struct {
+
+	// A list of issues affecting the capability. If this list is empty, the
+	// capability is healthy.
+	Issues []CapabilityIssue
+
+	noSmithyDocumentSerde
+}
+
+// An issue affecting a capability's health or operation.
+type CapabilityIssue struct {
+
+	// A code identifying the type of issue. This can be used to programmatically
+	// handle specific issue types.
+	Code CapabilityIssueCode
+
+	// A human-readable message describing the issue and potential remediation steps.
+	Message *string
+
+	noSmithyDocumentSerde
+}
+
+// A summary of a capability, containing basic information without the full
+// configuration details. This is returned by the ListCapabilities operation.
+type CapabilitySummary struct {
+
+	// The Amazon Resource Name (ARN) of the capability.
+	Arn *string
+
+	// The unique name of the capability within the cluster.
+	CapabilityName *string
+
+	// The Unix epoch timestamp in seconds for when the capability was created.
+	CreatedAt *time.Time
+
+	// The Unix epoch timestamp in seconds for when the capability was last modified.
+	ModifiedAt *time.Time
+
+	// The current status of the capability.
+	Status CapabilityStatus
+
+	// The type of capability. Valid values are ACK , ARGOCD , or KRO .
+	Type CapabilityType
+
+	// The version of the capability software that is currently running.
+	Version *string
 
 	noSmithyDocumentSerde
 }
@@ -412,6 +740,10 @@ type Cluster struct {
 
 	// The configuration used to connect to a cluster for registration.
 	ConnectorConfig *ConnectorConfigResponse
+
+	// The control plane scaling tier configuration. For more information, see EKS
+	// Provisioned Control Plane in the Amazon EKS User Guide.
+	ControlPlaneScalingConfig *ControlPlaneScalingConfig
 
 	// The Unix epoch timestamp at object creation.
 	CreatedAt *time.Time
@@ -684,6 +1016,11 @@ type ControlPlanePlacementRequest struct {
 	// This setting can't be changed after cluster creation.
 	GroupName *string
 
+	// Optional parameter to specify the placement group spread level for control
+	// plane instances. If not provided, Amazon EKS will deploy control plane instances
+	// without a placement group.
+	SpreadLevel SpreadLevel
+
 	noSmithyDocumentSerde
 }
 
@@ -696,6 +1033,22 @@ type ControlPlanePlacementResponse struct {
 
 	// The name of the placement group for the Kubernetes control plane instances.
 	GroupName *string
+
+	// The spread level used with the placement group for control plane instances on
+	// your local Amazon EKS cluster on Amazon Web Services Outposts.
+	SpreadLevel SpreadLevel
+
+	noSmithyDocumentSerde
+}
+
+// The control plane scaling tier configuration. For more information, see EKS
+// Provisioned Control Plane in the Amazon EKS User Guide.
+type ControlPlaneScalingConfig struct {
+
+	// The control plane scaling tier configuration. Available options are standard ,
+	// tier-xl , tier-2xl , tier-4xl, or tier-8xl . For more information, see EKS
+	// Provisioned Control Plane in the Amazon EKS User Guide.
+	Tier ProvisionedControlPlaneTier
 
 	noSmithyDocumentSerde
 }
@@ -866,6 +1219,35 @@ type ErrorDetail struct {
 
 	// An optional field that contains the resource IDs associated with the error.
 	ResourceIds []string
+
+	noSmithyDocumentSerde
+}
+
+// The placement configuration for the etcd instances of your local Amazon EKS
+// cluster on an Amazon Web Services Outpost. For more information, see [Capacity considerations]in the
+// Amazon EKS User Guide.
+//
+// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
+type EtcdPlacementRequest struct {
+
+	// Optional parameter to specify the placement group spread level for etcd
+	// instances. If not provided, Amazon EKS will deploy etcd instances without a
+	// placement group.
+	SpreadLevel SpreadLevel
+
+	noSmithyDocumentSerde
+}
+
+// The placement configuration for the etcd instances of your local Amazon EKS
+// cluster on an Amazon Web Services Outpost. For more information, see [Capacity considerations]in the
+// Amazon EKS User Guide.
+//
+// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
+type EtcdPlacementResponse struct {
+
+	// The spread level used with the placement group for etcd instances on your local
+	// Amazon EKS cluster on Amazon Web Services Outposts.
+	SpreadLevel SpreadLevel
 
 	noSmithyDocumentSerde
 }
@@ -1485,6 +1867,12 @@ type Nodegroup struct {
 	// The Kubernetes version of the managed node group.
 	Version *string
 
+	// The warm pool configuration attached to the node group. Amazon EKS manages warm
+	// pools throughout the node group lifecycle using the
+	// AWSServiceRoleForAmazonEKSNodegroup service-linked role to create, update, and
+	// delete warm pool resources.
+	WarmPoolConfig *WarmPoolConfig
+
 	noSmithyDocumentSerde
 }
 
@@ -1596,6 +1984,57 @@ type NodeRepairConfig struct {
 	// Specifies whether to enable node auto repair for the node group. Node auto
 	// repair is disabled by default.
 	Enabled *bool
+
+	// Specify the maximum number of nodes that can be repaired concurrently or in
+	// parallel, expressed as a count of unhealthy nodes. This gives you finer-grained
+	// control over the pace of node replacements. When using this, you cannot also set
+	// maxParallelNodesRepairedPercentage at the same time.
+	MaxParallelNodesRepairedCount *int32
+
+	// Specify the maximum number of nodes that can be repaired concurrently or in
+	// parallel, expressed as a percentage of unhealthy nodes. This gives you
+	// finer-grained control over the pace of node replacements. When using this, you
+	// cannot also set maxParallelNodesRepairedCount at the same time.
+	MaxParallelNodesRepairedPercentage *int32
+
+	// Specify a count threshold of unhealthy nodes, above which node auto repair
+	// actions will stop. When using this, you cannot also set
+	// maxUnhealthyNodeThresholdPercentage at the same time.
+	MaxUnhealthyNodeThresholdCount *int32
+
+	// Specify a percentage threshold of unhealthy nodes, above which node auto repair
+	// actions will stop. When using this, you cannot also set
+	// maxUnhealthyNodeThresholdCount at the same time.
+	MaxUnhealthyNodeThresholdPercentage *int32
+
+	// Specify granular overrides for specific repair actions. These overrides control
+	// the repair action and the repair delay time before a node is considered eligible
+	// for repair. If you use this, you must specify all the values.
+	NodeRepairConfigOverrides []NodeRepairConfigOverrides
+
+	noSmithyDocumentSerde
+}
+
+// Specify granular overrides for specific repair actions. These overrides control
+// the repair action and the repair delay time before a node is considered eligible
+// for repair. If you use this, you must specify all the values.
+type NodeRepairConfigOverrides struct {
+
+	// Specify the minimum time in minutes to wait before attempting to repair a node
+	// with this specific nodeMonitoringCondition and nodeUnhealthyReason .
+	MinRepairWaitTimeMins *int32
+
+	// Specify an unhealthy condition reported by the node monitoring agent that this
+	// override would apply to.
+	NodeMonitoringCondition *string
+
+	// Specify a reason reported by the node monitoring agent that this override would
+	// apply to.
+	NodeUnhealthyReason *string
+
+	// Specify the repair action to take for nodes when all of the specified
+	// conditions are met.
+	RepairAction RepairAction
 
 	noSmithyDocumentSerde
 }
@@ -1733,13 +2172,12 @@ type OidcIdentityProviderConfigRequest struct {
 // [Creating a local cluster on an Outpost]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-local-cluster-create.html
 type OutpostConfigRequest struct {
 
-	// The Amazon EC2 instance type that you want to use for your local Amazon EKS
-	// cluster on Outposts. Choose an instance type based on the number of nodes that
-	// your cluster will have. For more information, see [Capacity considerations]in the Amazon EKS User Guide.
+	// The Amazon EC2 instance type for the Kubernetes control plane instances of your
+	// local Amazon EKS cluster on Amazon Web Services Outposts. This instance type
+	// applies to all control plane instances and cannot be changed after cluster
+	// creation.
 	//
-	// The instance type that you specify is used for all Kubernetes control plane
-	// instances. The instance type can't be changed after cluster creation. The
-	// control plane is not automatically scaled by Amazon EKS.
+	// For more information, see [Capacity considerations] in the Amazon EKS User Guide.
 	//
 	// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
 	//
@@ -1759,6 +2197,18 @@ type OutpostConfigRequest struct {
 	// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
 	ControlPlanePlacement *ControlPlanePlacementRequest
 
+	// The Amazon EC2 instance type for etcd instances of your local Amazon EKS
+	// cluster on Amazon Web Services Outposts. This instance type applies to all etcd
+	// instances and cannot be changed after cluster creation.
+	EtcdInstanceType *string
+
+	// An object representing the placement configuration for the etcd instances of
+	// your local Amazon EKS cluster on an Amazon Web Services Outpost. For more
+	// information, see [Capacity considerations]in the Amazon EKS User Guide.
+	//
+	// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
+	EtcdPlacement *EtcdPlacementRequest
+
 	noSmithyDocumentSerde
 }
 
@@ -1767,7 +2217,8 @@ type OutpostConfigRequest struct {
 // the Amazon Web Services cloud.
 type OutpostConfigResponse struct {
 
-	// The Amazon EC2 instance type used for the control plane. The instance type is
+	// The Amazon EC2 instance type for the Kubernetes control plane instances of your
+	// local Amazon EKS cluster on Amazon Web Services Outposts. The instance type is
 	// the same for all control plane instances.
 	//
 	// This member is required.
@@ -1785,6 +2236,18 @@ type OutpostConfigResponse struct {
 	//
 	// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
 	ControlPlanePlacement *ControlPlanePlacementResponse
+
+	// The Amazon EC2 instance type for etcd instances of your local Amazon EKS
+	// cluster on Amazon Web Services Outposts. The instance type is the same for all
+	// etcd instances.
+	EtcdInstanceType *string
+
+	// An object representing the placement configuration for the etcd instances of
+	// your local Amazon EKS cluster on an Amazon Web Services Outpost. For more
+	// information, see [Capacity considerations]in the Amazon EKS User Guide.
+	//
+	// [Capacity considerations]: https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html
+	EtcdPlacement *EtcdPlacementResponse
 
 	noSmithyDocumentSerde
 }
@@ -1841,6 +2304,14 @@ type PodIdentityAssociation struct {
 
 	// If defined, the EKS Pod Identity association is owned by an Amazon EKS add-on.
 	OwnerArn *string
+
+	// An optional IAM policy in JSON format (as an escaped string) that applies
+	// additional restrictions to this pod identity association beyond the IAM policies
+	// attached to the IAM role. This policy is applied as the intersection of the
+	// role's policies and this policy, allowing you to reduce the permissions that
+	// applications in the pods can use. Use this policy to enforce least privilege
+	// access while still leveraging a shared IAM role across multiple applications.
+	Policy *string
 
 	// The Amazon Resource Name (ARN) of the IAM role to associate with the service
 	// account. The EKS Pod Identity agent manages credentials to assume this role for
@@ -2154,6 +2625,36 @@ type RemotePodNetwork struct {
 	noSmithyDocumentSerde
 }
 
+// The rollback configuration for the cluster version rollback.
+type RollbackConfig struct {
+
+	// The length of time in minutes to wait before cancelling the update. Timeout is
+	// a minimum-bound property, meaning the timeout occurs no sooner than the time you
+	// specify, but can occur shortly thereafter. This value can be between 120 (2
+	// hours) and 10080 (7 days). Default: 720 (12 hours) if not specified.
+	TimeoutMinutes *int32
+
+	noSmithyDocumentSerde
+}
+
+// An IAM Identity CenterIAM; Identity Center identity (user or group) that can be
+// assigned permissions in a capability.
+type SsoIdentity struct {
+
+	// The unique identifier of the IAM Identity CenterIAM; Identity Center user or
+	// group.
+	//
+	// This member is required.
+	Id *string
+
+	// The type of identity. Valid values are SSO_USER or SSO_GROUP .
+	//
+	// This member is required.
+	Type SsoIdentityType
+
+	noSmithyDocumentSerde
+}
+
 // Request to update the configuration of the storage capability of your EKS Auto
 // Mode cluster. For example, enable the capability. For more information, see EKS
 // Auto Mode block storage capability in the Amazon EKS User Guide.
@@ -2197,6 +2698,10 @@ type Taint struct {
 // An object representing an asynchronous update.
 type Update struct {
 
+	// The latest cancellation information for the update. This field is present only
+	// if any cancellation is attempted for the update.
+	Cancellation *Cancellation
+
 	// The Unix epoch timestamp at object creation.
 	CreatedAt *time.Time
 
@@ -2227,6 +2732,32 @@ type UpdateAccessConfigRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Configuration updates for an Argo CD capability. You only need to specify the
+// fields you want to update.
+type UpdateArgoCdConfig struct {
+
+	// Updated network access configuration for the Argo CD capability's managed API
+	// server endpoint. You can add or remove VPC endpoint associations to control
+	// which VPCs have private access to the Argo CD server.
+	NetworkAccess *ArgoCdNetworkAccessConfigRequest
+
+	// Updated RBAC role mappings for the Argo CD capability. You can add, update, or
+	// remove role mappings.
+	RbacRoleMappings *UpdateRoleMappings
+
+	noSmithyDocumentSerde
+}
+
+// Configuration updates for a capability. The structure varies depending on the
+// capability type.
+type UpdateCapabilityConfiguration struct {
+
+	// Configuration updates specific to Argo CD capabilities.
+	ArgoCd *UpdateArgoCdConfig
+
+	noSmithyDocumentSerde
+}
+
 // An object representing a Kubernetes label change for a managed node group.
 type UpdateLabelsPayload struct {
 
@@ -2247,6 +2778,23 @@ type UpdateParam struct {
 
 	// The value of the keys submitted as part of an update request.
 	Value *string
+
+	noSmithyDocumentSerde
+}
+
+// Updates to RBAC role mappings for an Argo CD capability. You can add, update,
+// or remove role mappings in a single operation.
+type UpdateRoleMappings struct {
+
+	// A list of role mappings to add or update. If a mapping for the specified role
+	// already exists, it will be updated with the new identities. If it doesn't exist,
+	// a new mapping will be created.
+	AddOrUpdateRoleMappings []ArgoCdRoleMapping
+
+	// A list of role mappings to remove from the RBAC configuration. Each mapping
+	// specifies an Argo CD role ( ADMIN , EDITOR , or VIEWER ) and the identities to
+	// remove from that role.
+	RemoveRoleMappings []ArgoCdRoleMapping
 
 	noSmithyDocumentSerde
 }
@@ -2309,6 +2857,21 @@ type UpgradePolicyResponse struct {
 
 // An object representing the VPC configuration to use for an Amazon EKS cluster.
 type VpcConfigRequest struct {
+
+	// Specifies the control plane egress routing mode for the cluster. If the cluster
+	// is set to AWS_MANAGED , Amazon EKS manages the egress path from the control
+	// plane and you don't need to configure NAT gateways or other routing
+	// infrastructure for control plane traffic. If the cluster is set to
+	// CUSTOMER_ROUTED , you manage the egress path from the control plane in your VPC
+	// subnets. You are responsible for ensuring that the control plane can reach
+	// required endpoints such as webhook servers and OIDC providers. The default value
+	// is AWS_MANAGED . Once set to CUSTOMER_ROUTED , this setting cannot be changed
+	// back to AWS_MANAGED on the same cluster.
+	//
+	// [Learn more about control plane egress routing in the Amazon EKS User Guide.]
+	//
+	// [Learn more about control plane egress routing in the Amazon EKS User Guide.]: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-egress.html
+	ControlPlaneEgressMode ControlPlaneEgressModeType
 
 	// Set this value to true to enable private access for your cluster's Kubernetes
 	// API server endpoint. If you enable private access, Kubernetes API requests from
@@ -2374,6 +2937,16 @@ type VpcConfigResponse struct {
 	// communication.
 	ClusterSecurityGroupId *string
 
+	// The current control plane egress routing mode for the cluster. If the cluster
+	// is set to AWS_MANAGED , Amazon EKS manages the egress path from the control
+	// plane. If the cluster is set to CUSTOMER_ROUTED , you manage the egress path
+	// from the control plane in your VPC subnets.
+	//
+	// [Learn more about control plane egress routing in the Amazon EKS User Guide.]
+	//
+	// [Learn more about control plane egress routing in the Amazon EKS User Guide.]: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-egress.html
+	ControlPlaneEgressMode ControlPlaneEgressModeType
+
 	// This parameter indicates whether the Amazon EKS private API server endpoint is
 	// enabled. If the Amazon EKS private API server endpoint is enabled, Kubernetes
 	// API requests that originate from within your cluster's VPC use the private VPC
@@ -2413,6 +2986,43 @@ type VpcConfigResponse struct {
 
 	// The VPC associated with your cluster.
 	VpcId *string
+
+	noSmithyDocumentSerde
+}
+
+// The configuration for an Amazon EC2 Auto Scaling warm pool attached to an
+// Amazon EKS managed node group. Warm pools maintain pre-initialized EC2 instances
+// alongside your Auto Scaling group that have already completed the bootup
+// initialization process and can be kept in a Stopped , Running , or Hibernated
+// state.
+type WarmPoolConfig struct {
+
+	// Specifies whether to attach warm pools on the managed node group. Set to true
+	// to enable the warm pool, or false to disable and remove it. If not specified
+	// during an update, the current value is preserved.
+	Enabled *bool
+
+	// The maximum total number of instances across the warm pool and Auto Scaling
+	// group combined. This value controls the total prepared capacity available for
+	// your node group.
+	MaxGroupPreparedCapacity *int32
+
+	// The minimum number of instances to maintain in the warm pool. Default: 0 . Size
+	// your warm pool based on scaling patterns to balance cost and availability. Start
+	// with 10-20% of expected peak capacity.
+	MinSize *int32
+
+	// The desired state for warm pool instances. Default: Stopped . Valid values are
+	// Stopped (most cost-effective with EBS storage costs only), Running (fastest
+	// transition time with full EC2 costs), and Hibernated (balance between cost and
+	// speed, only supported on specific instance types). Warm pool instances in the
+	// Hibernated state are not supported with Bottlerocket AMIs.
+	PoolState WarmPoolState
+
+	// Indicates whether instances should return to the warm pool during scale-in
+	// events instead of being terminated. Default: false . Enable this to reduce costs
+	// by reusing instances. This feature is not supported for Bottlerocket AMIs.
+	ReuseOnScaleIn *bool
 
 	noSmithyDocumentSerde
 }

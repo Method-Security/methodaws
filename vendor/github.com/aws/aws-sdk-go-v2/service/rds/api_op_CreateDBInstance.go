@@ -4,8 +4,6 @@ package rds
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -98,6 +96,8 @@ type CreateDBInstanceInput struct {
 	//
 	//   - db2-ae
 	//
+	//   - db2-ce
+	//
 	//   - db2-se
 	//
 	//   - mariadb
@@ -114,6 +114,8 @@ type CreateDBInstanceInput struct {
 	//
 	//   - postgres
 	//
+	//   - sqlserver-dev-ee
+	//
 	//   - sqlserver-ee
 	//
 	//   - sqlserver-se
@@ -124,6 +126,12 @@ type CreateDBInstanceInput struct {
 	//
 	// This member is required.
 	Engine *string
+
+	// A list of additional storage volumes to create for the DB instance. You can
+	// create up to three additional storage volumes using the names rdsdbdata2 ,
+	// rdsdbdata3 , and rdsdbdata4 . Additional storage volumes are supported for RDS
+	// for Oracle and RDS for SQL Server DB instances only.
+	AdditionalStorageVolumes []types.AdditionalStorageVolume
 
 	// The amount of storage in gibibytes (GiB) to allocate for the DB instance.
 	//
@@ -744,8 +752,8 @@ type CreateDBInstanceInput struct {
 
 	// The license model information for this DB instance.
 	//
-	// License models for RDS for Db2 require additional configuration. The Bring Your
-	// Own License (BYOL) model requires a custom parameter group and an Amazon Web
+	// License models for RDS for Db2 require additional configuration. The bring your
+	// own license (BYOL) model requires a custom parameter group and an Amazon Web
 	// Services License Manager self-managed license. The Db2 license through Amazon
 	// Web Services Marketplace model requires an Amazon Web Services Marketplace
 	// subscription. For more information, see [Amazon RDS for Db2 licensing options]in the Amazon RDS User Guide.
@@ -760,7 +768,7 @@ type CreateDBInstanceInput struct {
 	//
 	//   - RDS for MariaDB - general-public-license
 	//
-	//   - RDS for Microsoft SQL Server - license-included
+	//   - RDS for Microsoft SQL Server - license-included | bring-your-own-media
 	//
 	//   - RDS for MySQL - general-public-license
 	//
@@ -783,6 +791,19 @@ type CreateDBInstanceInput struct {
 	//
 	// [Password management with Amazon Web Services Secrets Manager]: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-secrets-manager.html
 	ManageMasterUserPassword *bool
+
+	// Specifies the authentication type for the master user. With IAM master user
+	// authentication, you can configure the master DB user with IAM database
+	// authentication when you create a DB instance.
+	//
+	// You can specify one of the following values:
+	//
+	//   - password - Use standard database authentication with a password.
+	//
+	//   - iam-db-auth - Use IAM database authentication for the master user.
+	//
+	// This option is only valid for RDS for PostgreSQL and Aurora PostgreSQL engines.
+	MasterUserAuthenticationType types.MasterUserAuthenticationType
 
 	// The password for the master user.
 	//
@@ -892,12 +913,8 @@ type CreateDBInstanceInput struct {
 	// Specifies whether the DB instance is a Multi-AZ deployment. You can't set the
 	// AvailabilityZone parameter if the DB instance is a Multi-AZ deployment.
 	//
-	// This setting doesn't apply to the following DB instances:
-	//
-	//   - Amazon Aurora (DB instance Availability Zones (AZs) are managed by the DB
-	//   cluster.)
-	//
-	//   - RDS Custom
+	// This setting doesn't apply to Amazon Aurora because the DB instance
+	// Availability Zones (AZs) are managed by the DB cluster.
 	MultiAZ *bool
 
 	// Specifies whether to use the multi-tenant configuration or the single-tenant
@@ -1067,36 +1084,26 @@ type CreateDBInstanceInput struct {
 	// Specifies whether the DB instance is publicly accessible.
 	//
 	// When the DB instance is publicly accessible and you connect from outside of the
-	// DB instance's virtual private cloud (VPC), its Domain Name System (DNS) endpoint
+	// DB instance's virtual private cloud (VPC), its domain name system (DNS) endpoint
 	// resolves to the public IP address. When you connect from within the same VPC as
 	// the DB instance, the endpoint resolves to the private IP address. Access to the
-	// DB instance is ultimately controlled by the security group it uses. That public
-	// access is not permitted if the security group assigned to the DB instance
-	// doesn't permit it.
+	// DB instance is controlled by its security group settings.
 	//
 	// When the DB instance isn't publicly accessible, it is an internal DB instance
 	// with a DNS name that resolves to a private IP address.
 	//
-	// Default: The default behavior varies depending on whether DBSubnetGroupName is
-	// specified.
+	// The default behavior when PubliclyAccessible is not specified depends on
+	// whether a DBSubnetGroup is specified.
 	//
-	// If DBSubnetGroupName isn't specified, and PubliclyAccessible isn't specified,
-	// the following applies:
+	// If DBSubnetGroup isn't specified, PubliclyAccessible defaults to false for
+	// Aurora instances and true for non-Aurora instances.
 	//
-	//   - If the default VPC in the target Region doesn’t have an internet gateway
-	//   attached to it, the DB instance is private.
+	// If DBSubnetGroup is specified, PubliclyAccessible defaults to false unless the
+	// value of DBSubnetGroup is default , in which case PubliclyAccessible defaults
+	// to true .
 	//
-	//   - If the default VPC in the target Region has an internet gateway attached to
-	//   it, the DB instance is public.
-	//
-	// If DBSubnetGroupName is specified, and PubliclyAccessible isn't specified, the
-	// following applies:
-	//
-	//   - If the subnets are part of a VPC that doesn’t have an internet gateway
-	//   attached to it, the DB instance is private.
-	//
-	//   - If the subnets are part of a VPC that has an internet gateway attached to
-	//   it, the DB instance is public.
+	// If PubliclyAccessible is true and the VPC that the DBSubnetGroup is in doesn't
+	// have an internet gateway attached to it, Amazon RDS returns an error.
 	PubliclyAccessible *bool
 
 	// Specifes whether the DB instance is encrypted. By default, it isn't encrypted.
@@ -1128,6 +1135,13 @@ type CreateDBInstanceInput struct {
 	//
 	// Default: io1 , if the Iops parameter is specified. Otherwise, gp3 .
 	StorageType *string
+
+	// Tags to assign to resources associated with the DB instance.
+	//
+	// Valid Values:
+	//
+	//   - auto-backup - The DB instance's automated backup.
+	TagSpecifications []types.TagSpecification
 
 	// Tags to assign to the DB instance.
 	Tags []types.Tag
@@ -1179,9 +1193,6 @@ type CreateDBInstanceOutput struct {
 }
 
 func (c *Client) addOperationCreateDBInstanceMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpCreateDBInstance{}, middleware.After)
 	if err != nil {
 		return err
@@ -1190,17 +1201,8 @@ func (c *Client) addOperationCreateDBInstanceMiddlewares(stack *middleware.Stack
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CreateDBInstance"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -1212,19 +1214,7 @@ func (c *Client) addOperationCreateDBInstanceMiddlewares(stack *middleware.Stack
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -1233,25 +1223,13 @@ func (c *Client) addOperationCreateDBInstanceMiddlewares(stack *middleware.Stack
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateDBInstanceValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateDBInstance(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CreateDBInstance"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -1266,55 +1244,8 @@ func (c *Client) addOperationCreateDBInstanceMiddlewares(stack *middleware.Stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opCreateDBInstance(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CreateDBInstance",
-	}
 }

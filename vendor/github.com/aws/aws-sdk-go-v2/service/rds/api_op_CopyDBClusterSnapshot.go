@@ -5,7 +5,6 @@ package rds
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	presignedurlcust "github.com/aws/aws-sdk-go-v2/service/internal/presigned-url"
 	"github.com/aws/aws-sdk-go-v2/service/rds/types"
@@ -74,19 +73,17 @@ type CopyDBClusterSnapshotInput struct {
 	// The identifier of the DB cluster snapshot to copy. This parameter isn't
 	// case-sensitive.
 	//
-	// You can't copy an encrypted, shared DB cluster snapshot from one Amazon Web
-	// Services Region to another.
-	//
 	// Constraints:
 	//
-	//   - Must specify a valid system snapshot in the "available" state.
+	//   - Must specify a valid source snapshot in the "available" state.
 	//
 	//   - If the source snapshot is in the same Amazon Web Services Region as the
 	//   copy, specify a valid DB snapshot identifier.
 	//
 	//   - If the source snapshot is in a different Amazon Web Services Region than
-	//   the copy, specify a valid DB cluster snapshot ARN. For more information, go to [Copying Snapshots Across Amazon Web Services Regions]
-	//   in the Amazon Aurora User Guide.
+	//   the copy, specify a valid DB cluster snapshot ARN. You can also specify an ARN
+	//   of a snapshot that is in a different account and a different Amazon Web Services
+	//   Region. For more information, go to [Copying Snapshots Across Amazon Web Services Regions]in the Amazon Aurora User Guide.
 	//
 	// Example: my-cluster-snapshot1
 	//
@@ -219,9 +216,6 @@ type CopyDBClusterSnapshotOutput struct {
 }
 
 func (c *Client) addOperationCopyDBClusterSnapshotMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsAwsquery_serializeOpCopyDBClusterSnapshot{}, middleware.After)
 	if err != nil {
 		return err
@@ -230,17 +224,8 @@ func (c *Client) addOperationCopyDBClusterSnapshotMiddlewares(stack *middleware.
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "CopyDBClusterSnapshot"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -252,19 +237,7 @@ func (c *Client) addOperationCopyDBClusterSnapshotMiddlewares(stack *middleware.
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -276,25 +249,13 @@ func (c *Client) addOperationCopyDBClusterSnapshotMiddlewares(stack *middleware.
 	if err = addCopyDBClusterSnapshotPresignURLMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCopyDBClusterSnapshotValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCopyDBClusterSnapshot(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CopyDBClusterSnapshot"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -309,46 +270,7 @@ func (c *Client) addOperationCopyDBClusterSnapshotMiddlewares(stack *middleware.
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -431,14 +353,6 @@ func (c *presignAutoFillCopyDBClusterSnapshotClient) PresignURL(ctx context.Cont
 	}
 	presignOptFn := WithPresignClientFromClientOptions(optFn)
 	return c.client.PresignCopyDBClusterSnapshot(ctx, input, presignOptFn)
-}
-
-func newServiceMetadataMiddleware_opCopyDBClusterSnapshot(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "CopyDBClusterSnapshot",
-	}
 }
 
 // PresignCopyDBClusterSnapshot is used to generate a presigned HTTP Request which

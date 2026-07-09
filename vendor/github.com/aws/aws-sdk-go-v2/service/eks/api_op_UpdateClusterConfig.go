@@ -5,7 +5,6 @@ package eks
 import (
 	"context"
 	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -91,6 +90,10 @@ type UpdateClusterConfigInput struct {
 	// cluster. For example, enable the capability.
 	ComputeConfig *types.ComputeConfigRequest
 
+	// The control plane scaling tier configuration. For more information, see EKS
+	// Provisioned Control Plane in the Amazon EKS User Guide.
+	ControlPlaneScalingConfig *types.ControlPlaneScalingConfig
+
 	// Specifies whether to enable or disable deletion protection for the cluster.
 	// When enabled ( true ), the cluster cannot be deleted until deletion protection
 	// is explicitly disabled. When disabled ( false ), the cluster can be deleted
@@ -115,7 +118,9 @@ type UpdateClusterConfigInput struct {
 	// remove this configuration after the cluster is created.
 	RemoteNetworkConfig *types.RemoteNetworkConfigRequest
 
-	// An object representing the VPC configuration to use for an Amazon EKS cluster.
+	// An object representing the VPC configuration to use for the cluster update. You
+	// can use this parameter to update the control plane egress mode, the subnets used
+	// by the cluster, the security groups, and the endpoint access settings.
 	ResourcesVpcConfig *types.VpcConfigRequest
 
 	// Update the configuration of the block storage capability of your EKS Auto Mode
@@ -161,9 +166,6 @@ type UpdateClusterConfigOutput struct {
 }
 
 func (c *Client) addOperationUpdateClusterConfigMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsRestjson1_serializeOpUpdateClusterConfig{}, middleware.After)
 	if err != nil {
 		return err
@@ -172,17 +174,8 @@ func (c *Client) addOperationUpdateClusterConfigMiddlewares(stack *middleware.St
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "UpdateClusterConfig"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -194,34 +187,13 @@ func (c *Client) addOperationUpdateClusterConfigMiddlewares(stack *middleware.St
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addCredentialSource(stack, options); err != nil {
@@ -233,10 +205,7 @@ func (c *Client) addOperationUpdateClusterConfigMiddlewares(stack *middleware.St
 	if err = addOpUpdateClusterConfigValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateClusterConfig(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "UpdateClusterConfig"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -251,46 +220,7 @@ func (c *Client) addOperationUpdateClusterConfigMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
@@ -327,12 +257,4 @@ func (m *idempotencyToken_initializeOpUpdateClusterConfig) HandleInitialize(ctx 
 }
 func addIdempotencyToken_opUpdateClusterConfigMiddleware(stack *middleware.Stack, cfg Options) error {
 	return stack.Initialize.Add(&idempotencyToken_initializeOpUpdateClusterConfig{tokenProvider: cfg.IdempotencyTokenProvider}, middleware.Before)
-}
-
-func newServiceMetadataMiddleware_opUpdateClusterConfig(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "UpdateClusterConfig",
-	}
 }

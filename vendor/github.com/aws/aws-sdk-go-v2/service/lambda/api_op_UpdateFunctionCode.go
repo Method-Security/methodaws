@@ -4,8 +4,6 @@ package lambda
 
 import (
 	"context"
-	"fmt"
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -85,6 +83,9 @@ type UpdateFunctionCodeInput struct {
 	// This has the same effect as calling PublishVersionseparately.
 	Publish bool
 
+	// Specifies where to publish the function version or configuration.
+	PublishTo types.FunctionVersionLatestPublished
+
 	// Update the function only if the revision ID matches the ID that's specified.
 	// Use this option to avoid modifying a function that has changed since you last
 	// read it.
@@ -98,6 +99,11 @@ type UpdateFunctionCodeInput struct {
 	// The Amazon S3 key of the deployment package. Use only with a function defined
 	// with a .zip file archive deployment package.
 	S3Key *string
+
+	// Specifies how the deployment package is stored. Use COPY (default) to upload a
+	// copy of your deployment package to Lambda. Use REFERENCE to have Lambda
+	// reference the deployment package from the specified Amazon S3 bucket.
+	S3ObjectStorageMode types.S3ObjectStorageMode
 
 	// For versioned objects, the version of the deployment package object to use.
 	S3ObjectVersion *string
@@ -123,17 +129,28 @@ type UpdateFunctionCodeOutput struct {
 	// x86_64 .
 	Architectures []types.Architecture
 
+	// Configuration for the capacity provider that manages compute resources for
+	// Lambda functions.
+	CapacityProviderConfig *types.CapacityProviderConfig
+
 	// The SHA256 hash of the function's deployment package.
 	CodeSha256 *string
 
 	// The size of the function's deployment package, in bytes.
 	CodeSize int64
 
+	// The SHA256 hash of the function configuration.
+	ConfigSha256 *string
+
 	// The function's dead letter queue.
 	DeadLetterConfig *types.DeadLetterConfig
 
 	// The function's description.
 	Description *string
+
+	// The function's durable execution configuration settings, if the function is
+	// configured for durability.
+	DurableConfig *types.DurableConfig
 
 	// The function's [environment variables]. Omitted from CloudTrail logs.
 	//
@@ -146,8 +163,9 @@ type UpdateFunctionCodeOutput struct {
 	// [Configuring ephemeral storage (console)]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-ephemeral-storage
 	EphemeralStorage *types.EphemeralStorage
 
-	// Connection settings for an [Amazon EFS file system].
+	// Connection settings for an [Amazon EFS file system] or an [Amazon S3 Files file system].
 	//
+	// [Amazon S3 Files file system]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-filesystem.html
 	// [Amazon EFS file system]: https://docs.aws.amazon.com/lambda/latest/dg/configuration-filesystem.html
 	FileSystemConfigs []types.FileSystemConfig
 
@@ -270,6 +288,10 @@ type UpdateFunctionCodeOutput struct {
 	// you can't invoke or modify the function.
 	StateReasonCode types.StateReasonCode
 
+	// The function's tenant isolation configuration settings. Determines whether the
+	// Lambda function runs on a shared or dedicated infrastructure per unique tenant.
+	TenancyConfig *types.TenancyConfig
+
 	// The amount of time in seconds that Lambda allows a function to run before
 	// stopping it.
 	Timeout *int32
@@ -290,9 +312,6 @@ type UpdateFunctionCodeOutput struct {
 }
 
 func (c *Client) addOperationUpdateFunctionCodeMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	if err := stack.Serialize.Add(&setOperationInputMiddleware{}, middleware.After); err != nil {
-		return err
-	}
 	err = stack.Serialize.Add(&awsRestjson1_serializeOpUpdateFunctionCode{}, middleware.After)
 	if err != nil {
 		return err
@@ -301,17 +320,8 @@ func (c *Client) addOperationUpdateFunctionCodeMiddlewares(stack *middleware.Sta
 	if err != nil {
 		return err
 	}
-	if err := addProtocolFinalizerMiddlewares(stack, options, "UpdateFunctionCode"); err != nil {
-		return fmt.Errorf("add protocol finalizers: %v", err)
-	}
 
 	if err = addlegacyEndpointContextSetter(stack, options); err != nil {
-		return err
-	}
-	if err = addSetLoggerMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
 	if err = addComputeContentLength(stack); err != nil {
@@ -323,19 +333,7 @@ func (c *Client) addOperationUpdateFunctionCodeMiddlewares(stack *middleware.Sta
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetry(stack, options); err != nil {
-		return err
-	}
-	if err = addRawResponseToMetadata(stack); err != nil {
-		return err
-	}
 	if err = addRecordResponseTiming(stack); err != nil {
-		return err
-	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
@@ -344,25 +342,13 @@ func (c *Client) addOperationUpdateFunctionCodeMiddlewares(stack *middleware.Sta
 	if err = smithyhttp.AddCloseResponseBodyMiddleware(stack); err != nil {
 		return err
 	}
-	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUpdateFunctionCodeValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateFunctionCode(options.Region), middleware.Before); err != nil {
-		return err
-	}
-	if err = addRecursionDetection(stack); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "UpdateFunctionCode"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -377,55 +363,8 @@ func (c *Client) addOperationUpdateFunctionCodeMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAttempt(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptExecution(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSerialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterSigning(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptTransmit(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addInterceptAfterDeserialization(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
-}
-
-func newServiceMetadataMiddleware_opUpdateFunctionCode(region string) *awsmiddleware.RegisterServiceMetadata {
-	return &awsmiddleware.RegisterServiceMetadata{
-		Region:        region,
-		ServiceID:     ServiceID,
-		OperationName: "UpdateFunctionCode",
-	}
 }
