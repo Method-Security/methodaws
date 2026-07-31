@@ -39,6 +39,9 @@ type UpdateCapacityProviderInput struct {
 	// provider.
 	PropagateTags *types.PropagateTags
 
+	// The updated telemetry configuration for the capacity provider.
+	TelemetryConfig *types.CapacityProviderTelemetryConfig
+
 	noSmithyDocumentSerde
 }
 
@@ -77,7 +80,7 @@ func (c *Client) addOperationUpdateCapacityProviderMiddlewares(stack *middleware
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
