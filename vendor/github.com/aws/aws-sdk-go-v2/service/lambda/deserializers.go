@@ -20242,6 +20242,11 @@ func awsRestjson1_deserializeDocumentCapacityProvider(v **types.CapacityProvider
 				sv.State = types.CapacityProviderState(jtv)
 			}
 
+		case "TelemetryConfig":
+			if err := awsRestjson1_deserializeDocumentCapacityProviderTelemetryConfig(&sv.TelemetryConfig, value); err != nil {
+				return err
+			}
+
 		case "VpcConfig":
 			if err := awsRestjson1_deserializeDocumentCapacityProviderVpcConfig(&sv.VpcConfig, value); err != nil {
 				return err
@@ -20330,6 +20335,55 @@ func awsRestjson1_deserializeDocumentCapacityProviderLimitExceededException(v **
 					return fmt.Errorf("expected String to be of type string, got %T instead", value)
 				}
 				sv.Type = ptr.String(jtv)
+			}
+
+		default:
+			_, _ = key, value
+
+		}
+	}
+	*v = sv
+	return nil
+}
+
+func awsRestjson1_deserializeDocumentCapacityProviderLoggingConfig(v **types.CapacityProviderLoggingConfig, value interface{}) error {
+	if v == nil {
+		return fmt.Errorf("unexpected nil of type %T", v)
+	}
+	if value == nil {
+		return nil
+	}
+
+	shape, ok := value.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("unexpected JSON type %v", value)
+	}
+
+	var sv *types.CapacityProviderLoggingConfig
+	if *v == nil {
+		sv = &types.CapacityProviderLoggingConfig{}
+	} else {
+		sv = *v
+	}
+
+	for key, value := range shape {
+		switch key {
+		case "LogGroup":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected LogGroup to be of type string, got %T instead", value)
+				}
+				sv.LogGroup = ptr.String(jtv)
+			}
+
+		case "SystemLogLevel":
+			if value != nil {
+				jtv, ok := value.(string)
+				if !ok {
+					return fmt.Errorf("expected SystemLogLevel to be of type string, got %T instead", value)
+				}
+				sv.SystemLogLevel = types.SystemLogLevel(jtv)
 			}
 
 		default:
@@ -20576,6 +20630,42 @@ func awsRestjson1_deserializeDocumentCapacityProviderSubnetIds(v *[]string, valu
 
 	}
 	*v = cv
+	return nil
+}
+
+func awsRestjson1_deserializeDocumentCapacityProviderTelemetryConfig(v **types.CapacityProviderTelemetryConfig, value interface{}) error {
+	if v == nil {
+		return fmt.Errorf("unexpected nil of type %T", v)
+	}
+	if value == nil {
+		return nil
+	}
+
+	shape, ok := value.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("unexpected JSON type %v", value)
+	}
+
+	var sv *types.CapacityProviderTelemetryConfig
+	if *v == nil {
+		sv = &types.CapacityProviderTelemetryConfig{}
+	} else {
+		sv = *v
+	}
+
+	for key, value := range shape {
+		switch key {
+		case "LoggingConfig":
+			if err := awsRestjson1_deserializeDocumentCapacityProviderLoggingConfig(&sv.LoggingConfig, value); err != nil {
+				return err
+			}
+
+		default:
+			_, _ = key, value
+
+		}
+	}
+	*v = sv
 	return nil
 }
 

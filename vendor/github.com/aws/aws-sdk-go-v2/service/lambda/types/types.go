@@ -242,6 +242,10 @@ type CapacityProvider struct {
 	// provider.
 	PropagateTags *PropagateTags
 
+	// The telemetry configuration for the capacity provider, including logging
+	// settings.
+	TelemetryConfig *CapacityProviderTelemetryConfig
+
 	noSmithyDocumentSerde
 }
 
@@ -253,6 +257,23 @@ type CapacityProviderConfig struct {
 	//
 	// This member is required.
 	LambdaManagedInstancesCapacityProviderConfig *LambdaManagedInstancesCapacityProviderConfig
+
+	noSmithyDocumentSerde
+}
+
+// The capacity provider's Amazon CloudWatch Logs configuration settings.
+type CapacityProviderLoggingConfig struct {
+
+	// The name of the Amazon CloudWatch log group the capacity provider sends logs
+	// to. By default, Lambda capacity providers send logs to a default log group named
+	// /aws/lambda/capacity-provider/<capacity provider name> . To use a different log
+	// group, enter an existing log group or enter a new log group name.
+	LogGroup *string
+
+	// Set this property to filter the system logs for your capacity provider that
+	// Lambda sends to CloudWatch. Lambda only sends system logs at the selected level
+	// of detail and lower, where DEBUG is the highest level and WARN is the lowest.
+	SystemLogLevel SystemLogLevel
 
 	noSmithyDocumentSerde
 }
@@ -285,6 +306,15 @@ type CapacityProviderScalingConfig struct {
 	// A list of scaling policies that define how the capacity provider scales compute
 	// instances based on metrics and thresholds.
 	ScalingPolicies []TargetTrackingScalingPolicy
+
+	noSmithyDocumentSerde
+}
+
+// Configuration that specifies the telemetry collection for the capacity provider.
+type CapacityProviderTelemetryConfig struct {
+
+	// The capacity provider's Amazon CloudWatch Logs configuration settings.
+	LoggingConfig *CapacityProviderLoggingConfig
 
 	noSmithyDocumentSerde
 }
@@ -1284,9 +1314,12 @@ type FunctionCode struct {
 	// The Amazon S3 key of the deployment package.
 	S3Key *string
 
-	// Specifies how the deployment package is stored. Use COPY (default) to upload a
-	// copy of your deployment package to Lambda. Use REFERENCE to have Lambda
-	// reference the deployment package from the specified Amazon S3 bucket.
+	// Specifies how the deployment package is stored. Valid values:
+	//
+	//   - COPY (default) – Uploads a copy of your deployment package to Lambda.
+	//
+	//   - REFERENCE – Lambda references the deployment package from the specified
+	//   Amazon S3 bucket.
 	S3ObjectStorageMode S3ObjectStorageMode
 
 	// For versioned objects, the version of the deployment package object to use.
@@ -1338,13 +1371,16 @@ type FunctionCodeLocation struct {
 	noSmithyDocumentSerde
 }
 
-// Details about an error related to retrieving a function's deployment package.
+// Contains details about an error that occurred when Lambda attempted to retrieve
+// a function's deployment package.
 type FunctionCodeLocationError struct {
 
-	// The error code for the failed retrieval.
+	// The error code that identifies why Lambda failed to retrieve the deployment
+	// package.
 	ErrorCode *string
 
-	// A description of the error.
+	// The human-readable message that describes why Lambda failed to retrieve the
+	// deployment package.
 	Message *string
 
 	noSmithyDocumentSerde
@@ -1940,7 +1976,12 @@ type LayerVersionContentInput struct {
 	// The Amazon S3 key of the layer archive.
 	S3Key *string
 
-	// The storage mode for a function's deployment package.
+	// Specifies how the layer archive is stored. Valid values:
+	//
+	//   - COPY (default) – Uploads a copy of your layer archive to Lambda.
+	//
+	//   - REFERENCE – Lambda references the layer archive from the specified Amazon S3
+	//   bucket.
 	S3ObjectStorageMode S3ObjectStorageMode
 
 	// For versioned objects, the version of the layer archive object to use.
@@ -1967,8 +2008,7 @@ type LayerVersionContentOutput struct {
 	// A link to the layer archive in Amazon S3 that is valid for 10 minutes.
 	Location *string
 
-	// Details about the resolved Amazon S3 object that contains a function's
-	// deployment package.
+	// The resolved Amazon S3 object that contains the layer archive.
 	ResolvedS3Object *ResolvedS3Object
 
 	// The Amazon Resource Name (ARN) of a signing job.

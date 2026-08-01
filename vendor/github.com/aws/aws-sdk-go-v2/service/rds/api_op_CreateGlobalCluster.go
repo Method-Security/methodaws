@@ -69,7 +69,7 @@ type CreateGlobalClusterInput struct {
 	//   Amazon Aurora uses the engine of the source DB cluster.
 	Engine *string
 
-	// The life cycle type for this global database cluster.
+	// The lifecycle type for this global database cluster.
 	//
 	// By default, this value is set to open-source-rds-extended-support , which
 	// enrolls your global cluster into Amazon RDS Extended Support. At the end of
@@ -165,7 +165,7 @@ func (c *Client) addOperationCreateGlobalClusterMiddlewares(stack *middleware.St
 	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack, options); err != nil {
 		return err
 	}
 	if err = smithyhttp.AddErrorCloseResponseBodyMiddleware(stack); err != nil {
