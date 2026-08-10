@@ -6,7 +6,7 @@ github.com/Method-Security/pkg/writer
 ## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/endpoints
-# github.com/aws/aws-sdk-go-v2 v1.43.3
+# github.com/aws/aws-sdk-go-v2 v1.43.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/aws
 github.com/aws/aws-sdk-go-v2/aws/arn
@@ -37,11 +37,11 @@ github.com/aws/aws-sdk-go-v2/internal/timeconv
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream/eventstreamapi
-# github.com/aws/aws-sdk-go-v2/config v1.32.34
+# github.com/aws/aws-sdk-go-v2/config v1.32.35
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/config
 github.com/aws/aws-sdk-go-v2/config/internal/ini
-# github.com/aws/aws-sdk-go-v2/credentials v1.19.33
+# github.com/aws/aws-sdk-go-v2/credentials v1.19.34
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -51,58 +51,58 @@ github.com/aws/aws-sdk-go-v2/credentials/logincreds
 github.com/aws/aws-sdk-go-v2/credentials/processcreds
 github.com/aws/aws-sdk-go-v2/credentials/ssocreds
 github.com/aws/aws-sdk-go-v2/credentials/stscreds
-# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.34
+# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.35
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds/internal/config
-# github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.34
+# github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.35
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/internal/configsources
-# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.34
+# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.35
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
-# github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.35
+# github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.36
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/internal/v4a
 github.com/aws/aws-sdk-go-v2/internal/v4a/internal/crypto
 github.com/aws/aws-sdk-go-v2/internal/v4a/internal/v4
-# github.com/aws/aws-sdk-go-v2/service/apigateway v1.42.3
+# github.com/aws/aws-sdk-go-v2/service/apigateway v1.42.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/apigateway
 github.com/aws/aws-sdk-go-v2/service/apigateway/internal/customizations
 github.com/aws/aws-sdk-go-v2/service/apigateway/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/apigateway/types
-# github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.37.3
+# github.com/aws/aws-sdk-go-v2/service/apigatewayv2 v1.37.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/apigatewayv2
 github.com/aws/aws-sdk-go-v2/service/apigatewayv2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/apigatewayv2/types
-# github.com/aws/aws-sdk-go-v2/service/cloudfront v1.67.3
+# github.com/aws/aws-sdk-go-v2/service/cloudfront v1.67.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/cloudfront
 github.com/aws/aws-sdk-go-v2/service/cloudfront/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/cloudfront/types
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.318.1
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.321.0
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/ec2/types
-# github.com/aws/aws-sdk-go-v2/service/eks v1.90.3
+# github.com/aws/aws-sdk-go-v2/service/eks v1.90.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/eks
 github.com/aws/aws-sdk-go-v2/service/eks/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/eks/types
-# github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.36.3
+# github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing v1.36.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types
-# github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.58.4
+# github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.58.5
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types
-# github.com/aws/aws-sdk-go-v2/service/iam v1.57.1
+# github.com/aws/aws-sdk-go-v2/service/iam v1.58.1
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/iam
 github.com/aws/aws-sdk-go-v2/service/iam/internal/endpoints
@@ -110,61 +110,61 @@ github.com/aws/aws-sdk-go-v2/service/iam/types
 # github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.15
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding
-# github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.27
+# github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.28
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/internal/checksum
-# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.34
+# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.35
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
-# github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.35
+# github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.36
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared/arn
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared/config
-# github.com/aws/aws-sdk-go-v2/service/lambda v1.101.1
+# github.com/aws/aws-sdk-go-v2/service/lambda v1.101.2
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/lambda
 github.com/aws/aws-sdk-go-v2/service/lambda/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/lambda/types
-# github.com/aws/aws-sdk-go-v2/service/rds v1.124.0
+# github.com/aws/aws-sdk-go-v2/service/rds v1.124.1
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/rds
 github.com/aws/aws-sdk-go-v2/service/rds/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/rds/types
-# github.com/aws/aws-sdk-go-v2/service/route53 v1.65.5
+# github.com/aws/aws-sdk-go-v2/service/route53 v1.65.6
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/route53
 github.com/aws/aws-sdk-go-v2/service/route53/internal/customizations
 github.com/aws/aws-sdk-go-v2/service/route53/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/route53/types
-# github.com/aws/aws-sdk-go-v2/service/s3 v1.106.3
+# github.com/aws/aws-sdk-go-v2/service/s3 v1.107.0
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/s3
 github.com/aws/aws-sdk-go-v2/service/s3/internal/arn
 github.com/aws/aws-sdk-go-v2/service/s3/internal/customizations
 github.com/aws/aws-sdk-go-v2/service/s3/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/s3/types
-# github.com/aws/aws-sdk-go-v2/service/signin v1.5.3
+# github.com/aws/aws-sdk-go-v2/service/signin v1.5.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/signin
 github.com/aws/aws-sdk-go-v2/service/signin/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/signin/types
-# github.com/aws/aws-sdk-go-v2/service/sso v1.33.3
+# github.com/aws/aws-sdk-go-v2/service/sso v1.33.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/sso
 github.com/aws/aws-sdk-go-v2/service/sso/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sso/types
-# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.3
+# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/ssooidc
 github.com/aws/aws-sdk-go-v2/service/ssooidc/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/ssooidc/types
-# github.com/aws/aws-sdk-go-v2/service/sts v1.45.3
+# github.com/aws/aws-sdk-go-v2/service/sts v1.45.4
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sts/types
-# github.com/aws/aws-sdk-go-v2/service/wafv2 v1.77.1
+# github.com/aws/aws-sdk-go-v2/service/wafv2 v1.77.3
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/wafv2
 github.com/aws/aws-sdk-go-v2/service/wafv2/internal/endpoints
