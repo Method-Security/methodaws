@@ -1,3 +1,21 @@
+# v1.91.1 (2026-08-14)
+
+* **Dependency Update**: Update to smithy-go v1.27.8.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.91.0 (2026-08-11)
+
+* **Feature**: This feature would give customers the ability to selectively tune certain configurations of Kubernetes control plane components in an Amazon EKS cluster.
+
+# v1.90.5 (2026-08-10)
+
+* **Dependency Update**: Update to smithy-go v1.27.7.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.90.4 (2026-08-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.90.3 (2026-07-31.2)
 
 * **Dependency Update**: Updated to the latest SDK module versions
