@@ -1,3 +1,17 @@
+# v1.124.3 (2026-08-14)
+
+* **Dependency Update**: Update to smithy-go v1.27.8.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.124.2 (2026-08-10)
+
+* **Dependency Update**: Update to smithy-go v1.27.7.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.124.1 (2026-08-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.124.0 (2026-07-31.2)
 
 * **Feature**: Adds StorageOperationStatus and StorageOperationPercentProgress to DescribeDBInstances, letting you monitor RDS storage initialization and optimization progress.

@@ -1,3 +1,21 @@
+# v1.77.5 (2026-08-14)
+
+* **Dependency Update**: Update to smithy-go v1.27.8.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.77.4 (2026-08-10)
+
+* **Dependency Update**: Update to smithy-go v1.27.7.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.77.3 (2026-08-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.77.2 (2026-08-03)
+
+* **Documentation**: Updated descriptions for number of PreParseTextTransformations allowed per rule statement
+
 # v1.77.1 (2026-07-31.2)
 
 * **Dependency Update**: Updated to the latest SDK module versions
