@@ -1,5 +1,8 @@
 # Dockerfile used for the compilation of the statically compiled methodaws binary
-FROM golang:1.26.5-alpine3.23 AS base
+# GO_VERSION should be a minor (e.g. 1.26) so the floating golang:<minor>-alpine*
+# tag tracks the latest patch, matching setup-go check-latest in CI.
+ARG GO_VERSION=1.26
+FROM golang:${GO_VERSION}-alpine3.23 AS base
 ARG GORELEASER_VERSION="v2.0.1"
 ARG CLI_NAME="methodaws"
 ARG TARGETARCH
