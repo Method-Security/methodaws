@@ -13,7 +13,7 @@ on:
         type: string
 
 env:
-  GO_VERSION: "1.26.5"
+  GO_VERSION: "1.26"
 
 jobs:
   # Build ARM64 using native GitHub ARM runner but inside Docker for Alpine compatibility
@@ -46,9 +46,14 @@ jobs:
         env:
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
 
-      # Build ARM64 builder image natively (no QEMU needed)
+      # Build ARM64 builder image natively (no QEMU needed).
+      # --pull ensures the floating golang:${GO_VERSION}-alpine* tag is refreshed
+      # so Linux picks up the same latest 1.26.x patch as setup-go check-latest.
       - name: Build ARM64 Builder Image
-        run: docker buildx build . --platform linux/arm64 --load --tag armbuilder -f Dockerfile.builder
+        run: >
+          docker buildx build . --platform linux/arm64 --load --pull
+          --build-arg GO_VERSION=${{ env.GO_VERSION }}
+          --tag armbuilder -f Dockerfile.builder
 
       # Build inside the Alpine container to ensure library compatibility
       - name: Build ARM64 Binary in Alpine Container
@@ -99,9 +104,14 @@ jobs:
         env:
           FERN_TOKEN: ${{ secrets.FERN_TOKEN }}
 
-      # Build AMD64 builder image natively (no QEMU needed)
+      # Build AMD64 builder image natively (no QEMU needed).
+      # --pull ensures the floating golang:${GO_VERSION}-alpine* tag is refreshed
+      # so Linux picks up the same latest 1.26.x patch as setup-go check-latest.
       - name: Build AMD64 Builder Image
-        run: docker buildx build . --platform linux/amd64 --load --tag amdbuilder -f Dockerfile.builder
+        run: >
+          docker buildx build . --platform linux/amd64 --load --pull
+          --build-arg GO_VERSION=${{ env.GO_VERSION }}
+          --tag amdbuilder -f Dockerfile.builder
 
       # Build inside the Alpine container to ensure library compatibility
       - name: Build AMD64 Binary in Alpine Container
@@ -173,6 +183,7 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # ratchet:actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
           cache: true
 
       - uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # ratchet:goreleaser/goreleaser-action@v7
@@ -250,6 +261,7 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # ratchet:actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
           cache: true
 
       - name: Download Artifacts
