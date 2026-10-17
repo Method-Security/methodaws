@@ -65,7 +65,11 @@ func TestAPIGatewayOriginUsesResolvedAPIFamily(t *testing.T) {
 func TestUnresolvedAPIOriginDoesNotInventBackendAndCollectionContinues(t *testing.T) {
 	for _, status := range []int{http.StatusForbidden, http.StatusNotFound, http.StatusOK} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodHead {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(status)
 				assert.NoError(t, json.NewEncoder(w).Encode(map[string]string{"id": "different-api", "apiId": "different-api"}))
@@ -87,4 +91,30 @@ func TestUnresolvedAPIOriginDoesNotInventBackendAndCollectionContinues(t *testin
 			assert.Nil(t, origins[2].Backend)
 		})
 	}
+}
+
+func TestUnresolvedS3OriginDoesNotInventBackendAndCollectionContinues(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	cfg := aws.Config{Region: "us-east-1", Credentials: aws.AnonymousCredentials{}, BaseEndpoint: aws.String(server.URL)}
+	origins, errs := processOrigins(context.Background(), cfg, []types.Origin{
+		{Id: aws.String("bucket-origin"), DomainName: aws.String("deleted-bucket.s3.us-east-1.amazonaws.com")},
+		{Id: aws.String("custom-origin"), DomainName: aws.String("backend.example.com")},
+	}, "123456789012")
+
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0], `Origin "bucket-origin"`)
+	assert.Contains(t, errs[0], "S3 bucket not found")
+	require.Len(t, origins, 2)
+	assert.Nil(t, origins[0].Backend)
+	assert.Equal(t, "deleted-bucket.s3.us-east-1.amazonaws.com", aws.ToString(origins[0].Identification.DomainName))
+	assert.Nil(t, origins[1].Backend)
 }

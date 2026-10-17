@@ -2,7 +2,9 @@ package enumerate
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
@@ -16,6 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	elbtypes "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // Only recognized AWS endpoint forms can produce backend identities. Custom DNS
@@ -52,13 +56,7 @@ func matchOriginDomain(pattern *regexp.Regexp, domainName string) []string {
 func resolveOriginBackend(ctx context.Context, awsConfig aws.Config, domainName string, originType cloudfrontfern.CloudFrontResourceType, accountID string) (*cloudfrontfern.CloudFrontOriginBackend, error) {
 	switch originType {
 	case cloudfrontfern.CloudFrontResourceTypeS3:
-		matches := matchOriginDomain(s3OriginDomain, domainName)
-		if len(matches) < 2 {
-			return nil, fmt.Errorf("invalid S3 origin domain: %s", domainName)
-		}
-		return &cloudfrontfern.CloudFrontOriginBackend{
-			Type: "s3", S3: &cloudfrontfern.S3OriginBackend{BucketName: matches[1]},
-		}, nil
+		return resolveS3OriginBackend(ctx, awsConfig, domainName)
 	case cloudfrontfern.CloudFrontResourceTypeLoadBalancer:
 		lb, err := resolveLoadBalancer(ctx, awsConfig, domainName)
 		if err != nil {
@@ -78,6 +76,31 @@ func resolveOriginBackend(ctx context.Context, awsConfig aws.Config, domainName 
 	default:
 		return nil, nil
 	}
+}
+
+func resolveS3OriginBackend(ctx context.Context, awsConfig aws.Config, domainName string) (*cloudfrontfern.CloudFrontOriginBackend, error) {
+	matches := matchOriginDomain(s3OriginDomain, domainName)
+	if len(matches) < 2 {
+		return nil, fmt.Errorf("invalid S3 origin domain: %s", domainName)
+	}
+
+	region := matches[2]
+	if region == "" {
+		region = "us-east-1"
+	}
+	awsConfig.Region = region
+
+	bucketName := matches[1]
+	_, err := s3.NewFromConfig(awsConfig).HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(bucketName)})
+	var responseError *smithyhttp.ResponseError
+	// Only a 404 conclusively means the configured origin no longer resolves to a bucket.
+	if errors.As(err, &responseError) && responseError.HTTPStatusCode() == http.StatusNotFound {
+		return nil, fmt.Errorf("S3 bucket not found for origin domain: %s", domainName)
+	}
+
+	return &cloudfrontfern.CloudFrontOriginBackend{
+		Type: "s3", S3: &cloudfrontfern.S3OriginBackend{BucketName: bucketName},
+	}, nil
 }
 
 func resolveAPIGateway(ctx context.Context, cfg aws.Config, domainName string) (*cloudfrontfern.CloudFrontOriginBackend, error) {
